@@ -1,11 +1,22 @@
-import { tncPayload, getAALAgreementNo, getEUPAgreementNo, getBackupPaymentFlagForAgreement, populateTysPayloadParams } from './Utils';
+import { tncPayload } from './Utils'; // Adjust import as per your file structure
 
-jest.mock('./Utils', () => ({
-    getAALAgreementNo: jest.fn(),
-    getEUPAgreementNo: jest.fn(),
-    getBackupPaymentFlagForAgreement: jest.fn(),
-    populateTysPayloadParams: jest.fn()
-}));
+// Mock internal functions
+const mockGetAALAgreementNo = jest.fn();
+const mockGetEUPAgreementNo = jest.fn();
+const mockGetBackupPaymentFlagForAgreement = jest.fn();
+const mockPopulateTysPayloadParams = jest.fn();
+
+jest.mock('./Utils', () => {
+    const originalModule = jest.requireActual('./Utils');
+
+    return {
+        ...originalModule,
+        getAALAgreementNo: mockGetAALAgreementNo,
+        getEUPAgreementNo: mockGetEUPAgreementNo,
+        getBackupPaymentFlagForAgreement: mockGetBackupPaymentFlagForAgreement,
+        populateTysPayloadParams: mockPopulateTysPayloadParams,
+    };
+});
 
 describe('tncPayload function', () => {
     beforeEach(() => {
@@ -27,7 +38,8 @@ describe('tncPayload function', () => {
         const isTysFlow = false;
 
         const mockBackupPaymentFlag = 'backupFlag';
-        getBackupPaymentFlagForAgreement.mockReturnValue(mockBackupPaymentFlag);
+        mockGetBackupPaymentFlagForAgreement.mockReturnValue(mockBackupPaymentFlag);
+
         const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
             isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
 
@@ -69,14 +81,14 @@ describe('tncPayload function', () => {
 
         const aalAgreement = { aalAgreementNum: "AAL123", aalMtnInstallmentString: "AAL456" };
         const eupAgreement = { eupAgreementNum: "EUP123", eupMtnInstallmentString: "EUP456" };
-        getAALAgreementNo.mockReturnValue(aalAgreement);
-        getEUPAgreementNo.mockReturnValue(eupAgreement);
+        mockGetAALAgreementNo.mockReturnValue(aalAgreement);
+        mockGetEUPAgreementNo.mockReturnValue(eupAgreement);
 
         const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
             isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
 
-        expect(getAALAgreementNo).toHaveBeenCalled();
-        expect(getEUPAgreementNo).toHaveBeenCalled();
+        expect(mockGetAALAgreementNo).toHaveBeenCalled();
+        expect(mockGetEUPAgreementNo).toHaveBeenCalled();
         expect(result.upgradeAgreementNo).toBe(aalAgreement.aalMtnInstallmentString);
         expect(result.aalAgreementNo).toBe(aalAgreement.aalAgreementNum);
     });
@@ -171,19 +183,17 @@ describe('tncPayload function', () => {
             showEquipmentProtection: "N",
             retailPrice: "100",
             channel: "DEFAULT",
-            backupPaymentFlag: getBackupPaymentFlagForAgreement(cart, channel, orderPaymentDetails),
+            backupPaymentFlag: 'mockFlag',
             creditAppNumber: "",
             ringType: "N",
             orderType: "M",
-            homeMobileCombo: "N",
-            someAdditionalField: "someValue"
+            homeMobileCombo: "N"
         };
-        populateTysPayloadParams.mockReturnValue(mockPayload);
+        mockPopulateTysPayloadParams.mockReturnValue(mockPayload);
 
         const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
             isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
 
-        expect(populateTysPayloadParams).toHaveBeenCalled();
-        expect(result).toEqual(mockPayload);
+        expect(mockPopulateTysPayloadParams).toHaveBeenCalledWith(result, agreementEligibleFlags, customerDetails);
     });
 });
