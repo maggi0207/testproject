@@ -1,22 +1,4 @@
-import { tncPayload } from './Utils'; // Adjust import as per your file structure
 
-// Mock internal functions
-const mockGetAALAgreementNo = jest.fn();
-const mockGetEUPAgreementNo = jest.fn();
-const mockGetBackupPaymentFlagForAgreement = jest.fn();
-const mockPopulateTysPayloadParams = jest.fn();
-
-jest.mock('./Utils', () => {
-    const originalModule = jest.requireActual('./Utils');
-
-    return {
-        ...originalModule,
-        getAALAgreementNo: mockGetAALAgreementNo,
-        getEUPAgreementNo: mockGetEUPAgreementNo,
-        getBackupPaymentFlagForAgreement: mockGetBackupPaymentFlagForAgreement,
-        populateTysPayloadParams: mockPopulateTysPayloadParams,
-    };
-});
 
 describe('tncPayload function', () => {
     beforeEach(() => {
@@ -113,6 +95,26 @@ describe('tncPayload function', () => {
         expect(result.fiveGInd).toBe("ltehome");
     });
 
+    it('should handle show5GAgreement flag', () => {
+        const cart = { orderDetails: { totalDueToday: "100", locationCode: "001", isComboOrder: "N" } };
+        const agreementEligibleFlags = { showLTEAgreement: false, show5GAgreement: true };
+        const encryptedCartId = "cart123";
+        const channel = "DEFAULT";
+        const orderBalance = "100";
+        const repeaterDeviceSku = "SC-XYZ";
+        const isMultiLineRisaEnabled = false;
+        const orderPaymentDetails = {};
+        const whwRedemptionFlow = false;
+        const midnightRedemptionFlow = false;
+        const customerDetails = {};
+        const isTysFlow = false;
+
+        const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
+            isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
+
+        expect(result.fiveGInd).toBe("fiveg");
+    });
+
     it('should handle repeaterDeviceSku condition', () => {
         const cart = { orderDetails: { totalDueToday: "0", locationCode: "001", isComboOrder: "N" } };
         const agreementEligibleFlags = {};
@@ -169,31 +171,19 @@ describe('tncPayload function', () => {
         const customerDetails = {};
         const isTysFlow = true;
 
-        const mockPayload = {
-            encryptedCartId,
-            isMultiLineRisaEnabled,
-            pageName: "tandc",
-            locationCode: "001",
-            fcraEnabled: "Y",
-            upgradeAgreementNo: "",
-            aalAgreementNo: "",
-            upgradeTwoYear: "N",
-            aalTwoYear: "N",
-            eqpDeclined: "N",
-            showEquipmentProtection: "N",
-            retailPrice: "100",
-            channel: "DEFAULT",
-            backupPaymentFlag: 'mockFlag',
-            creditAppNumber: "",
-            ringType: "N",
-            orderType: "M",
-            homeMobileCombo: "N"
-        };
-        mockPopulateTysPayloadParams.mockReturnValue(mockPayload);
+        mockPopulateTysPayloadParams.mockReturnValue({
+            tysParam1: "value1",
+            tysParam2: "value2"
+        });
 
         const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
             isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
 
-        expect(mockPopulateTysPayloadParams).toHaveBeenCalledWith(result, agreementEligibleFlags, customerDetails);
+        expect(mockPopulateTysPayloadParams).toHaveBeenCalledWith(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
+            isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails);
+        expect(result.tysParams).toEqual({
+            tysParam1: "value1",
+            tysParam2: "value2"
+        });
     });
 });
