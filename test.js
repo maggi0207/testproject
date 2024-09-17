@@ -1,59 +1,189 @@
-import { processReceiveData } from './Utils';  // Adjust the path as needed
 
-describe('processReceiveData function', () => {
-    it('should return ipAddress when field is ipAddress', () => {
-        const longPollEvent = "";
-        const longPollPayload = { field: "ipAddress", value: "192.168.1.1" };
-        const result = processReceiveData(longPollEvent, longPollPayload);
-        expect(result).toEqual({ ipAddress: "192.168.1.1" });
+
+jest.mock('./Utils', () => ({
+    getAALAgreementNo: jest.fn(),
+    getEUPAgreementNo: jest.fn(),
+    getBackupPaymentFlagForAgreement: jest.fn(),
+    populateTysPayloadParams: jest.fn()
+}));
+
+describe('tncPayload function', () => {
+    beforeEach(() => {
+        jest.resetAllMocks();
     });
 
-    it('should return an object with tacsignature when longPollEvent is submitSignature and tacsignature is present', () => {
-        const longPollEvent = "submitSignature";
-        const longPollPayload = { tacsignature: "base64encodedstring" };
-        const result = processReceiveData(longPollEvent, longPollPayload);
+    it('should return payload with default values when no special conditions are met', () => {
+        const cart = { orderDetails: { totalDueToday: "100", locationCode: "001", isComboOrder: "N" } };
+        const agreementEligibleFlags = {};
+        const encryptedCartId = "cart123";
+        const channel = "DEFAULT";
+        const orderBalance = "100";
+        const repeaterDeviceSku = "SC-XYZ";
+        const isMultiLineRisaEnabled = false;
+        const orderPaymentDetails = {};
+        const whwRedemptionFlow = false;
+        const midnightRedemptionFlow = false;
+        const customerDetails = {};
+        const isTysFlow = false;
+
+        const mockBackupPaymentFlag = 'backupFlag';
+        getBackupPaymentFlagForAgreement.mockReturnValue(mockBackupPaymentFlag);
+        const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
+            isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
+
         expect(result).toEqual({
-            tacsignature: "data:image/png;base64,base64encodedstring"
+            encryptedCartId,
+            isMultiLineRisaEnabled,
+            pageName: "tandc",
+            locationCode: "001",
+            fcraEnabled: "Y",
+            upgradeAgreementNo: "",
+            aalAgreementNo: "",
+            upgradeTwoYear: "N",
+            aalTwoYear: "N",
+            eqpDeclined: "N",
+            showEquipmentProtection: "N",
+            retailPrice: "100",
+            channel: "DEFAULT",
+            backupPaymentFlag: mockBackupPaymentFlag,
+            creditAppNumber: "",
+            ringType: "N",
+            orderType: "M",
+            homeMobileCombo: "N"
         });
     });
 
-    it('should return an object with safetechSessionId when longPollEvent is submitSignature and safetechSessionId is present', () => {
-        const longPollEvent = "submitSignature";
-        const longPollPayload = { safetechSessionId: "sessionId123" };
-        const result = processReceiveData(longPollEvent, longPollPayload);
-        expect(result).toEqual({ safetechSessionId: "sessionId123" });
+    it('should call getAALAgreementNo and getEUPAgreementNo', () => {
+        const cart = { orderDetails: { totalDueToday: "100", locationCode: "001", isComboOrder: "N" } };
+        const agreementEligibleFlags = { showLTEAgreement: false, show5GAgreement: false };
+        const encryptedCartId = "cart123";
+        const channel = "DEFAULT";
+        const orderBalance = "100";
+        const repeaterDeviceSku = "SC-XYZ";
+        const isMultiLineRisaEnabled = true;  // To trigger AAL and EUP agreements
+        const orderPaymentDetails = {};
+        const whwRedemptionFlow = false;
+        const midnightRedemptionFlow = false;
+        const customerDetails = {};
+        const isTysFlow = false;
+
+        const aalAgreement = { aalAgreementNum: "AAL123", aalMtnInstallmentString: "AAL456" };
+        const eupAgreement = { eupAgreementNum: "EUP123", eupMtnInstallmentString: "EUP456" };
+        getAALAgreementNo.mockReturnValue(aalAgreement);
+        getEUPAgreementNo.mockReturnValue(eupAgreement);
+
+        const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
+            isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
+
+        expect(getAALAgreementNo).toHaveBeenCalled();
+        expect(getEUPAgreementNo).toHaveBeenCalled();
+        expect(result.upgradeAgreementNo).toBe(aalAgreement.aalMtnInstallmentString);
+        expect(result.aalAgreementNo).toBe(aalAgreement.aalAgreementNum);
     });
 
-    it('should return an object with both tacsignature and safetechSessionId when both are present', () => {
-        const longPollEvent = "submitSignature";
-        const longPollPayload = {
-            tacsignature: "base64encodedstring",
-            safetechSessionId: "sessionId123"
+    it('should handle showLTEAgreement and show5GAgreement flags', () => {
+        const cart = { orderDetails: { totalDueToday: "100", locationCode: "001", isComboOrder: "N" } };
+        const agreementEligibleFlags = { showLTEAgreement: true, show5GAgreement: false };
+        const encryptedCartId = "cart123";
+        const channel = "DEFAULT";
+        const orderBalance = "100";
+        const repeaterDeviceSku = "SC-XYZ";
+        const isMultiLineRisaEnabled = false;
+        const orderPaymentDetails = {};
+        const whwRedemptionFlow = false;
+        const midnightRedemptionFlow = false;
+        const customerDetails = {};
+        const isTysFlow = false;
+
+        const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
+            isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
+
+        expect(result.fiveGInd).toBe("ltehome");
+    });
+
+    it('should handle repeaterDeviceSku condition', () => {
+        const cart = { orderDetails: { totalDueToday: "0", locationCode: "001", isComboOrder: "N" } };
+        const agreementEligibleFlags = {};
+        const encryptedCartId = "cart123";
+        const channel = "OMNI-CARE";
+        const orderBalance = "0";
+        const repeaterDeviceSku = "SC-EZCONNECT";
+        const isMultiLineRisaEnabled = false;
+        const orderPaymentDetails = {};
+        const whwRedemptionFlow = false;
+        const midnightRedemptionFlow = false;
+        const customerDetails = {};
+        const isTysFlow = false;
+
+        const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
+            isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
+
+        expect(result.repeaterDevice).toBe("Y");
+    });
+
+    it('should handle whwRedemptionFlow and midnightRedemptionFlow', () => {
+        const cart = { orderDetails: { totalDueToday: "100", locationCode: "001", isComboOrder: "N" } };
+        const agreementEligibleFlags = {};
+        const encryptedCartId = "cart123";
+        const channel = "DEFAULT";
+        const orderBalance = "100";
+        const repeaterDeviceSku = "SC-XYZ";
+        const isMultiLineRisaEnabled = false;
+        const orderPaymentDetails = {};
+        const whwRedemptionFlow = true;
+        const midnightRedemptionFlow = true;
+        const customerDetails = {};
+        const isTysFlow = false;
+
+        const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
+            isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
+
+        expect(result.fiveGWHWFlow).toBe("Y");
+        expect(result.midnightWHWRedeem).toBe("Y");
+        expect(result.fiveGInd).toBe("fiveg");
+    });
+
+    it('should handle isTysFlow and call populateTysPayloadParams', () => {
+        const cart = { orderDetails: { totalDueToday: "100", locationCode: "001", isComboOrder: "N" } };
+        const agreementEligibleFlags = {};
+        const encryptedCartId = "cart123";
+        const channel = "DEFAULT";
+        const orderBalance = "100";
+        const repeaterDeviceSku = "SC-XYZ";
+        const isMultiLineRisaEnabled = false;
+        const orderPaymentDetails = {};
+        const whwRedemptionFlow = false;
+        const midnightRedemptionFlow = false;
+        const customerDetails = {};
+        const isTysFlow = true;
+
+        const mockPayload = {
+            encryptedCartId,
+            isMultiLineRisaEnabled,
+            pageName: "tandc",
+            locationCode: "001",
+            fcraEnabled: "Y",
+            upgradeAgreementNo: "",
+            aalAgreementNo: "",
+            upgradeTwoYear: "N",
+            aalTwoYear: "N",
+            eqpDeclined: "N",
+            showEquipmentProtection: "N",
+            retailPrice: "100",
+            channel: "DEFAULT",
+            backupPaymentFlag: getBackupPaymentFlagForAgreement(cart, channel, orderPaymentDetails),
+            creditAppNumber: "",
+            ringType: "N",
+            orderType: "M",
+            homeMobileCombo: "N",
+            someAdditionalField: "someValue"
         };
-        const result = processReceiveData(longPollEvent, longPollPayload);
-        expect(result).toEqual({
-            tacsignature: "data:image/png;base64,base64encodedstring",
-            safetechSessionId: "sessionId123"
-        });
-    });
+        populateTysPayloadParams.mockReturnValue(mockPayload);
 
-    it('should return an empty object for longPollEvent submitSignature with no relevant fields', () => {
-        const longPollEvent = "submitSignature";
-        const longPollPayload = {};
-        const result = processReceiveData(longPollEvent, longPollPayload);
-        expect(result).toEqual({});
-    });
+        const result = tncPayload(cart, agreementEligibleFlags, encryptedCartId, channel, orderBalance, repeaterDeviceSku,
+            isMultiLineRisaEnabled, orderPaymentDetails, whwRedemptionFlow, midnightRedemptionFlow, customerDetails, isTysFlow);
 
-    it('should return an empty object for unknown longPollEvent and payload', () => {
-        const longPollEvent = "unknownEvent";
-        const longPollPayload = {};
-        const result = processReceiveData(longPollEvent, longPollPayload);
-        expect(result).toEqual({});
-    });
-
-    it('should handle undefined payload gracefully', () => {
-        const longPollEvent = "submitSignature";
-        const result = processReceiveData(longPollEvent, undefined);
-        expect(result).toEqual({});
+        expect(populateTysPayloadParams).toHaveBeenCalled();
+        expect(result).toEqual(mockPayload);
     });
 });
