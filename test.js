@@ -1,23 +1,15 @@
-import { getSendEmailRequest, getSendEmailAPIRequest } from './yourModule';
-import { isPreOrBackOrder } from './yourModule'; // Import necessary helper functions
-
-jest.mock('./Utils', () => ({
-    ...jest.requireActual('./Utils'),
-    getSendEmailAPIRequest: jest.fn(),
-    isPreOrBackOrder: jest.fn(),
-}));
 
 describe('getSendEmailRequest', () => {
     beforeEach(() => {
         jest.resetAllMocks();
     });
 
-    it('should handle orderNumber and creditApplicationNum correctly', () => {
+    it('should handle default values and fallback logic correctly', () => {
         const cart = {
             orderDetails: {
                 orderNumber: "",
                 orderList: [
-                    { orderNumber: "1234", orderActivityType: "ACC" }
+                    { orderNumber: "1234", orderActivityType: "ACC", creditApplication: { creditApplicationNum: "CRED1234" } }
                 ],
                 orderType: "IS",
                 locationCode: "LOC123",
@@ -47,23 +39,20 @@ describe('getSendEmailRequest', () => {
         isPreOrBackOrder.mockReturnValue(false);
         getSendEmailAPIRequest.mockReturnValue({});
 
-        const result = getSendEmailRequest(payload);
+        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags, 
+            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel, 
+            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo, 
+            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
 
-        expect(result).toHaveProperty('data.ordInfo.orderNumber', '1234');
-        expect(result).toHaveProperty('data.ordInfo.creditAppNumber', '');
+        expect(result).toHaveProperty('data.orderNum', '1234');
+        expect(result).toHaveProperty('data.creditAppNumber', 'CRED1234');
     });
 
-    it('should handle date formatting when day and month are both less than 10', () => {
-        // Implement test for date formatting with day < 10 and month < 10 if required
-    });
-
-    it('should handle empty orderNumber and creditApplicationNum and fallback to orderList', () => {
+    it('should set pageName to "networkextender" for OMNI-CARE channel with specific conditions', () => {
         const cart = {
             orderDetails: {
                 orderNumber: "",
-                orderList: [
-                    { orderNumber: "5678", creditApplication: { creditApplicationNum: "CRED5678" } }
-                ],
+                orderList: [],
                 orderType: "",
                 locationCode: "LOC456",
                 totalDueToday: "200"
@@ -75,12 +64,12 @@ describe('getSendEmailRequest', () => {
         const payload = {
             selectedMtn: "654321",
             selectedEmailId: "test2@example.com",
-            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
+            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: true },
             sendInspicioToken: "testToken",
             receievInspicioToken: "recvToken",
             customerProfileData: { customer: { accountNo: "ACCT456", cartId: "cart2", caseId: "case2", loggedInUser: "user2" } },
-            channel: "DEFAULT",
-            pageName: "testPage",
+            channel: "OMNI-CARE",
+            pageName: "tandc",
             inspicioMode: "email",
             sendMessageResponse: { cluster: "cluster2" },
             primaryUserInfo: { firstName: "Jane" },
@@ -89,49 +78,13 @@ describe('getSendEmailRequest', () => {
             repeaterDeviceSku: "SC-NONCONNECT"
         };
 
-        isPreOrBackOrder.mockReturnValue(true);
-        getSendEmailAPIRequest.mockReturnValue({});
-
-        const result = getSendEmailRequest(payload);
-
-        expect(result).toHaveProperty('data.ordInfo.orderNumber', '5678');
-        expect(result).toHaveProperty('data.ordInfo.creditAppNumber', 'CRED5678');
-    });
-
-    it('should set pageName to "networkextender" for OMNI-CARE channel with specific conditions', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: "",
-                orderList: [],
-                orderType: "",
-                locationCode: "LOC789",
-                totalDueToday: "250"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: "123456",
-            selectedEmailId: "test@example.com",
-            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: true },
-            sendInspicioToken: "testToken",
-            receievInspicioToken: "recvToken",
-            customerProfileData: { customer: { accountNo: "ACCT789", cartId: "cart3", caseId: "case3", loggedInUser: "user3" } },
-            channel: "OMNI-CARE",
-            pageName: "tandc",
-            inspicioMode: "email",
-            sendMessageResponse: { cluster: "cluster3" },
-            primaryUserInfo: { firstName: "Alice" },
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SC-NONCONNECT"
-        };
-
         isPreOrBackOrder.mockReturnValue(false);
         getSendEmailAPIRequest.mockReturnValue({});
 
-        const result = getSendEmailRequest(payload);
+        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags, 
+            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel, 
+            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo, 
+            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
 
         expect(result.data.pageName).toBe("networkextender");
     });
@@ -142,7 +95,7 @@ describe('getSendEmailRequest', () => {
                 orderNumber: "",
                 orderList: [],
                 orderType: "",
-                locationCode: "LOC999",
+                locationCode: "LOC789",
                 totalDueToday: "300"
             },
             cartHeader: { creditApplicationNum: "" },
@@ -155,11 +108,11 @@ describe('getSendEmailRequest', () => {
             agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
             sendInspicioToken: "testToken",
             receievInspicioToken: "recvToken",
-            customerProfileData: { customer: { accountNo: "ACCT999", cartId: "cart4", caseId: "case4", loggedInUser: "user4" } },
+            customerProfileData: { customer: { accountNo: "ACCT789", cartId: "cart3", caseId: "case3", loggedInUser: "user3" } },
             channel: "OMNI-CARE",
             pageName: "testPage",
             inspicioMode: "email",
-            sendMessageResponse: { cluster: "cluster4" },
+            sendMessageResponse: { cluster: "cluster3" },
             primaryUserInfo: { firstName: "Bob" },
             whwRedemptionFlow: false,
             midnightRedemptionFlow: false,
@@ -169,7 +122,10 @@ describe('getSendEmailRequest', () => {
         isPreOrBackOrder.mockReturnValue(false);
         getSendEmailAPIRequest.mockReturnValue({});
 
-        const result = getSendEmailRequest(payload);
+        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags, 
+            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel, 
+            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo, 
+            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
 
         expect(result.data.pageName).toBe("repeaterdevice");
     });
@@ -207,7 +163,10 @@ describe('getSendEmailRequest', () => {
         isPreOrBackOrder.mockReturnValue(false);
         getSendEmailAPIRequest.mockReturnValue({});
 
-        const result = getSendEmailRequest(payload);
+        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags, 
+            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel, 
+            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo, 
+            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
 
         expect(result.data.userId).toBe("c0huska");
     });
@@ -241,13 +200,16 @@ describe('getSendEmailRequest', () => {
             primaryUserInfo: { firstName: "David" },
             whwRedemptionFlow: false,
             midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SC-EZCONNECT"
+            repeaterDeviceSku: "SC-NONCONNECT"
         };
 
         isPreOrBackOrder.mockReturnValue(true);
         getSendEmailAPIRequest.mockReturnValue({});
 
-        const result = getSendEmailRequest(payload);
+        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags, 
+            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel, 
+            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo, 
+            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
 
         expect(result.data.pageName).toBe("networkextender");
         expect(result.data.userId).toBe("user6");
