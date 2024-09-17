@@ -10,7 +10,7 @@ jest.mock('./Utils', () => {
     };
 });
 
-describe('getSendEmailRequest', () => {
+describe('getSendEmailRequest - Additional Coverage for OrderNumber Logic', () => {
     const mockIsPreOrBackOrder = isPreOrBackOrder;
     const mockGetSendEmailAPIRequest = getSendEmailAPIRequest;
 
@@ -18,14 +18,12 @@ describe('getSendEmailRequest', () => {
         jest.resetAllMocks();
     });
 
-    // Existing test cases...
-
-    it('should handle undefined pageName in payload', () => {
+    it('should handle case where orderNumber is empty and orderList is empty', () => {
         const cart = {
             orderDetails: {
                 orderNumber: "",
                 orderList: [],
-                orderType: "",
+                orderType: "IS",
                 locationCode: "LOC000",
                 totalDueToday: "100"
             },
@@ -35,144 +33,7 @@ describe('getSendEmailRequest', () => {
 
         const payload = {
             selectedMtn: "345678",
-            selectedEmailId: "test6@example.com",
-            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
-            sendInspicioToken: "testToken",
-            receievInspicioToken: "recvToken",
-            customerProfileData: { customer: { accountNo: "ACCT000", cartId: "cart5", caseId: "case5", loggedInUser: "user" } },
-            channel: "DEFAULT",
-            pageName: undefined,
-            inspicioMode: "email",
-            sendMessageResponse: { cluster: "cluster5" },
-            primaryUserInfo: { firstName: "Charlie" },
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SC-NONCONNECT"
-        };
-
-        mockIsPreOrBackOrder.mockReturnValue(false);
-        mockGetSendEmailAPIRequest.mockReturnValue({ data: { pageName: "defaultPage" } });
-
-        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-
-        expect(mockGetSendEmailAPIRequest).toHaveBeenCalledWith(expect.objectContaining({ pageName: "defaultPage" }));
-        expect(result.data.pageName).toBe("defaultPage");
-    });
-
-    it('should handle null values for important parameters', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: "",
-                orderList: [],
-                orderType: "",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: null,
-            selectedEmailId: null,
-            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
-            sendInspicioToken: null,
-            receievInspicioToken: null,
-            customerProfileData: { customer: { accountNo: "ACCT000", cartId: "cart5", caseId: "case5", loggedInUser: "user" } },
-            channel: "DEFAULT",
-            pageName: "testPage",
-            inspicioMode: "email",
-            sendMessageResponse: { cluster: "cluster5" },
-            primaryUserInfo: { firstName: "Charlie" },
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SC-NONCONNECT"
-        };
-
-        mockIsPreOrBackOrder.mockReturnValue(false);
-        mockGetSendEmailAPIRequest.mockReturnValue({ data: { pageName: "testPage" } });
-
-        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-
-        expect(mockGetSendEmailAPIRequest).toHaveBeenCalledWith(expect.objectContaining({ pageName: "testPage" }));
-        expect(result.data.pageName).toBe("testPage");
-    });
-
-    it('should test behavior with different return values from isPreOrBackOrder', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: "",
-                orderList: [],
-                orderType: "",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: "345678",
-            selectedEmailId: "test7@example.com",
-            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
-            sendInspicioToken: "testToken",
-            receievInspicioToken: "recvToken",
-            customerProfileData: { customer: { accountNo: "ACCT000", cartId: "cart5", caseId: "case5", loggedInUser: "user" } },
-            channel: "OMNI-CARE",
-            pageName: "testPage",
-            inspicioMode: "email",
-            sendMessageResponse: { cluster: "cluster5" },
-            primaryUserInfo: { firstName: "Charlie" },
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SC-NONCONNECT"
-        };
-
-        // Test when isPreOrBackOrder returns true
-        mockIsPreOrBackOrder.mockReturnValue(true);
-        mockGetSendEmailAPIRequest.mockReturnValue({ data: { pageName: "networkextender" } });
-
-        let result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-        
-        expect(result.data.pageName).toBe("networkextender");
-
-        // Test when isPreOrBackOrder returns false
-        mockIsPreOrBackOrder.mockReturnValue(false);
-        mockGetSendEmailAPIRequest.mockReturnValue({ data: { pageName: "testPage" } });
-
-        result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-        
-        expect(result.data.pageName).toBe("testPage");
-    });
-
-    it('should handle API request returning no data', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: "",
-                orderList: [],
-                orderType: "",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: "345678",
-            selectedEmailId: "test8@example.com",
+            selectedEmailId: "test1@example.com",
             agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
             sendInspicioToken: "testToken",
             receievInspicioToken: "recvToken",
@@ -187,23 +48,21 @@ describe('getSendEmailRequest', () => {
             repeaterDeviceSku: "SC-NONCONNECT"
         };
 
-        mockIsPreOrBackOrder.mockReturnValue(false);
-        mockGetSendEmailAPIRequest.mockReturnValue({ data: {} }); // No data
-
         const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
             payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
             payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
             payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
 
-        expect(result.data.pageName).toBeUndefined();
+        // Expect orderNumber to remain unchanged since orderList is empty
+        expect(cart.orderDetails.orderNumber).toBe("");
     });
 
-    it('should assign correct pageName for different channels', () => {
+    it('should handle case where orderNumber is empty and orderList contains no ACC type orders', () => {
         const cart = {
             orderDetails: {
                 orderNumber: "",
-                orderList: [],
-                orderType: "",
+                orderList: [{ orderActivityType: "DEL", orderNumber: "12345" }],
+                orderType: "IS",
                 locationCode: "LOC000",
                 totalDueToday: "100"
             },
@@ -213,12 +72,12 @@ describe('getSendEmailRequest', () => {
 
         const payload = {
             selectedMtn: "345678",
-            selectedEmailId: "test9@example.com",
+            selectedEmailId: "test2@example.com",
             agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
             sendInspicioToken: "testToken",
             receievInspicioToken: "recvToken",
             customerProfileData: { customer: { accountNo: "ACCT000", cartId: "cart5", caseId: "case5", loggedInUser: "user" } },
-            channel: "OMNI-CARE",
+            channel: "DEFAULT",
             pageName: "testPage",
             inspicioMode: "email",
             sendMessageResponse: { cluster: "cluster5" },
@@ -228,14 +87,137 @@ describe('getSendEmailRequest', () => {
             repeaterDeviceSku: "SC-NONCONNECT"
         };
 
-        mockIsPreOrBackOrder.mockReturnValue(false);
-        mockGetSendEmailAPIRequest.mockReturnValue({ data: { pageName: "omniPage" } });
+        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
+            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
+            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
+            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
+
+        // Expect orderNumber to remain unchanged as no ACC type orders are present
+        expect(cart.orderDetails.orderNumber).toBe("");
+    });
+
+    it('should handle case where orderNumber is empty and orderList contains ACC type order with valid orderNumber', () => {
+        const cart = {
+            orderDetails: {
+                orderNumber: "",
+                orderList: [
+                    { orderActivityType: "ACC", orderNumber: "67890" },
+                    { orderActivityType: "DEL", orderNumber: "12345" }
+                ],
+                orderType: "IS",
+                locationCode: "LOC000",
+                totalDueToday: "100"
+            },
+            cartHeader: { creditApplicationNum: "" },
+            lineDetails: {}
+        };
+
+        const payload = {
+            selectedMtn: "345678",
+            selectedEmailId: "test3@example.com",
+            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
+            sendInspicioToken: "testToken",
+            receievInspicioToken: "recvToken",
+            customerProfileData: { customer: { accountNo: "ACCT000", cartId: "cart5", caseId: "case5", loggedInUser: "user" } },
+            channel: "DEFAULT",
+            pageName: "testPage",
+            inspicioMode: "email",
+            sendMessageResponse: { cluster: "cluster5" },
+            primaryUserInfo: { firstName: "Charlie" },
+            whwRedemptionFlow: false,
+            midnightRedemptionFlow: false,
+            repeaterDeviceSku: "SC-NONCONNECT"
+        };
 
         const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
             payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
             payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
             payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
 
-        expect(result.data.pageName).toBe("omniPage");
+        // Expect orderNumber to be updated with "67890" from ACC type order
+        expect(cart.orderDetails.orderNumber).toBe("67890");
+    });
+
+    it('should handle case where orderNumber is zero and orderList contains ACC type orders', () => {
+        const cart = {
+            orderDetails: {
+                orderNumber: 0,
+                orderList: [
+                    { orderActivityType: "ACC", orderNumber: "67890" },
+                    { orderActivityType: "DEL", orderNumber: "12345" }
+                ],
+                orderType: "IS",
+                locationCode: "LOC000",
+                totalDueToday: "100"
+            },
+            cartHeader: { creditApplicationNum: "" },
+            lineDetails: {}
+        };
+
+        const payload = {
+            selectedMtn: "345678",
+            selectedEmailId: "test4@example.com",
+            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
+            sendInspicioToken: "testToken",
+            receievInspicioToken: "recvToken",
+            customerProfileData: { customer: { accountNo: "ACCT000", cartId: "cart5", caseId: "case5", loggedInUser: "user" } },
+            channel: "DEFAULT",
+            pageName: "testPage",
+            inspicioMode: "email",
+            sendMessageResponse: { cluster: "cluster5" },
+            primaryUserInfo: { firstName: "Charlie" },
+            whwRedemptionFlow: false,
+            midnightRedemptionFlow: false,
+            repeaterDeviceSku: "SC-NONCONNECT"
+        };
+
+        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
+            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
+            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
+            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
+
+        // Expect orderNumber to be updated with "67890" from ACC type order
+        expect(cart.orderDetails.orderNumber).toBe("67890");
+    });
+
+    it('should handle case where orderNumber is empty and orderType is not IS', () => {
+        const cart = {
+            orderDetails: {
+                orderNumber: "",
+                orderList: [
+                    { orderActivityType: "ACC", orderNumber: "67890" }
+                ],
+                orderType: "NON_IS",
+                locationCode: "LOC000",
+                totalDueToday: "100"
+            },
+            cartHeader: { creditApplicationNum: "" },
+            lineDetails: {}
+        };
+
+        const payload = {
+            selectedMtn: "345678",
+            selectedEmailId: "test5@example.com",
+            agreementEligibleFlags: { showNetworkExtenderTnCDiscountApplied: false },
+            sendInspicioToken: "testToken",
+            receievInspicioToken: "recvToken",
+            customerProfileData: { customer: { accountNo: "ACCT000", cartId: "cart5", caseId: "case5", loggedInUser: "user" } },
+            channel: "DEFAULT",
+            pageName: "testPage",
+            inspicioMode: "email",
+            sendMessageResponse: { cluster: "cluster5" },
+            primaryUserInfo: { firstName: "Charlie" },
+            whwRedemptionFlow: false,
+            midnightRedemptionFlow: false,
+            repeaterDeviceSku: "SC-NONCONNECT"
+        };
+
+        const result = getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
+            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
+            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
+            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
+
+        // Expect orderNumber to remain unchanged since orderType is not "IS"
+        expect(cart.orderDetails.orderNumber).toBe("");
     });
 });
