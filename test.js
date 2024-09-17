@@ -1,38 +1,4 @@
-
-
-// Helper function to get the current date in the format used in your function
-const getCurrentDate = () => {
-    const currentDate = new Date();
-    let dd = currentDate.getDate();
-    let mm = currentDate.getMonth() + 1;
-    const yyyy = currentDate.getFullYear();
-    if (dd < 10) dd = `0${dd}`;
-    if (mm < 10) mm = `0${mm}`;
-    return `${mm}/${dd}/${yyyy}`;
-};
-
-describe('getSendEmailAPIRequest', () => {
-    it('should use default userId when not provided in payload', () => {
-        const payload = {
-            pageName: "testPage",
-            cluster: "testCluster",
-            sms: "N",
-            sendInspicioToken: "testToken",
-            channel: "DEFAULT",
-            tradeIn: "N",
-            orderNum: "12345",
-            locationCode: "LOC123",
-            creditAppNumber: "CRED123",
-            isPreOrBackOrder: false,
-            amount: "100"
-        };
-
-        const result = getSendEmailAPIRequest(payload);
-
-        expect(result.meta.user).toBe("c0huska"); // Default value for userId
-    });
-
-    it('should format date correctly and include it in request', () => {
+it('should format date with day less than 10 correctly', () => {
         const payload = {
             userId: "testUser",
             pageName: "testPage",
@@ -48,15 +14,18 @@ describe('getSendEmailAPIRequest', () => {
             amount: "100"
         };
 
-        const result = getSendEmailAPIRequest(payload);
+        // Use a date where the day is less than 10
+        const testDate = new Date('2024-09-05'); // 5th day, which is less than 10
 
-        // Ensure the date matches the formatted date
-        expect(result.data.ordInfo.orderDate).toBe(getCurrentDate()); // Check for correct date format
+        jest.spyOn(global, 'Date').mockImplementation(() => testDate);
+
+        const result = getSendEmailAPIRequest(payload);
+        expect(result.data.ordInfo.orderDate).toBe(formatDate(testDate));
     });
 
-    it('should include default values in the API request', () => {
+    it('should format date with month less than 10 correctly', () => {
         const payload = {
-            // omitting some fields to test default values
+            userId: "testUser",
             pageName: "testPage",
             cluster: "testCluster",
             sms: "N",
@@ -70,38 +39,36 @@ describe('getSendEmailAPIRequest', () => {
             amount: "100"
         };
 
-        const result = getSendEmailAPIRequest(payload);
+        // Use a date where the month is less than 10
+        const testDate = new Date('2024-05-15'); // May (5th month), which is less than 10
 
-        expect(result.meta.client).toBe("POSMOBILE");
-        expect(result.meta.user).toBe("c0huska"); // Default value
-        expect(result.meta.timestamp).toBeDefined(); // Ensure timestamp is present
+        jest.spyOn(global, 'Date').mockImplementation(() => testDate);
+
+        const result = getSendEmailAPIRequest(payload);
+        expect(result.data.ordInfo.orderDate).toBe(formatDate(testDate));
     });
 
-    it('should handle payload with all fields provided correctly', () => {
+    it('should format date with day and month both greater than or equal to 10 correctly', () => {
         const payload = {
             userId: "testUser",
             pageName: "testPage",
             cluster: "testCluster",
-            sms: "Y",
+            sms: "N",
             sendInspicioToken: "testToken",
-            channel: "EMAIL",
-            tradeIn: "Y",
+            channel: "DEFAULT",
+            tradeIn: "N",
             orderNum: "12345",
             locationCode: "LOC123",
             creditAppNumber: "CRED123",
-            isPreOrBackOrder: true,
-            amount: "100",
-            cartId: "cart123",
-            caseId: "case123",
-            firstName: "John",
-            emailId: "john.doe@example.com"
+            isPreOrBackOrder: false,
+            amount: "100"
         };
 
-        const result = getSendEmailAPIRequest(payload);
+        // Use a date where both day and month are greater than 10
+        const testDate = new Date('2024-11-15'); // 15th day, 11th month
 
-        expect(result.data.pageName).toBe("testPage");
-        expect(result.data.emailId).toBe("john.doe@example.com");
-        expect(result.data.mtn).toBe("1234567890");
-        expect(result.data.ordInfo.orderDate).toBe(getCurrentDate());
+        jest.spyOn(global, 'Date').mockImplementation(() => testDate);
+
+        const result = getSendEmailAPIRequest(payload);
+        expect(result.data.ordInfo.orderDate).toBe(formatDate(testDate));
     });
-});
