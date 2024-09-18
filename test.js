@@ -1,36 +1,26 @@
 import React from 'react';
-import { render, fireEvent, waitFor, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { createStore, applyMiddleware } from 'redux';
-import createSagaMiddleware from 'redux-saga';
+import { fireEvent, screen, render } from '@testing-library/react';
 import rootReducer from '../../modules/store/reducer';
 import { rootSaga } from '../../modules/store/saga';
 import CheckoutInspicio from './CheckoutInspicio';
+import { configureStore } from '@reduxjs/toolkit';
+import createSagaMiddleware from 'redux-saga';
 
-// Configure the store with reducer and saga middleware
-const configureStore = (initialState = {}) => {
+// Create a custom render function that includes Redux and Saga setup
+const customRender = (ui, { initialState, ...renderOptions } = {}) => {
     const sagaMiddleware = createSagaMiddleware();
-    const store = createStore(
-        rootReducer,
-        initialState,
-        applyMiddleware(sagaMiddleware)
-    );
-    sagaMiddleware.run(rootSaga);
-    return store;
-};
-
-describe('CheckoutInspicio component', () => {
-    let store;
-
-    beforeEach(() => {
-        store = configureStore(); // Configure store before each test
-        render(
-            <Provider store={store}>
-                <CheckoutInspicio {...defaultProps} />
-            </Provider>
-        );
+    const store = configureStore({
+        reducer: rootReducer,
+        middleware: [sagaMiddleware],
+        preloadedState: initialState,
     });
 
+    sagaMiddleware.run(rootSaga);
+
+    return render(<Provider store={store}>{ui}</Provider>, renderOptions);
+};
+
+describe('CheckoutInspicio Agreement Modal Component', () => {
     const defaultProps = {
         cart: {
             lineDetails: {
@@ -38,11 +28,11 @@ describe('CheckoutInspicio component', () => {
                     {
                         lineActivityType: 'NSE',
                         serviceInfo: {
-                            primaryUserInfo: {}
-                        }
-                    }
-                ]
-            }
+                            primaryUserInfo: {},
+                        },
+                    },
+                ],
+            },
         },
         pageName: 'test-page',
         toggleInspicio: jest.fn(),
@@ -62,8 +52,15 @@ describe('CheckoutInspicio component', () => {
         agreementEligibleFlags: {},
         orderPaymentDetails: {},
         customerProfileData: {},
-        cancelLongPoll: false
+        cancelLongPoll: false,
     };
+
+    beforeEach(() => {
+        customRender(<CheckoutInspicio {...defaultProps} />, {
+            reducers: rootReducer,
+            sagas: rootSaga,
+        });
+    });
 
     it('renders correctly', () => {
         expect(screen.getByText('Send SMS')).toBeInTheDocument();
@@ -101,10 +98,8 @@ describe('CheckoutInspicio component', () => {
 
     it('calls handleReceivePollApi function', async () => {
         const handleReceivePollApi = jest.fn();
-        render(
-            <Provider store={store}>
-                <CheckoutInspicio {...defaultProps} handleReceivePollApi={handleReceivePollApi} />
-            </Provider>
+        customRender(
+            <CheckoutInspicio {...defaultProps} handleReceivePollApi={handleReceivePollApi} />
         );
         const receivePoll = screen.getByText('Receive Poll');
         fireEvent.click(receivePoll);
