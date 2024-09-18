@@ -5,8 +5,8 @@ describe('tncPayload function - getAALAgreementNo coverage', () => {
     const cart = {
       lineDetails: {
         lineInfo: [{
-          mobileNumber: '1234567890',
-          lineActivityType: 'AAL', // This should trigger getAALAgreementNo logic
+          mobileNumber: '1234567890', // Must match the value in mtnInstallmentList
+          lineActivityType: 'AAL', // Must be 'AAL' to trigger getAALAgreementNo logic
           itemsInfo: [{ cartItems: { cartItem: [{ cartItemType: 'DEVICE', itemPrice: '200' }] } }]
         }]
       },
@@ -27,14 +27,13 @@ describe('tncPayload function - getAALAgreementNo coverage', () => {
       showDPAgreement: false
     };
 
-    const agreementOptions = {
-      mtnInstallmentList: [
-        {
-          mtn: '1234567890', // Matches the mobile number in cart.lineDetails.lineInfo
-          installmentLoanNumber: 'AAL_INST123'
-        }
-      ]
-    };
+    // This is where the aalAgreementNo should come from
+    const mtnInstallmentList = [
+      {
+        mtn: '1234567890', // Matches the mobile number in cart.lineDetails.lineInfo
+        installmentLoanNumber: 'AAL_INST123' // The value we expect to be returned in aalAgreementNo
+      }
+    ];
 
     const expectedPayload = {
       encryptedCartId: 'encryptedCartId123',
@@ -43,7 +42,7 @@ describe('tncPayload function - getAALAgreementNo coverage', () => {
       locationCode: 'LOC123',
       fcraEnabled: 'Y',
       upgradeAgreementNo: '',
-      aalAgreementNo: 'AAL_INST123', // This is the value from getAALAgreementNo
+      aalAgreementNo: 'AAL_INST123', // This should come from mtnInstallmentList
       upgradeTwoYear: 'N',
       aalTwoYear: 'Y',
       eqpDeclined: 'Y',
@@ -58,6 +57,7 @@ describe('tncPayload function - getAALAgreementNo coverage', () => {
       fiveGInd: 'fiveg'
     };
 
+    // Call tncPayload with necessary data
     const payload = tncPayload(
       cart,
       agreementEligibleFlags,
@@ -73,6 +73,7 @@ describe('tncPayload function - getAALAgreementNo coverage', () => {
       false // isTysFlow
     );
 
+    // Check if aalAgreementNo is correctly set from mtnInstallmentList
     expect(payload.aalAgreementNo).toBe('AAL_INST123');
     expect(payload.aalTwoYear).toBe('Y');
     expect(payload).toEqual(expectedPayload);
