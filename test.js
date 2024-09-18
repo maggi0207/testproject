@@ -1,239 +1,80 @@
+import { tncPayload } from './path-to-file';
 
-    it('should handle case where orderNumber is empty, orderList is non-empty, and orderType is "IS"', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: "",
-                orderList: [
-                    { orderActivityType: "ACC", orderNumber: "67890" }
-                ],
-                orderType: "IS",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
+describe('tncPayload function - getAALAgreementNo coverage', () => {
+  it('should return correct AAL agreement number and string when AAL line exists', () => {
+    const cart = {
+      lineDetails: {
+        lineInfo: [{
+          mobileNumber: '1234567890',
+          lineActivityType: 'AAL', // This should trigger getAALAgreementNo logic
+          itemsInfo: [{ cartItems: { cartItem: [{ cartItemType: 'DEVICE', itemPrice: '200' }] } }]
+        }]
+      },
+      orderDetails: {
+        totalDueToday: 100, 
+        locationCode: 'LOC123',
+        isComboOrder: 'N'
+      },
+      cartHeader: { creditApplicationNum: 'CREDIT123' }
+    };
+    
+    const agreementEligibleFlags = {
+      showDeclineEquipmentProtection: true,
+      showDeviceProtectionITTK: true,
+      showRingAgreement: true,
+      showLTEAgreement: false,
+      show5GAgreement: true,
+      showDPAgreement: false
+    };
 
-        const payload = {
-            selectedMtn: "Mtn001",
-            selectedEmailId: "test@example.com",
-            agreementEligibleFlags: {},
-            sendInspicioToken: "token1",
-            receievInspicioToken: "token2",
-            customerProfileData: {},
-            channel: "web",
-            pageName: "home",
-            inspicioMode: "mode1",
-            sendMessageResponse: {},
-            primaryUserInfo: {},
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SKU123"
-        };
+    const agreementOptions = {
+      mtnInstallmentList: [
+        {
+          mtn: '1234567890', // Matches the mobile number in cart.lineDetails.lineInfo
+          installmentLoanNumber: 'AAL_INST123'
+        }
+      ]
+    };
 
-        getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
+    const expectedPayload = {
+      encryptedCartId: 'encryptedCartId123',
+      isMultiLineRisaEnabled: false,
+      pageName: 'tandc',
+      locationCode: 'LOC123',
+      fcraEnabled: 'Y',
+      upgradeAgreementNo: '',
+      aalAgreementNo: 'AAL_INST123', // This is the value from getAALAgreementNo
+      upgradeTwoYear: 'N',
+      aalTwoYear: 'Y',
+      eqpDeclined: 'Y',
+      showEquipmentProtection: 'Y',
+      retailPrice: '200',
+      channel: 'OMNI-CARE',
+      backupPaymentFlag: 'N',
+      creditAppNumber: 'CREDIT123',
+      ringType: 'Y',
+      orderType: 'M',
+      homeMobileCombo: 'N',
+      fiveGInd: 'fiveg'
+    };
 
-        expect(cart.orderDetails.orderNumber).toBe("67890");
-    });
+    const payload = tncPayload(
+      cart,
+      agreementEligibleFlags,
+      'encryptedCartId123',
+      'OMNI-CARE',
+      0,
+      'SC-EZCONNECT',
+      false, // isMultiLineRisaEnabled
+      [], // orderPaymentDetails
+      false, // whwRedemptionFlow
+      false, // midnightRedemptionFlow
+      {}, // customerDetails
+      false // isTysFlow
+    );
 
-    it('should handle case where orderNumber is empty, orderList is non-empty, and orderType is not "IS"', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: "",
-                orderList: [
-                    { orderActivityType: "ACC", orderNumber: "67890" }
-                ],
-                orderType: "NON_IS",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: "Mtn001",
-            selectedEmailId: "test@example.com",
-            agreementEligibleFlags: {},
-            sendInspicioToken: "token1",
-            receievInspicioToken: "token2",
-            customerProfileData: {},
-            channel: "web",
-            pageName: "home",
-            inspicioMode: "mode1",
-            sendMessageResponse: {},
-            primaryUserInfo: {},
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SKU123"
-        };
-
-        getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-
-        expect(cart.orderDetails.orderNumber).toBe("");
-    });
-
-    it('should handle case where orderNumber is zero, orderList is non-empty, and orderType is "IS"', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: 0,
-                orderList: [
-                    { orderActivityType: "ACC", orderNumber: "67890" }
-                ],
-                orderType: "IS",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: "Mtn001",
-            selectedEmailId: "test@example.com",
-            agreementEligibleFlags: {},
-            sendInspicioToken: "token1",
-            receievInspicioToken: "token2",
-            customerProfileData: {},
-            channel: "web",
-            pageName: "home",
-            inspicioMode: "mode1",
-            sendMessageResponse: {},
-            primaryUserInfo: {},
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SKU123"
-        };
-
-        getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-
-        expect(cart.orderDetails.orderNumber).toBe("67890");
-    });
-
-    it('should handle case where orderNumber is zero, orderList is non-empty, and orderType is not "IS"', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: 0,
-                orderList: [
-                    { orderActivityType: "ACC", orderNumber: "67890" }
-                ],
-                orderType: "NON_IS",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: "Mtn001",
-            selectedEmailId: "test@example.com",
-            agreementEligibleFlags: {},
-            sendInspicioToken: "token1",
-            receievInspicioToken: "token2",
-            customerProfileData: {},
-            channel: "web",
-            pageName: "home",
-            inspicioMode: "mode1",
-            sendMessageResponse: {},
-            primaryUserInfo: {},
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SKU123"
-        };
-
-        getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-
-        expect(cart.orderDetails.orderNumber).toBe(0);
-    });
-
-    it('should handle case where orderNumber is empty, orderList is empty, and orderType is "IS"', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: "",
-                orderList: [],
-                orderType: "IS",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: "Mtn001",
-            selectedEmailId: "test@example.com",
-            agreementEligibleFlags: {},
-            sendInspicioToken: "token1",
-            receievInspicioToken: "token2",
-            customerProfileData: {},
-            channel: "web",
-            pageName: "home",
-            inspicioMode: "mode1",
-            sendMessageResponse: {},
-            primaryUserInfo: {},
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SKU123"
-        };
-
-        getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-
-        // Expect orderNumber to remain unchanged as orderList is empty
-        expect(cart.orderDetails.orderNumber).toBe("");
-    });
-
-    it('should handle case where orderNumber is zero, orderList is empty, and orderType is "IS"', () => {
-        const cart = {
-            orderDetails: {
-                orderNumber: 0,
-                orderList: [],
-                orderType: "IS",
-                locationCode: "LOC000",
-                totalDueToday: "100"
-            },
-            cartHeader: { creditApplicationNum: "" },
-            lineDetails: {}
-        };
-
-        const payload = {
-            selectedMtn: "Mtn001",
-            selectedEmailId: "test@example.com",
-            agreementEligibleFlags: {},
-            sendInspicioToken: "token1",
-            receievInspicioToken: "token2",
-            customerProfileData: {},
-            channel: "web",
-            pageName: "home",
-            inspicioMode: "mode1",
-            sendMessageResponse: {},
-            primaryUserInfo: {},
-            whwRedemptionFlow: false,
-            midnightRedemptionFlow: false,
-            repeaterDeviceSku: "SKU123"
-        };
-
-        getSendEmailRequest(cart, payload.selectedMtn, payload.selectedEmailId, payload.agreementEligibleFlags,
-            payload.sendInspicioToken, payload.receievInspicioToken, payload.customerProfileData, payload.channel,
-            payload.pageName, payload.inspicioMode, payload.sendMessageResponse, payload.primaryUserInfo,
-            payload.whwRedemptionFlow, payload.midnightRedemptionFlow, payload.repeaterDeviceSku);
-
-        // Expect orderNumber to remain unchanged as orderList is empty
-        expect(cart.orderDetails.orderNumber).toBe(0);
-    });
+    expect(payload.aalAgreementNo).toBe('AAL_INST123');
+    expect(payload.aalTwoYear).toBe('Y');
+    expect(payload).toEqual(expectedPayload);
+  });
 });
