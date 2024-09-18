@@ -7,7 +7,12 @@ import CheckoutInspicio from './CheckoutInspicio';
 import * as PaymentApiCallHook from '../../modules/services/APIService/PaymentApiCallHooks';
 import * as Utils from './Utils'; // Import Utils module to spy on processReceiveData
 
+jest.mock('./reducer', () => ({
+  longpolldata: jest.fn(() => ({ type: 'LONGPOLLDATA_ACTION', payload: { key: 'value' } })),
+}));
+
 describe('CheckoutInspicio Agreement Modal Component', () => {
+   const dispatch = jest.fn();
   const mockData = {
     getAllActiveMtnsRequest: jest.fn(),
     requestBodySendMessage: jest.fn(),
@@ -79,10 +84,29 @@ describe('CheckoutInspicio Agreement Modal Component', () => {
 
   beforeEach(() => {
     jest.spyOn(Utils, 'processReceiveData').mockReturnValue({ someKey: 'someValue' });
+     jest.spyOn(React, 'useDispatch').mockReturnValue(dispatch);
   });
 
   afterEach(() => {
     jest.clearAllMocks(); // Clear all mocks after each test
+  });
+
+  test('should call updateLongPollReducer with correct data after toggling switch', () => {
+    // Render the component
+    render(<CheckoutInspicio {...props} />, {
+      reducers: rootReducer,
+      sagas: rootSaga,
+    });
+
+    // Simulate toggle action
+    const toggleSwitch = screen.getByRole('switch'); // Adjust the role if needed
+    fireEvent.click(toggleSwitch);
+
+    // Check that dispatch was called with the correct action after toggle
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'LONGPOLLDATA_ACTION',
+      payload: { key: 'value' }, // Adjust payload based on your actual implementation
+    });
   });
 
     test('Toggle switch changes and triggers handleInspicioToggle', () => {
