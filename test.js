@@ -1,178 +1,84 @@
-import { getEUPAgreementNo } from './path-to-file';
+import { populateTysPayloadParams } from './path-to-file';
 
-describe('getEUPAgreementNo', () => {
-
-  it('should return the correct eupAgreementNum and eupMtnInstallmentString when mobile number matches and lineActivityType is EUP', () => {
-    const cart = {
-      lineDetails: {
-        lineInfo: [
-          {
-            mobileNumber: '1234567890',
-            lineActivityType: 'EUP'
-          }
-        ]
-      }
-    };
-
-    const agreementOptions = {
+describe('populateTysPayloadParams', () => {
+  it('should populate payload with tysFlow and process tysMtnInstallmentList and devicePromotionMTNList', () => {
+    const payload = {};
+    const agreementEligibleFlags = {
+      dpAgreementInfo: [
+        { mtn: '12345', otherInfo: 'test' }
+      ],
       mtnInstallmentList: [
-        { mtn: '1234567890', installmentLoanNumber: 'EUP_INST123' }
-      ]
+        { mtn: '12345', installmentLoanNumber: 'ABC123' }
+      ],
+      showDevicePromotion: true,
+      devicePromotionMTNList: ['78910']
+    };
+    const customerDetails = {
+      firstName: 'John',
+      lastName: 'Doe'
     };
 
-    const result = getEUPAgreementNo(cart, agreementOptions);
+    const result = populateTysPayloadParams(payload, agreementEligibleFlags, customerDetails);
 
-    expect(result.eupAgreementNum).toBe('EUP_INST123');
-    expect(result.eupMtnInstallmentString).toBe('1234567890');
+    expect(result).toEqual({
+      tysFlow: 'Y',
+      tysMtnInstallmentList: [
+        { mtn: '12345', otherInfo: 'test', installmentLoanNumber: 'ABC123' }
+      ],
+      tysShowDevicePromotion: true,
+      tysDevicePromotionMTNList: ['78910'],
+      customerFirstName: 'John',
+      customerLastName: 'Doe'
+    });
   });
 
-  it('should return the correct eupAgreementNum and eupMtnInstallmentString when mobile number matches and lineActivityType is NSE', () => {
-    const cart = {
-      lineDetails: {
-        lineInfo: [
-          {
-            mobileNumber: '1234567890',
-            lineActivityType: 'NSE'
-          }
-        ]
-      }
+  it('should handle empty tysMtnInstallmentList and missing devicePromotionMTNList', () => {
+    const payload = {};
+    const agreementEligibleFlags = {
+      dpAgreementInfo: [],
+      showDevicePromotion: false
     };
+    const customerDetails = {};
 
-    const agreementOptions = {
-      mtnInstallmentList: [
-        { mtn: '1234567890', installmentLoanNumber: 'NSE_INST123' }
-      ]
-    };
+    const result = populateTysPayloadParams(payload, agreementEligibleFlags, customerDetails);
 
-    const result = getEUPAgreementNo(cart, agreementOptions);
-
-    expect(result.eupAgreementNum).toBe('NSE_INST123');
+    expect(result).toEqual({
+      tysFlow: 'Y',
+      tysMtnInstallmentList: [],
+      customerFirstName: '',
+      customerLastName: ''
+    });
   });
 
-  it('should return the correct eupAgreementNum and eupMtnInstallmentString when mobile number matches and lineActivityType is NSE_LTE', () => {
-    const cart = {
-      lineDetails: {
-        lineInfo: [
-          {
-            mobileNumber: '1234567890',
-            lineActivityType: 'NSE_LTE'
-          }
-        ]
-      }
-    };
+  it('should handle undefined agreementEligibleFlags and customerDetails', () => {
+    const payload = {};
+    const agreementEligibleFlags = undefined;
+    const customerDetails = undefined;
 
-    const agreementOptions = {
-      mtnInstallmentList: [
-        { mtn: '1234567890', installmentLoanNumber: 'LTE_INST123' }
-      ]
-    };
+    const result = populateTysPayloadParams(payload, agreementEligibleFlags, customerDetails);
 
-    const result = getEUPAgreementNo(cart, agreementOptions);
-
-    expect(result.eupAgreementNum).toBe('LTE_INST123');
+    expect(result).toEqual({
+      tysFlow: 'Y',
+      tysMtnInstallmentList: [],
+      customerFirstName: '',
+      customerLastName: ''
+    });
   });
 
-  it('should return the correct eupAgreementNum and eupMtnInstallmentString when mobile number matches and lineActivityType is NSE_5G and cBandQualified is true', () => {
-    const cart = {
-      lineDetails: {
-        lineInfo: [
-          {
-            mobileNumber: '1234567890',
-            lineActivityType: 'NSE_5G'
-          }
-        ]
-      }
+  it('should assign default values when properties are missing', () => {
+    const payload = {};
+    const agreementEligibleFlags = {
+      dpAgreementInfo: []
     };
+    const customerDetails = {};
 
-    const agreementOptions = {
-      mtnInstallmentList: [
-        { mtn: '1234567890', installmentLoanNumber: '5G_INST123' }
-      ]
-    };
+    const result = populateTysPayloadParams(payload, agreementEligibleFlags, customerDetails);
 
-    const props = { cBandQualified: true }; // Simulate cBandQualified prop
-
-    const result = getEUPAgreementNo.call({ props }, cart, agreementOptions);
-
-    expect(result.eupAgreementNum).toBe('5G_INST123');
-    expect(result.eupMtnInstallmentString).toBe('1234567890');
-  });
-
-  it('should return empty eupAgreementNum if no mobile number matches', () => {
-    const cart = {
-      lineDetails: {
-        lineInfo: [
-          {
-            mobileNumber: '0987654321',
-            lineActivityType: 'EUP'
-          }
-        ]
-      }
-    };
-
-    const agreementOptions = {
-      mtnInstallmentList: [
-        { mtn: '1234567890', installmentLoanNumber: 'EUP_INST123' }
-      ]
-    };
-
-    const result = getEUPAgreementNo(cart, agreementOptions);
-
-    expect(result.eupAgreementNum).toBe('');
-  });
-
-  it('should return empty eupAgreementNum if lineActivityType is not EUP or NSE variants', () => {
-    const cart = {
-      lineDetails: {
-        lineInfo: [
-          {
-            mobileNumber: '1234567890',
-            lineActivityType: 'OTHER'
-          }
-        ]
-      }
-    };
-
-    const agreementOptions = {
-      mtnInstallmentList: [
-        { mtn: '1234567890', installmentLoanNumber: 'EUP_INST123' }
-      ]
-    };
-
-    const result = getEUPAgreementNo(cart, agreementOptions);
-
-    expect(result.eupAgreementNum).toBe('');
-    expect(result.eupMtnInstallmentString).toBe('1234567890');
-  });
-
-  it('should return empty eupAgreementNum if mtnInstallmentList is undefined or empty', () => {
-    const cart = {
-      lineDetails: {
-        lineInfo: [
-          {
-            mobileNumber: '1234567890',
-            lineActivityType: 'EUP'
-          }
-        ]
-      }
-    };
-
-    const agreementOptions = {
-      mtnInstallmentList: undefined
-    };
-
-    const result = getEUPAgreementNo(cart, agreementOptions);
-
-    expect(result.eupAgreementNum).toBe('');
-  });
-
-  it('should handle errors gracefully and return empty string', () => {
-    // Simulate an error by passing invalid data
-    const cart = null; 
-    const agreementOptions = null;
-
-    const result = getEUPAgreementNo(cart, agreementOptions);
-
-    expect(result).toBe(''); // Should return empty string when an error occurs
+    expect(result).toEqual({
+      tysFlow: 'Y',
+      tysMtnInstallmentList: [],
+      customerFirstName: '',
+      customerLastName: ''
+    });
   });
 });
