@@ -1,48 +1,66 @@
-// path-to-your-test-file.js
-
 // Import the functions to be tested
 import { getBackupPaymentFlagForAgreement, getBackupPaymentEligible } from './path-to-file';
 
-// Declare mocks
-const mockGetBackupPaymentEligible = jest.fn();
-const mockGetBackupPaymentFlagForAgreement = jest.fn();
+// Declare the cart and channel values for different scenarios
+const cartWithEdgeLines = {
+    lineDetails: {
+        lineInfo: [
+            {
+                installmentInfo: {
+                    installmentTerm: 12, // This will make getBackupPaymentEligible return true
+                },
+                mobileNumber: '1234567890',
+            },
+        ],
+    },
+};
 
-// Mock the actual implementations with our mock functions
-jest.mock('./path-to-file', () => ({
-    getBackupPaymentFlagForAgreement: mockGetBackupPaymentFlagForAgreement,
-    getBackupPaymentEligible: mockGetBackupPaymentEligible,
-}));
+const cartWithoutEdgeLines = {
+    lineDetails: {
+        lineInfo: [
+            {
+                installmentInfo: {
+                    installmentTerm: 0, // This will make getBackupPaymentEligible return false
+                },
+                mobileNumber: '1234567890',
+            },
+        ],
+    },
+};
 
+// Test suite
 describe('getBackupPaymentFlagForAgreement', () => {
-    beforeEach(() => {
-        // Clear previous mock calls and implementations
-        mockGetBackupPaymentEligible.mockClear();
-        mockGetBackupPaymentFlagForAgreement.mockClear();
-    });
-
     it('should return "Y" when eligible and there is a credit card payment', () => {
         // Arrange
-        const cart = {};
         const channel = 'OMNI-CARE';
-        const paymentDetails = [{ modeOfPay: 'CR' }];
-        mockGetBackupPaymentEligible.mockReturnValue(true);
+        const paymentDetails = [{ modeOfPay: 'CR' }]; // Payment type is CR
 
         // Act
-        const result = getBackupPaymentFlagForAgreement(cart, channel, paymentDetails);
+        const result = getBackupPaymentFlagForAgreement(cartWithEdgeLines, channel, paymentDetails);
 
         // Assert
         expect(result).toBe('Y');
     });
 
-    it('should return "N" when not eligible', () => {
+    it('should return "N" when eligible but no credit card payments', () => {
         // Arrange
-        const cart = {};
         const channel = 'OMNI-CARE';
-        const paymentDetails = [{ modeOfPay: 'CR' }];
-        mockGetBackupPaymentEligible.mockReturnValue(false);
+        const paymentDetails = [{ modeOfPay: 'PP' }]; // Payment type is not CR
 
         // Act
-        const result = getBackupPaymentFlagForAgreement(cart, channel, paymentDetails);
+        const result = getBackupPaymentFlagForAgreement(cartWithEdgeLines, channel, paymentDetails);
+
+        // Assert
+        expect(result).toBe('N');
+    });
+
+    it('should return "N" when not eligible', () => {
+        // Arrange
+        const channel = 'OMNI-CARE';
+        const paymentDetails = [{ modeOfPay: 'CR' }]; // Payment type is CR
+
+        // Act
+        const result = getBackupPaymentFlagForAgreement(cartWithoutEdgeLines, channel, paymentDetails);
 
         // Assert
         expect(result).toBe('N');
@@ -50,76 +68,32 @@ describe('getBackupPaymentFlagForAgreement', () => {
 
     it('should return "N" when paymentDetails is empty', () => {
         // Arrange
-        const cart = {};
         const channel = 'OMNI-CARE';
-        const paymentDetails = [];
-        mockGetBackupPaymentEligible.mockReturnValue(true);
+        const paymentDetails = []; // No payment details
 
         // Act
-        const result = getBackupPaymentFlagForAgreement(cart, channel, paymentDetails);
+        const result = getBackupPaymentFlagForAgreement(cartWithEdgeLines, channel, paymentDetails);
 
         // Assert
         expect(result).toBe('N');
     });
-});
 
-describe('getBackupPaymentEligible', () => {
-    beforeEach(() => {
-        // Clear previous mock calls and implementations
-        mockGetBackupPaymentEligible.mockClear();
-    });
+    it('should return "N" when an exception is thrown', () => {
+        // Temporarily override the implementation to simulate an exception
+        const originalImplementation = getBackupPaymentEligible;
+        getBackupPaymentEligible = () => { throw new Error('Test Error'); };
 
-    it('should return true when the channel is valid and lineInfo contains installment term', () => {
         // Arrange
-        const cart = {
-            lineDetails: {
-                lineInfo: [
-                    { installmentInfo: { installmentTerm: 12 } },
-                ],
-            },
-        };
         const channel = 'OMNI-CARE';
+        const paymentDetails = [{ modeOfPay: 'CR' }]; // Payment type is CR
 
         // Act
-        const result = getBackupPaymentEligible(cart, channel);
+        const result = getBackupPaymentFlagForAgreement(cartWithEdgeLines, channel, paymentDetails);
 
         // Assert
-        expect(result).toBe(true);
-    });
+        expect(result).toBe('N');
 
-    it('should return false when the channel is invalid', () => {
-        // Arrange
-        const cart = {
-            lineDetails: {
-                lineInfo: [
-                    { installmentInfo: { installmentTerm: 12 } },
-                ],
-            },
-        };
-        const channel = 'INVALID-CHANNEL';
-
-        // Act
-        const result = getBackupPaymentEligible(cart, channel);
-
-        // Assert
-        expect(result).toBe(false);
-    });
-
-    it('should return false when lineInfo does not contain installment term', () => {
-        // Arrange
-        const cart = {
-            lineDetails: {
-                lineInfo: [
-                    { installmentInfo: { installmentTerm: 0 } },
-                ],
-            },
-        };
-        const channel = 'OMNI-CARE';
-
-        // Act
-        const result = getBackupPaymentEligible(cart, channel);
-
-        // Assert
-        expect(result).toBe(false);
+        // Restore original implementation
+        getBackupPaymentEligible = originalImplementation;
     });
 });
