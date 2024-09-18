@@ -85,6 +85,52 @@ describe('CheckoutInspicio Agreement Modal Component', () => {
     jest.clearAllMocks(); // Clear all mocks after each test
   });
 
+    test('Toggle switch changes and triggers handleInspicioToggle', () => {
+    jest.spyOn(PaymentApiCallHook, 'default').mockImplementation(() => mockData);
+
+    render(<CheckoutInspicio {...props} />, {
+      reducers: rootReducer,
+      sagas: rootSaga,
+    });
+
+    const toggleSwitch = screen.getByRole('switch'); // Assuming the switch is correctly rendered and has the role 'switch'
+
+    // Check initial state of the toggle switch
+    expect(toggleSwitch).not.toBeChecked();
+
+    // Simulate toggle on (true)
+    fireEvent.click(toggleSwitch);
+    expect(props.handleInspicioToggle).toHaveBeenCalledWith(true);
+
+    // Simulate toggle off (false)
+    fireEvent.click(toggleSwitch);
+    expect(props.handleInspicioToggle).toHaveBeenCalledWith(false);
+  });
+
+  test('Toggle switch does not trigger when disabled', () => {
+    const disabledProps = {
+      ...props,
+      inspicioMode: 'email',
+      validEmailId: false, // Condition that disables the switch
+    };
+
+    jest.spyOn(PaymentApiCallHook, 'default').mockImplementation(() => mockData);
+
+    render(<CheckoutInspicio {...disabledProps} />, {
+      reducers: rootReducer,
+      sagas: rootSaga,
+    });
+
+    const toggleSwitch = screen.getByRole('switch'); // Assuming the switch is correctly rendered and has the role 'switch'
+
+    // Verify the switch is disabled
+    expect(toggleSwitch).toBeDisabled();
+
+    // Try to click the disabled switch and ensure the handler is not called
+    fireEvent.click(toggleSwitch);
+    expect(props.handleInspicioToggle).not.toHaveBeenCalled();
+  });
+
   test('Close on Agree & Continue button click', () => {
     jest.spyOn(PaymentApiCallHook, 'default').mockImplementation(() => mockData);
     render(<CheckoutInspicio {...props} />, {
