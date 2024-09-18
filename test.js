@@ -1,84 +1,125 @@
-import { populateTysPayloadParams } from './path-to-file';
+// path-to-your-test-file.js
 
-describe('populateTysPayloadParams', () => {
-  it('should populate payload with tysFlow and process tysMtnInstallmentList and devicePromotionMTNList', () => {
-    const payload = {};
-    const agreementEligibleFlags = {
-      dpAgreementInfo: [
-        { mtn: '12345', otherInfo: 'test' }
-      ],
-      mtnInstallmentList: [
-        { mtn: '12345', installmentLoanNumber: 'ABC123' }
-      ],
-      showDevicePromotion: true,
-      devicePromotionMTNList: ['78910']
-    };
-    const customerDetails = {
-      firstName: 'John',
-      lastName: 'Doe'
-    };
+// Import the functions to be tested
+import { getBackupPaymentFlagForAgreement, getBackupPaymentEligible } from './path-to-file';
 
-    const result = populateTysPayloadParams(payload, agreementEligibleFlags, customerDetails);
+// Declare mocks
+const mockGetBackupPaymentEligible = jest.fn();
+const mockGetBackupPaymentFlagForAgreement = jest.fn();
 
-    expect(result).toEqual({
-      tysFlow: 'Y',
-      tysMtnInstallmentList: [
-        { mtn: '12345', otherInfo: 'test', installmentLoanNumber: 'ABC123' }
-      ],
-      tysShowDevicePromotion: true,
-      tysDevicePromotionMTNList: ['78910'],
-      customerFirstName: 'John',
-      customerLastName: 'Doe'
+// Mock the actual implementations with our mock functions
+jest.mock('./path-to-file', () => ({
+    getBackupPaymentFlagForAgreement: mockGetBackupPaymentFlagForAgreement,
+    getBackupPaymentEligible: mockGetBackupPaymentEligible,
+}));
+
+describe('getBackupPaymentFlagForAgreement', () => {
+    beforeEach(() => {
+        // Clear previous mock calls and implementations
+        mockGetBackupPaymentEligible.mockClear();
+        mockGetBackupPaymentFlagForAgreement.mockClear();
     });
-  });
 
-  it('should handle empty tysMtnInstallmentList and missing devicePromotionMTNList', () => {
-    const payload = {};
-    const agreementEligibleFlags = {
-      dpAgreementInfo: [],
-      showDevicePromotion: false
-    };
-    const customerDetails = {};
+    it('should return "Y" when eligible and there is a credit card payment', () => {
+        // Arrange
+        const cart = {};
+        const channel = 'OMNI-CARE';
+        const paymentDetails = [{ modeOfPay: 'CR' }];
+        mockGetBackupPaymentEligible.mockReturnValue(true);
 
-    const result = populateTysPayloadParams(payload, agreementEligibleFlags, customerDetails);
+        // Act
+        const result = getBackupPaymentFlagForAgreement(cart, channel, paymentDetails);
 
-    expect(result).toEqual({
-      tysFlow: 'Y',
-      tysMtnInstallmentList: [],
-      customerFirstName: '',
-      customerLastName: ''
+        // Assert
+        expect(result).toBe('Y');
     });
-  });
 
-  it('should handle undefined agreementEligibleFlags and customerDetails', () => {
-    const payload = {};
-    const agreementEligibleFlags = undefined;
-    const customerDetails = undefined;
+    it('should return "N" when not eligible', () => {
+        // Arrange
+        const cart = {};
+        const channel = 'OMNI-CARE';
+        const paymentDetails = [{ modeOfPay: 'CR' }];
+        mockGetBackupPaymentEligible.mockReturnValue(false);
 
-    const result = populateTysPayloadParams(payload, agreementEligibleFlags, customerDetails);
+        // Act
+        const result = getBackupPaymentFlagForAgreement(cart, channel, paymentDetails);
 
-    expect(result).toEqual({
-      tysFlow: 'Y',
-      tysMtnInstallmentList: [],
-      customerFirstName: '',
-      customerLastName: ''
+        // Assert
+        expect(result).toBe('N');
     });
-  });
 
-  it('should assign default values when properties are missing', () => {
-    const payload = {};
-    const agreementEligibleFlags = {
-      dpAgreementInfo: []
-    };
-    const customerDetails = {};
+    it('should return "N" when paymentDetails is empty', () => {
+        // Arrange
+        const cart = {};
+        const channel = 'OMNI-CARE';
+        const paymentDetails = [];
+        mockGetBackupPaymentEligible.mockReturnValue(true);
 
-    const result = populateTysPayloadParams(payload, agreementEligibleFlags, customerDetails);
+        // Act
+        const result = getBackupPaymentFlagForAgreement(cart, channel, paymentDetails);
 
-    expect(result).toEqual({
-      tysFlow: 'Y',
-      tysMtnInstallmentList: [],
-      customerFirstName: '',
-      customerLastName: ''
+        // Assert
+        expect(result).toBe('N');
     });
-  });
+});
+
+describe('getBackupPaymentEligible', () => {
+    beforeEach(() => {
+        // Clear previous mock calls and implementations
+        mockGetBackupPaymentEligible.mockClear();
+    });
+
+    it('should return true when the channel is valid and lineInfo contains installment term', () => {
+        // Arrange
+        const cart = {
+            lineDetails: {
+                lineInfo: [
+                    { installmentInfo: { installmentTerm: 12 } },
+                ],
+            },
+        };
+        const channel = 'OMNI-CARE';
+
+        // Act
+        const result = getBackupPaymentEligible(cart, channel);
+
+        // Assert
+        expect(result).toBe(true);
+    });
+
+    it('should return false when the channel is invalid', () => {
+        // Arrange
+        const cart = {
+            lineDetails: {
+                lineInfo: [
+                    { installmentInfo: { installmentTerm: 12 } },
+                ],
+            },
+        };
+        const channel = 'INVALID-CHANNEL';
+
+        // Act
+        const result = getBackupPaymentEligible(cart, channel);
+
+        // Assert
+        expect(result).toBe(false);
+    });
+
+    it('should return false when lineInfo does not contain installment term', () => {
+        // Arrange
+        const cart = {
+            lineDetails: {
+                lineInfo: [
+                    { installmentInfo: { installmentTerm: 0 } },
+                ],
+            },
+        };
+        const channel = 'OMNI-CARE';
+
+        // Act
+        const result = getBackupPaymentEligible(cart, channel);
+
+        // Assert
+        expect(result).toBe(false);
+    });
 });
