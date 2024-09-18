@@ -7,6 +7,23 @@ import CheckoutInspicio from './CheckoutInspicio';
 import * as PaymentApiCallHook from '../../modules/services/APIService/PaymentApiCallHooks';
 import * as Utils from './Utils'; // Import Utils module to spy on processReceiveData
 
+ test('should handle email value change correctly', () => {
+    render(<CheckoutInspicio {...props} />);
+
+    // Simulate user input
+    const emailInput = screen.getByTestId('email-input');
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+
+    // Assertions to verify the state updates correctly
+    expect(screen.getByTestId('email-input').value).toBe('test@example.com');
+    expect(props.setValidEmailId).toHaveBeenCalledWith(true);
+    expect(props.setSelectedCustomEmailId).toHaveBeenCalledWith('test@example.com');
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'LONGPOLLDATA_ACTION',
+      payload: { key: 'value' }, // Adjust based on actual payload
+    });
+  });
+
 jest.mock('./reducer', () => ({
   longpolldata: jest.fn(() => ({ type: 'LONGPOLLDATA_ACTION', payload: { key: 'value' } })),
 }));
