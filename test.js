@@ -1,213 +1,48 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
+import configureStore from 'redux-mock-store';
+import { Provider } from 'react-redux';
+import AVStatsChart from '../../src/App/components/AVStatsChart';
+import TransactionsChart from '../../src/App/components/TransactionsChart';
+import reportData from '../mocks/reportData.json';
+import { ThemeProvider } from "@wf-wfria/pioneer-core";
 
-import { render, screen } from '../../utils/test-utils/renderHelper';
-import rootReducer from '../../modules/store/reducer';
-import { rootSaga } from '../../modules/store/saga';
-import CheckoutInspicio from './CheckoutInspicio';
-import * as PaymentApiCallHook from '../../modules/services/APIService/PaymentApiCallHooks';
+const mockStore = configureStore([]);
 
-describe('CheckoutInspicio Agreement Modal Component', () => {
-  // const mockCloseModalFn = jest.fn();
-  // const handleInspicioToggle = jest.fn();
-  const mockData = {
-    getAllActiveMtnsRequest: jest.fn(),
-    requestBodySendMessage: jest.fn(),
-    handleReceivePollApi: jest.fn(),
-    requestBodySendEmail: jest.fn(),
-    getResultGenerateInspicioId: { data: { sendInspicioToken: 'OMNI', encryptedCartId: '12345' } },
-    getResultSendEmail: { data: { sendEmailStatus: 'SUCCESS' } },
-    getResultSendMessage: { data: { status: 'SENT' } },
-    getAllActiveMtnsResponse: {
-      data: {
-        customer: {
-          billAccounts: [
-            {
-              mtns: [
-                {
-                  mtn: '7125772409',
-                  deviceCategory: 'Smartphone',
-                  mtnStatus: {
-                    isActive: true,
-                    isDisconnected: false,
-                  },
-                },
-              ],
-            },
-            {
-              mtns: [
-                {
-                  mtn: '7125772409',
-                  deviceCategory: 'Smartphone',
-                  mtnStatus: {
-                    isActive: true,
-                    isDisconnected: false,
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      },
-    },
-  };
+const renderWithProviders = (component, { store } = {}) => {
+  return render(
+    <Provider store={store}>
+      <ThemeProvider >
+        {component}
+      </ThemeProvider>
+    </Provider>
+  );
+};
 
-  const props = {
-    handleInspicioToggle: jest.fn(),
-    selectedEmail: 'test@vrz.com',
-    channel: 'CHAT-STORE',
-    pageName: 'tac',
-    agreementEligibleFlags: {
-      showDeclineEquipmentProtection: false,
-    },
-
-    cart: {
-      cartHeader: {
-        fullAccountNumber: '0280083539-1',
-      },
-      orderDetails: {
-        isPrePayCart: 'Y',
-      },
-      lineInfo: [
-        {
-          lineActivityType: 'NSEBYOD',
-        },
-      ],
-    },
-    state: {
-      selectedMtnValue: 'SMS',
-      mtn: [
-        { label: '6102992029', value: '6102992029' },
-        { label: '6102992830', value: '6102992830' },
-        { label: '6103683623', value: '6103683623' },
-        { label: '6106637197', value: '6106637197' },
-      ],
-      checkBoxSelectedValue: true,
-      inspicioModel: false,
-    },
-
-    cBandQualified: true,
-    signatureInspicioFlag: true,
-    inspicioCustomSelectedMTN: 'test',
-    selectedCheckboxValue: true,
-    cancelLongPoll: true,
-  };
-
-  const mockprocessReceiveData = jest.fn();
-
-  jest.mock('./Utils', () => ({
-    processReceiveData: mockprocessReceiveData,
-  }));
-
-  beforeAll(() => { });
-
+describe('AVStatsChart Component', () => {
+  let store;
 
   beforeEach(() => {
-    // const BPData = agreementSummary?.messages?.backupAgreementDescription;
-    // eslint-disable-next-line no-unused-expressions
-    sessionStorage.getItem('suspended') === 'suspended';
+    store = mockStore({});
   });
 
-  test('Close on Agree & Continue button click 0', () => {
-    jest.spyOn(PaymentApiCallHook, 'default').mockImplementation(() => mockData);
-    jest.fn();
-    const Newprops = {
-      onModeChange: jest.fn(),
-      agreementEligibleFlags: {
-        showDeclineEquipmentProtection: false,
-      },
-      cart: {
-        orderDetails: {
-          isPrePayCart: 'N',
-        },
-      },
+  it('renders correctly with report data passed as props', async () => {
+    const { getByText, debug } = renderWithProviders(<AVStatsChart reportData={reportData} />, { store });
 
-      channel: 'CHAT-STORE11',
-      cBandQualified: true,
-      signatureInspicioFlag: false,
-      inspicioCustomSelectedMTN: false,
-      selectedCheckboxValue: false,
-      cancelLongPoll: false,
-    };
-    render(<CheckoutInspicio {...Newprops} />, {
-      reducers: rootReducer,
-      sagas: rootSaga,
-    });
-    screen.getByRole('radio', {
-      name: /send sms/i,
+    // Use the debug method to log the current state of the DOM
+    debug();  // This will print the entire rendered DOM at this point
+
+    // Verify the title is rendered
+    await waitFor(() => {
+      expect(getByText('Status of Transactions at Account Validation')).toBeInTheDocument();
     });
 
-    // const email = 'VQNROOVI70@VZW.COM';
-    const emailValidationInput = screen.getByRole('radio', {
-      name: /send sms/i,
-    });
-    // const emailInput = within(emailValidationInput).getByRole('radio', {
-    //   name: /send sms/i
-    // })
-    fireEvent.click(emailValidationInput);
-    // fireEvent.change(emailValidationInput, { target: { value: '' } });
-    // fireEvent.change(emailValidationInput, { target: { value: email } });
-    // expect(emailValidationInput).toHaveValue(email);
-    screen.logTestingPlaygroundURL();
-  });
+    // Use the debug method to log again after DOM update
+    debug();  // This will print the DOM after the content has been rendered
 
-  test('Close on Agree & Continue button click', () => {
-    jest.spyOn(PaymentApiCallHook, 'default').mockImplementation(() => mockData);
-    render(<CheckoutInspicio {...props} />, {
-      reducers: rootReducer,
-      sagas: rootSaga,
-    });
-  });
-
-  test('Close on Agree & Continue button click 1', () => {
-    jest.spyOn(PaymentApiCallHook, 'default').mockImplementation(() => mockData);
-    // const newProps = {
-    //     ...props,
-    //     signatureInspicioFlag: true,
-    //     inspicioCustomSelectedMTN: true,
-    //     cBandQualified: true,
-    //     cart: {
-    //         orderDetails: {
-    //             isPrePayCart: "N"
-    //         },
-    //         lineInfo: [
-    //             {
-    //                 lineActivityType: "NSE_5G"
-    //             }
-    //         ]
-    //     },
-    //     selectedMtnValue: "SMS"
-    // }
-    render(<CheckoutInspicio {...props} />, {
-      reducers: rootReducer,
-      sagas: rootSaga,
-    });
-    // screen.logTestingPlaygroundURL();
-  });
-
-  test('should handle receivePoll event correctly when status is Success', () => {
-    jest.spyOn(PaymentApiCallHook, 'default').mockImplementation(() => mockData);
-    // Mock event data
-    const eventData = {
-      detail: {
-        status: "Success",
-        event: 'someEvent',
-        payload: 'somePayload'
-      }
-    };
-
-    const receiveData = { someKey: 'someValue' };
-
-    mockprocessReceiveData.mockReturnValue(receiveData);
-
-    render(<CheckoutInspicio {...props} />, {
-      reducers: rootReducer,
-      sagas: rootSaga,
-    });
-
-    fireEvent(document, new CustomEvent('receivePoll', { detail: eventData.detail }));
-    expect(mockprocessReceiveData).toHaveBeenCalledTimes(1);
-
-    // expect(mockUpdateLongPollReducer).toHaveBeenCalledTimes(1);
+    // Verify a specific transaction type is rendered
+    expect(getByText('Valid Transactions')).toBeInTheDocument();
   });
 });
+
