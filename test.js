@@ -13,7 +13,7 @@ const mockStore = configureStore([]);
 const renderWithProviders = (component, { store } = {}) => {
   return render(
     <Provider store={store}>
-      <ThemeProvider >
+      <ThemeProvider>
         {component}
       </ThemeProvider>
     </Provider>
@@ -22,15 +22,16 @@ const renderWithProviders = (component, { store } = {}) => {
 
 describe('AVStatsChart Component', () => {
   let store;
+  let renderedComponent;
 
   beforeEach(() => {
     store = mockStore({});
+    renderedComponent = renderWithProviders(<AVStatsChart reportData={reportData} />, { store });
   });
 
   it('renders correctly with report data passed as props', async () => {
-    const { getByText, debug } = renderWithProviders(<AVStatsChart reportData={reportData} />, { store });
+    const { getByText, debug } = renderedComponent;
 
-    // Use the debug method to log the current state of the DOM
     debug();  // This will print the entire rendered DOM at this point
 
     // Verify the title is rendered
@@ -46,3 +47,28 @@ describe('AVStatsChart Component', () => {
   });
 });
 
+describe('TransactionsChart Component', () => {
+  let store;
+  let renderedComponent;
+
+  beforeEach(() => {
+    store = mockStore({});
+    renderedComponent = renderWithProviders(<TransactionsChart reportData={reportData} />, { store });
+  });
+
+  it('renders the donut chart correctly with report data passed as props', async () => {
+    const { getByText, getByRole, debug } = renderedComponent;
+
+    debug();  // Prints the current DOM
+
+    // Verify the chart title is rendered
+    await waitFor(() => {
+      expect(getByText('Transactions Overview')).toBeInTheDocument();
+    });
+
+    debug();  // Prints the updated DOM
+
+    // Verify DonutChart or its related elements are rendered (assuming it's an SVG or a chart element)
+    expect(getByRole('img')).toBeInTheDocument();  // Adjust based on the actual rendered role or tag
+  });
+});
