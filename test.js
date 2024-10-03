@@ -19,6 +19,16 @@ afterEach(() => {
     jest.clearAllMocks();
 });
 
+// Mock components with delays
+jest.mock('./components/STPTranscationsChart', () => {
+  return jest.fn(() => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(() => <div>STP Transcations Chart</div>);
+      }, 1000); // Simulate a delay of 1 second
+    });
+  });
+});
 describe("App component with mocked store and API", () => {
 
   beforeEach(() => {
