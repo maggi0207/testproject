@@ -87,3 +87,44 @@ describe("App component with mocked store and API", () => {
     expect(screen.getByText('Error while connecting to Back-End server. Server might be down. Please try again after some time')).toBeInTheDocument();
   });
 });
+
+
+
+
+test('should add and trigger beforeunload and unload event listeners', () => {
+    const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
+    const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+    const beforeUnloadHandler = jest.fn();
+    const unloadHandler = jest.fn();
+
+    // Mock implementation of the event listeners
+    window.addEventListener = jest.fn((event, cb) => {
+      if (event === 'beforeunload') {
+        beforeUnloadHandler.mockImplementation(cb);
+      } else if (event === 'unload') {
+        unloadHandler.mockImplementation(cb);
+      }
+    });
+
+    // Render the component
+    renderWithProvider(<ThemeProvider><App /></ThemeProvider>, {
+      initialState: { AppReducer: { reportData: {} } }
+    });
+
+    // Assert that event listeners were added
+    expect(addEventListenerSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
+    expect(addEventListenerSpy).toHaveBeenCalledWith('unload', expect.any(Function));
+
+    // Trigger the beforeunload and unload events manually
+    fireEvent(window, new Event('beforeunload'));
+    fireEvent(window, new Event('unload'));
+
+    // Check if the mock handlers were called
+    expect(beforeUnloadHandler).toHaveBeenCalled();
+    expect(unloadHandler).toHaveBeenCalled();
+
+    // Unmount the component and check if event listeners are removed
+    cleanup();
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('unload', expect.any(Function));
+  });
