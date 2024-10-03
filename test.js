@@ -8,7 +8,7 @@ import configureStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
 import * as apiService from '../services/api.service';
 import { fetchComparisonReportSuccess, handleInterRunAPIError } from '../redux/actions/AppActions';
-
+ presets: ["@babel/preset-env", "@babel/preset-react"],
 jest.mock('../services/api.service');
 
 const mockStore = configureStore([]);
