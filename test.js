@@ -10,7 +10,7 @@ import * as apiService from '../services/api.service';
 import { fetchComparisonReportSuccess, handleInterRunAPIError } from '../redux/actions/AppActions';
  presets: ["@babel/preset-env", "@babel/preset-react"],
 jest.mock('../services/api.service');
-
+parser: @babel/eslint-parser,
 const mockStore = configureStore([]);
 let store;
 
