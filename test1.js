@@ -1,11 +1,32 @@
-jest.mock('your-repo-path', () => ({
-  appMessageActions: {
-    addAppMessage: jest.fn((message, type, ...args) => {
-      const callback = args[args.length - 1]; // Get the last argument which is the callback
-      // Call the callback immediately for testing
-      if (typeof callback === 'function') {
-        callback(); // Simulate user interaction with the message
-      }
-    }),
-  },
-}));
+{
+    "ecc-hub:article/learning": "Learning",
+    "ecc-hub:article/support-resources": "Support Resources",
+    "ecc-hub:article/video": "Videos",
+    "ecc-hub:document-type": "Content Type",
+    "ecc-hub:customer-type": "Customer Type",
+    "ecc-hub:solution-area": "Solution Area",
+    "ecc-hub:products": "Product",
+    "ecc-hub:document-type/article": "Article",
+    "ecc-hub:document-type/quick-reference-guide": "QRG",
+    "ecc-hub:document-type/support-tip": "Support Tip",
+    "ecc-hub:document-type/product-tip": "Product Tip",
+    "ecc-hub:document-type/video": "Video",
+    "ecc-hub:document-type/faq0": "FAQ",
+    "ecc-hub:document-type/toolkit": "Toolkit",
+    "ecc-hub:document-type/faq": "Product FAQ",
+    "ecc-hub:customer-type/channel-partner": "Channel Partner",
+    "ecc-hub:customer-type/provider": "Provider",
+    "ecc-hub:customer-type/payer": "Payer",
+    "ecc-hub:customer-type/vendor": "Vendor",
+    "ecc-hub:solution-area/filezilla": "FileZilla",
+    "ecc-hub:solution-area/client-access-system": "Client Access System",
+    "ecc-hub:solution-area/customer-care-hub": "Customer Care Hub",
+    "ecc-hub:solution-area/accupost": "AccuPost",
+    "ecc-hub:solution-area/vision": "Vision",
+    "ecc-hub:products/customer-care-hub": "Customer Care Hub",
+    "ecc-hub:products/accupost": "AccuPost",
+    "ecc-hub:products/vision": "Vision",
+    "ecc-hub:products/revenue-performance-advisor": "Revenue Performance Advisor",
+    "ecc-hub:products/filezilla": "FileZilla",
+    "ecc-hub:products/client-access-system": "Client Access System (CAS)"
+}
