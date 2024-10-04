@@ -30,3 +30,55 @@
     "ecc-hub:products/filezilla": "FileZilla",
     "ecc-hub:products/client-access-system": "Client Access System (CAS)"
 }
+[
+    {
+        "lastModified": "10/11/2023",
+        "relatedContentBean": {
+            "description": "Frequently asked questions related to Revenue Analytics and FileZilla.",
+            "title": "Revenue Analytics Frequently Asked Questions",
+            "thumbnailImage": "/content/dam/ECCHub/global/images/stock-images---workplace/ECC_GI_Manworkingwithtwomonitors_06.2022.jpg",
+            "pagePath": "/learning-resources/RevenueAnalyticsFrequentlyAskedQuestions.html"
+        },
+        "pageTags": [
+            "ecc-hub:keyword/revenue-analytics",
+            "ecc-hub:document-type/faq",
+            "ecc-hub:document-type/article",
+            "ecc-hub:customer-type/provider",
+            "ecc-hub:products/filezilla"
+        ],
+        "tagsTitleMap": {
+            "ecc-hub:keyword/revenue-analytics": "Revenue Analytics",
+            "ecc-hub:document-type/faq": "Product FAQ",
+            "ecc-hub:document-type/article": "Article",
+            "ecc-hub:customer-type/provider": "Provider",
+            "ecc-hub:products/filezilla": "FileZilla"
+        },
+        "responsiveGrid": null,
+        "hideChip": false
+    },
+    {
+        "lastModified": "08/30/2023",
+        "relatedContentBean": {
+            "description": "Frequently asked questions related to Vision.",
+            "title": "Vision Frequently Asked Questions",
+            "thumbnailImage": "/content/dam/ECCHub/global/images/stock-images---workplace/ECC_GI_Businesswomanpresenting ideas_06.2022.jpg",
+            "pagePath": "/learning-resources/VisionFrequentlyAskedQuestions.html"
+        },
+        "pageTags": [
+            "ecc-hub:products/vision",
+            "ecc-hub:customer-type/payer",
+            "ecc-hub:document-type/faq",
+            "ecc-hub:document-type/article",
+            "ecc-hub:customer-type/provider"
+        ],
+        "tagsTitleMap": {
+            "ecc-hub:products/vision": "Vision",
+            "ecc-hub:customer-type/payer": "Payer",
+            "ecc-hub:document-type/faq": "Product FAQ",
+            "ecc-hub:document-type/article": "Article",
+            "ecc-hub:customer-type/provider": "Provider"
+        },
+        "responsiveGrid": null,
+        "hideChip": false
+    }
+]
