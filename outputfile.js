@@ -1,73 +1,123 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { ThemeProvider } from '@wf-wfria/pioneer-core';
-import App from './App';
-import { AuthProvider } from 'react-oidc-context';
-import axios from 'axios';
-import { getWithCompleteURL } from './services/ServiceUtils';
+import React, { useEffect, useCallback, Suspense } from 'react';
+import PropTypes from 'prop-types';
+import { useDispatch, useSelector } from 'react-redux';
+import { Feedback, IconError, Masthead, Tab, Tabs, WaitMessage } from '@wf-wfria/pioneer-core';
+import './style/App.css';
+import 'navigator.sendbeacon';
+import STPTranscationsChart from './components/STPTranscationsChart/STPTranscationsChart';
+import TransactionsChart from './components/TransactionsChart/TransactionsChart';
+import RuleMigrationChart from './components/RuleMigrationChart/RuleMigrationChart';
+import RuleUtilizationChart from './components/RuleUtilizationChart/RuleUtilizationChart';
+import FedOutboundComparisonChart from './components/FedOutboundComparisonChart/FedOutboundComparisonChart';
+import { fetchComparisonReportSuccess, handleInterRunAPIError, setReportLoadingInProgress } from './redux/actions/AppActions';
+import ErrorBoundary from './common/ErrorBoundary';
+import AVStatsChart from './components/avStatsChart';
+import { fetchComparisonReportData } from './services/ajax.service';
+import { useAuth } from 'react-oidc-context';
+import { ENABLE_LOGIN } from './common/utils/OIDCConfigConstants';
 
-// Callbacks for OIDC
-const onSigninCallback = (_user) => {
-  window.history.replaceState(
-    {},
-    document.title,
-    sessionStorage.getItem("originURL")
-  );
-};
+const App = (props) => {
+  const dispatch = useDispatch();
+  const { reportData, isReportLoading, isAPIError } = useSelector((state) => state.AppReducer);
+  const auth = useAuth();
 
-const onRemoveUser = () => {
-  window.history.replaceState({}, document.title, window.location.pathname);
-};
+  // Loading state
+  const [isLoading, setIsLoading] = React.useState(true);
 
-async function setupOIDCConfig() {
-  const env = await axios.get(
-    window.location.origin + "/json/env-properties.json"
-  );
+  useEffect(() => {
+    // Start the authentication flow if the user is not authenticated
+    if (ENABLE_LOGIN && !auth.isAuthenticated && !auth.activeNavigator && !auth.isLoading) {
+      auth.signinRedirect();
+    } else if (auth.isAuthenticated) {
+      // If authenticated, set loading to false
+      setIsLoading(false);
+    }
+  }, [auth]);
 
-  const url = `${env.data.ONEOPS_SERVICE_BASE_URL}/oneops/config/PING_CONFIG`;
+  // Fetch report data only when authenticated
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      fetchReportData();
+    }
+  }, [auth.isAuthenticated]);
 
-  return getWithCompleteURL(url, { noToken: true }).then((response) => {
-    const OIDCconfigvalues = response.data;
+  const fetchReportData = async () => {
+    dispatch(setReportLoadingInProgress());
+    try {
+      const response = await fetchComparisonReportData();
+      if (response?.status === 200) {
+        dispatch(fetchComparisonReportSuccess(response?.data));
+      } else {
+        dispatch(handleInterRunAPIError([]));
+      }
+    } catch (err) {
+      dispatch(handleInterRunAPIError(err?.response?.data));
+    }
+  };
 
-    return {
-      authority: encodeURI(OIDCconfigvalues[0].currentValue?.PING_AUTHORITY),
-      client_id: OIDCconfigvalues[0].currentValue?.ONEOPS_PING_CLIENT_ID,
-      redirect_uri: encodeURI(
-        OIDCconfigvalues[0].currentValue?.PING_REDIRECT_URI_PATH
-      ),
-      scope: OIDCconfigvalues[0].currentValue?.PING_SCOPE,
-      response_type: "code",
-      revokeTokenAdditionalContentTypes: "text/html;charset=utf-8",
-      automaticSilentRenew: true,
-      onSigninCallback,
-      onRemoveUser,
-      metadataSeed: {
-        end_session_endpoint: encodeURI(
-          `${OIDCconfigvalues[0].currentValue?.PING_AUTHORITY}idp/startSLO.ping`
-        ),
-      },
-    };
-  });
-}
-
-async function mount(el) {
-  const oidcConfig = await setupOIDCConfig();
-
-  if (window.location.href.indexOf("code") === -1) {
-    sessionStorage.setItem("originURL", window.location.href);
+  // Show loading message while checking authentication
+  if (isLoading) {
+    return <WaitMessage render={() => <> Loading... </>} type="spinner" />;
   }
 
-  const appTemplate = (
-    <ThemeProvider baseTheme="graphite">
-      <AuthProvider {...oidcConfig}>
-        <App />
-      </AuthProvider>
-    </ThemeProvider>
+  return (
+    <ErrorBoundary>
+      <Masthead />
+      {isReportLoading && (
+        <WaitMessage render={() => <> Loading... </>} type="spinner" />
+      )}
+      {isAPIError ? (
+        <Feedback
+          icon={<IconError size="large" />}
+          size="medium"
+          padding
+          border
+          theme="informational"
+        >
+          {"Error while connecting to Back-End server. Server might be down. Please try again after some time"}
+        </Feedback>
+      ) : (
+        <Tabs defaultSelectedTab={0}>
+          <Tab title="Transactions by Phase">
+            <Suspense fallback={<WaitMessage render={() => <> Loading... </>} type="spinner" />}>
+              <TransactionsChart reportData={reportData} />
+            </Suspense>
+          </Tab>
+          <Tab lazyLoad title="AV Transactions">
+            <Suspense fallback={<WaitMessage render={() => <> Loading... </>} type="spinner" />}>
+              <AVStatsChart reportData={reportData} />
+            </Suspense>
+          </Tab>
+          <Tab lazyLoad title="STP Transactions">
+            <Suspense fallback={<WaitMessage render={() => <> Loading... </>} type="spinner" />}>
+              <STPTranscationsChart reportData={reportData} />
+            </Suspense>
+          </Tab>
+          <Tab lazyLoad title="Rule Migration">
+            <Suspense fallback={<WaitMessage render={() => <> Loading... </>} type="spinner" />}>
+              <RuleMigrationChart reportData={reportData} />
+            </Suspense>
+          </Tab>
+          <Tab lazyLoad title="Rule Utilization">
+            <Suspense fallback={<WaitMessage render={() => <> Loading... </>} type="spinner" />}>
+              <RuleUtilizationChart reportData={reportData} />
+            </Suspense>
+          </Tab>
+          <Tab lazyLoad title="Fedwire Outbound Comparison">
+            <Suspense fallback={<WaitMessage render={() => <> Loading... </>} type="spinner" />}>
+              <FedOutboundComparisonChart reportData={reportData} />
+            </Suspense>
+          </Tab>
+        </Tabs>
+      )}
+    </ErrorBoundary>
   );
+};
 
-  ReactDOM.createRoot(el).render(appTemplate);
-}
+App.propTypes = {
+  reportData: PropTypes.object,
+  isReportLoading: PropTypes.bool,
+  isAPIError: PropTypes.bool
+};
 
-// This should point to the correct DOM element where you want to mount your app
-const mfeRootElement = document.getElementById('app');
-mount(mfeRootElement);
+export default App;
