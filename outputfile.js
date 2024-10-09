@@ -1,33 +1,88 @@
-const processAndCaptureFilters = (event) => {
-    let filters = {}; 
 
-    selectedCategory.forEach(item => {
-        let label = tagTitle[item]; 
+  "devDependencies": {
+    "@babel/core": "^7.22.9",
+    "@babel/plugin-proposal-class-properties": "^7.21.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.21.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.22.9",
+    "@babel/preset-env": "^7.22.9",
+    "@babel/preset-react": "^7.22.5",
+    "@babel/runtime": "^7.22.9",
+    "@commitlint/cli": "^17.7.0",
+    "@commitlint/config-conventional": "^17.7.0",
+    "@testing-library/dom": "^9.0.0",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
+    "@wf/eslint-config-ria": "^11.0.1",
+    "acorn": "^8.12.1",
+    "axe-core": "^4.7.0",
+    "axe-testcafe": "^3.4.0",
+    "babel-jest": "^29.7.0",
+    "babel-loader": "^9.1.3",
+    "clean-webpack-plugin": "^4.0.0",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
+    "css-loader": "^7.1.2",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-react": "^7.33.2",
+    "file-loader": "^6.2.0",
+    "filemanager-webpack-plugin": "^2.0.5",
+    "html-webpack-plugin": "^5.5.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.7.0",
+    "jest-axe": "^9.0.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-sonar-reporter": "^2.0.0",
+    "jsdom": "^22.1.0",
+    "lint-staged": "^15.2.10",
+    "mini-css-extract-plugin": "^2.9.1",
+    "moxios": "^0.4.0",
+    "ncp": "^2.0.0",
+    "npm-run-all": "^4.1.5",
+    "prettier-eslint-cli": "^8.0.1",
+    "progress-bar-webpack-plugin": "^2.1.0",
+    "react-test-renderer": "^18.3.1",
+    "redux-logger": "^3.0.6",
+    "redux-mock-store": "^1.5.4",
+    "sinon": "^19.0.2",
+    "style-loader": "^4.0.0",
+    "stylelint": "^16.11.0",
+    "stylelint-config-standard": "^36.0.1",
+    "stylelint-scss": "^6.7.0",
+    "testcafe": "^3.6.2",
+    "util": "^0.12.5",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-config-utils": "^3.3.0",
+    "webpack-dev-server": "^4.15.0",
+    "webpack-subresource-integrity": "^5.1.0"
+  },
+  "dependencies": {
+    "@acemarke/redux-starter-kit": "^0.0.7",
+    "@reduxjs/toolkit": "^2.0.1",
+    "@stomp/stompjs": "^6.1.2",
+    "@wf-wfria/pioneer-charts": "^4.0.0-alpha.60.3",
+    "@wf-wfria/pioneer-core": "^4.61.0",
+    "axios": "^1.6.0",
+    "core-js": "^3.31.0",
+    "install": "^0.13.0",
+    "lodash": "^4.17.21",
+    "navigator.sendbeacon": "^0.0.20",
+    "oidc-client-ts": "^2.4.1",
+    "prop-types": "^15.7.2",
+    "react": "^18.3.1",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.3.1",
+    "react-intl": "^6.6.8",
+    "react-oidc-context": "^2.4.0",
+    "react-redux": "^9.1.0",
+    "react-router-dom": "^6.21.3",
+    "recharts": "^2.10.4",
+    "redux": "^5.0.0",
+    "redux-thunk": "^3.1.0",
+    "sockjs-client": "^1.6.1"
+  }
 
-        tagValues.forEach(tag => {
-            const [categoryName, tags] = Object.entries(tag)[0]; // Extract category name and tags
-
-            // If the selected category matches any tag key, segregate accordingly
-            if (tags.hasOwnProperty(item)) {
-                // Initialize the filter array for this category if it doesn't exist
-                if (!filters[categoryName]) {
-                    filters[categoryName] = [];
-                }
-
-                // Push the label to the correct filter array
-                filters[categoryName].push(label);
-            }
-        });
-    });
-
-    // Create the event object with all categorized filters
-    const eventData = {
-        event: event,
-        SearchTerm: Object.entries(filters).map(([category, values]) => {
-            return values.join(','); // Join the values for each category with a comma
-        }).join(' | ') // Join categories with a pipe operator
-    };
-
-    // Pass the event object to the capturing function
-    dataLayerLearningFiltersCapturingEvent(eventData);
-};
