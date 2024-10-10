@@ -1,5 +1,150 @@
 
 import React from 'react';
+import NavBar from './NavBar';
+import { Table, Button } from 'your-ui-library'; // Adjust the import path as necessary
+import '../assets/css/paymentsData.css'; // Specific CSS for PaymentsData
+
+const PaymentsData = () => {
+  const columns = [
+    {
+      key: "name",
+      label: "Name",
+      align: "center",
+    },
+    {
+      key: "sourceSystem",
+      label: "Source System",
+      align: "center",
+    },
+    {
+      key: "dateHarvested",
+      label: "Date Harvested",
+      align: "center",
+    },
+    {
+      key: "paymentsCount",
+      label: "# Payments",
+      align: "center",
+    },
+    {
+      key: "triggerRun",
+      label: "Trigger Run",
+      emptyValue: (item) => (
+        item.paymentsCount > 0 ? (
+          <Button kind="standard" slim onClick={() => handleRun(item)}>
+            Run
+          </Button>
+        ) : null
+      ),
+    },
+    {
+      key: "createNewFrom",
+      label: "Create New From",
+      emptyValue: (item) => (
+        <Button kind="standard" slim onClick={() => handleCreateFrom(item)}>
+          Create From
+        </Button>
+      ),
+    },
+    {
+      key: "activeRunId",
+      label: "Active Run ID",
+      align: "center",
+    },
+    {
+      key: "delete",
+      label: "Delete",
+      emptyValue: (item) => (
+        item.activeRunId ? (
+          <Button kind="standard" slim onClick={() => handlePurge(item)}>
+            Purge
+          </Button>
+        ) : null
+      ),
+    },
+  ];
+
+  const data = [
+    {
+      name: "Example Name",
+      sourceSystem: "System A",
+      dateHarvested: "2024-10-10",
+      paymentsCount: 100,
+      activeRunId: 45908,
+    },
+    {
+      name: "Another Name",
+      sourceSystem: "System B",
+      dateHarvested: "2024-10-09",
+      paymentsCount: 0,
+      activeRunId: null,
+    },
+    {
+      name: "Third Name",
+      sourceSystem: "System C",
+      dateHarvested: "2024-10-08",
+      paymentsCount: 50,
+      activeRunId: 45909,
+    },
+    {
+      name: "Fourth Name",
+      sourceSystem: "System D",
+      dateHarvested: "2024-10-07",
+      paymentsCount: 75,
+      activeRunId: 45910,
+    },
+    {
+      name: "Fifth Name",
+      sourceSystem: "System E",
+      dateHarvested: "2024-10-06",
+      paymentsCount: 30,
+      activeRunId: 45911,
+    },
+    {
+      name: "Sixth Name",
+      sourceSystem: "System F",
+      dateHarvested: "2024-10-05",
+      paymentsCount: 20,
+      activeRunId: null,
+    },
+  ];
+
+  const handleRun = (item) => {
+    console.log(`Running for: ${item.name}`);
+  };
+
+  const handleCreateFrom = (item) => {
+    console.log(`Creating from: ${item.name}`);
+  };
+
+  const handlePurge = (item) => {
+    console.log(`Purging: ${item.name}`);
+  };
+
+  return (
+    <div>
+      <NavBar />
+      <div className="table-container">
+        <h2>Payments Collections Catalog</h2>
+        <p>Enter text to narrow down rows in the table below:</p>
+        <input type="text" placeholder="Search by Collection Name" />
+
+        <Table
+          columns={columns}
+          data={data}
+          rowKey="name"
+        />
+
+        <button>Create New</button>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentsData;
+
+
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'your-button-library'; // Replace with actual import
 import Masthead from './Masthead'; // Adjust the import path as necessary
