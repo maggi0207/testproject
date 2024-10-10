@@ -1,88 +1,226 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './components/Home';
+import PaymentsData from './components/PaymentsData';
+import PaymentsExecution from './components/PaymentsExecution';
+import './assets/css/app.css';  // You can add global styles if necessary
 
-  "devDependencies": {
-    "@babel/core": "^7.22.9",
-    "@babel/plugin-proposal-class-properties": "^7.21.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.21.0",
-    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
-    "@babel/plugin-transform-runtime": "^7.22.9",
-    "@babel/preset-env": "^7.22.9",
-    "@babel/preset-react": "^7.22.5",
-    "@babel/runtime": "^7.22.9",
-    "@commitlint/cli": "^17.7.0",
-    "@commitlint/config-conventional": "^17.7.0",
-    "@testing-library/dom": "^9.0.0",
-    "@testing-library/jest-dom": "^6.5.0",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/user-event": "^14.4.3",
-    "@wf/eslint-config-ria": "^11.0.1",
-    "acorn": "^8.12.1",
-    "axe-core": "^4.7.0",
-    "axe-testcafe": "^3.4.0",
-    "babel-jest": "^29.7.0",
-    "babel-loader": "^9.1.3",
-    "clean-webpack-plugin": "^4.0.0",
-    "copyfiles": "^2.4.1",
-    "cross-env": "^7.0.3",
-    "css-loader": "^7.1.2",
-    "eslint": "^8.50.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-jsx-a11y": "^6.7.1",
-    "eslint-plugin-react": "^7.33.2",
-    "file-loader": "^6.2.0",
-    "filemanager-webpack-plugin": "^2.0.5",
-    "html-webpack-plugin": "^5.5.0",
-    "identity-obj-proxy": "^3.0.0",
-    "jest": "^29.7.0",
-    "jest-axe": "^9.0.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "jest-sonar-reporter": "^2.0.0",
-    "jsdom": "^22.1.0",
-    "lint-staged": "^15.2.10",
-    "mini-css-extract-plugin": "^2.9.1",
-    "moxios": "^0.4.0",
-    "ncp": "^2.0.0",
-    "npm-run-all": "^4.1.5",
-    "prettier-eslint-cli": "^8.0.1",
-    "progress-bar-webpack-plugin": "^2.1.0",
-    "react-test-renderer": "^18.3.1",
-    "redux-logger": "^3.0.6",
-    "redux-mock-store": "^1.5.4",
-    "sinon": "^19.0.2",
-    "style-loader": "^4.0.0",
-    "stylelint": "^16.11.0",
-    "stylelint-config-standard": "^36.0.1",
-    "stylelint-scss": "^6.7.0",
-    "testcafe": "^3.6.2",
-    "util": "^0.12.5",
-    "webpack": "^5.95.0",
-    "webpack-cli": "^5.1.4",
-    "webpack-config-utils": "^3.3.0",
-    "webpack-dev-server": "^4.15.0",
-    "webpack-subresource-integrity": "^5.1.0"
-  },
-  "dependencies": {
-    "@acemarke/redux-starter-kit": "^0.0.7",
-    "@reduxjs/toolkit": "^2.0.1",
-    "@stomp/stompjs": "^6.1.2",
-    "@wf-wfria/pioneer-charts": "^4.0.0-alpha.60.3",
-    "@wf-wfria/pioneer-core": "^4.61.0",
-    "axios": "^1.6.0",
-    "core-js": "^3.31.0",
-    "install": "^0.13.0",
-    "lodash": "^4.17.21",
-    "navigator.sendbeacon": "^0.0.20",
-    "oidc-client-ts": "^2.4.1",
-    "prop-types": "^15.7.2",
-    "react": "^18.3.1",
-    "react-chartjs-2": "^5.2.0",
-    "react-dom": "^18.3.1",
-    "react-intl": "^6.6.8",
-    "react-oidc-context": "^2.4.0",
-    "react-redux": "^9.1.0",
-    "react-router-dom": "^6.21.3",
-    "recharts": "^2.10.4",
-    "redux": "^5.0.0",
-    "redux-thunk": "^3.1.0",
-    "sockjs-client": "^1.6.1"
-  }
+const App = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/payments-data" element={<PaymentsData />} />
+        <Route path="/payments-execution" element={<PaymentsExecution />} />
+      </Routes>
+    </Router>
+  );
+};
+
+export default App;
+
+//NavBar.jsx
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import '../assets/css/navBar.css';  // Importing the specific CSS for NavBar
+
+const NavBar = () => {
+  const location = useLocation();
+
+  return (
+    <nav>
+      <Link to="/payments-data">
+        <button className={location.pathname === '/payments-data' ? 'active' : ''}>
+          Payments Data
+        </button>
+      </Link>
+
+      <Link to="/payments-execution">
+        <button className={location.pathname === '/payments-execution' ? 'active' : ''}>
+          Payments Execution
+        </button>
+      </Link>
+    </nav>
+  );
+};
+
+export default NavBar;
+
+/* src/assets/css/navBar.css */
+
+nav {
+  text-align: center;
+  margin: 20px 0;
+}
+
+button {
+  padding: 10px;
+  margin: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+button.active {
+  background-color: red;
+}
+
+
+
+//Home.jsx
+
+import React from 'react';
+import NavBar from './NavBar';
+import '../assets/css/home.css';  
+
+const Home = () => {
+  return (
+    <div>
+      <NavBar />
+      <div className="welcome-container">
+        <h2>Welcome to UAT/PRODUCTION - PARALLEL</h2>
+        <p>Version 1.0.0</p>
+      </div>
+    </div>
+  );
+};
+
+export default Home;
+
+/* src/assets/css/home.css */
+
+h2 {
+  text-align: center;
+}
+
+p {
+  text-align: center;
+}
+
+div.welcome-container {
+  text-align: center;
+  margin-top: 50px;
+}
+
+
+import React from 'react';
+import NavBar from './NavBar';
+import '../assets/css/paymentsData.css';  // Importing the specific CSS for PaymentsData
+
+const PaymentsData = () => {
+  return (
+    <div>
+      <NavBar />
+      <div className="table-container">
+        <h2>Payments Collections Catalog</h2>
+        <p>Enter text to narrow down rows in the table below:</p>
+        <input type="text" placeholder="Search by Collection Name" />
+
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Source System</th>
+              <th>Date Harvested</th>
+              <th># Payments</th>
+              <th>Trigger Run</th>
+              <th>Create New From</th>
+              <th>Active Run ID</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Example Name</td>
+              <td>System A</td>
+              <td>2024-10-10</td>
+              <td>100</td>
+              <td><button>Run</button></td>
+              <td><button>Create From</button></td>
+              <td>45908</td>
+              <td><button>Purge</button></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <button>Create New</button>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentsData;
+
+/* src/assets/css/paymentsData.css */
+
+div.table-container {
+  padding: 20px;
+}
+
+table {
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+
+table, th, td {
+  border: 1px solid #ccc;
+}
+
+th, td {
+  padding: 10px;
+}
+
+input {
+  padding: 5px;
+  margin: 10px 0;
+}
+
+button {
+  padding: 5px 10px;
+  margin: 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+
+
+import React from 'react';
+import NavBar from './NavBar';
+import '../assets/css/paymentsExecution.css';  // Importing the specific CSS for PaymentsExecution
+
+const PaymentsExecution = () => {
+  return (
+    <div>
+      <NavBar />
+      <div className="execution-container">
+        <h2>Payments Execution Page</h2>
+        <p>Execution-related content goes here...</p>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentsExecution;
+
+/* src/assets/css/paymentsExecution.css */
+
+div.execution-container {
+  padding: 20px;
+}
+
+h2 {
+  text-align: center;
+}
+
+p {
+  text-align: center;
+}
+
+
+
 
