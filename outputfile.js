@@ -1,3 +1,51 @@
+
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import '../assets/css/buttonContainer.css';  // Button container-specific styles
+
+const ButtonContainer = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="button-container">
+      <button className="btn" onClick={() => navigate('/payments-data')}>
+        Payments Data
+      </button>
+      <button className="btn" onClick={() => navigate('/payments-execution')}>
+        Payments Execution
+      </button>
+    </div>
+  );
+};
+
+export default ButtonContainer;
+
+/* src/assets/css/buttonContainer.css */
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px;
+}
+
+.btn {
+  background-color: #4287f5;
+  color: white;
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #1d5bbf;
+}
+
+
+
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
