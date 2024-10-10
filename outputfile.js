@@ -1,5 +1,42 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from 'your-button-library'; // Replace with actual import
+import Masthead from './Masthead'; // Adjust the import path as necessary
+import '../assets/css/buttonContainer.css';  // Button container-specific styles
+
+const ButtonContainer = () => {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <Masthead />
+
+      <div className="button-container">
+        <Button 
+          kind={window.location.pathname === '/payments-data' ? 'primary' : 'standard'} 
+          className="btn" 
+          onClick={() => navigate('/payments-data')}
+        >
+          Payments Data
+        </Button>
+
+        <Button 
+          kind={window.location.pathname === '/payments-execution' ? 'primary' : 'standard'} 
+          className="btn" 
+          onClick={() => navigate('/payments-execution')}
+        >
+          Payments Execution
+        </Button>
+      </div>
+    </>
+  );
+};
+
+export default ButtonContainer;
+
+
+import React from 'react';
 import NavBar from './NavBar';
 import { Table, Button } from 'wfia'; // Importing Table and Button from the WFIA package
 import '../assets/css/paymentsData.css';  // Importing the specific CSS for PaymentsData
