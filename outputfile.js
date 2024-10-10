@@ -1,5 +1,102 @@
 
 import React from 'react';
+import NavBar from './NavBar';
+import { Table, Button } from 'wfia'; // Importing Table and Button from the WFIA package
+import '../assets/css/paymentsData.css';  // Importing the specific CSS for PaymentsData
+
+const PaymentsData = () => {
+  // Define columns for the table
+  const columns = [
+    {
+      key: "name",
+      label: "Name",
+      align: "left", // Align left
+    },
+    {
+      key: "sourceSystem",
+      label: "Source System",
+      align: "left", // Align left
+    },
+    {
+      key: "dateHarvested",
+      label: "Date Harvested",
+      align: "left", // Align left
+    },
+    {
+      key: "paymentsCount",
+      label: "# Payments",
+      align: "left", // Align left
+    },
+    {
+      key: "triggerRun",
+      label: "Trigger Run",
+      emptyValue: () => (
+        <Button kind="standard" slim>
+          Run
+        </Button>
+      ),
+    },
+    {
+      key: "createNewFrom",
+      label: "Create New From",
+      emptyValue: () => (
+        <Button kind="standard" slim>
+          Create From
+        </Button>
+      ),
+    },
+    {
+      key: "activeRunId",
+      label: "Active Run ID",
+      align: "left", // Align left
+    },
+    {
+      key: "delete",
+      label: "Delete",
+      emptyValue: () => (
+        <Button kind="standard" slim>
+          Purge
+        </Button>
+      ),
+    },
+  ];
+
+  // Sample data for the table
+  const data = [
+    {
+      name: "Example Name",
+      sourceSystem: "System A",
+      dateHarvested: "2024-10-10",
+      paymentsCount: 100,
+      activeRunId: 45908,
+    },
+    // Add more sample data as needed
+  ];
+
+  return (
+    <div>
+      <NavBar />
+      <div className="table-container">
+        <h2>Payments Collections Catalog</h2>
+        <p>Enter text to narrow down rows in the table below:</p>
+        <input type="text" placeholder="Search by Collection Name" />
+
+        <Table
+          columns={columns}
+          data={data}
+          rowKey="name"
+        />
+
+        <button>Create New</button>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentsData;
+
+
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/css/buttonContainer.css';  // Button container-specific styles
 
