@@ -2,6 +2,18 @@
 
 import { fetchPayments as fetchPaymentsApi } from '../api/paymentApi'; // Import mock API function
 
+import {
+  FETCH_PAYMENTS_REQUEST,
+  FETCH_PAYMENTS_SUCCESS,
+  FETCH_PAYMENTS_FAILURE,
+  ADD_PAYMENT_REQUEST,
+  ADD_PAYMENT_SUCCESS,
+  ADD_PAYMENT_FAILURE,
+  UPDATE_PAYMENT_REQUEST,
+  UPDATE_PAYMENT_SUCCESS,
+  UPDATE_PAYMENT_FAILURE,
+} from './actionTypes';
+
 // Action types
 export const FETCH_PAYMENTS_REQUEST = 'FETCH_PAYMENTS_REQUEST';
 export const FETCH_PAYMENTS_SUCCESS = 'FETCH_PAYMENTS_SUCCESS';
