@@ -1,3 +1,108 @@
+// src/redux/payments.js
+
+import { fetchPayments as fetchPaymentsApi } from '../api/paymentApi'; // Import mock API function
+
+// Action types
+export const FETCH_PAYMENTS_REQUEST = 'FETCH_PAYMENTS_REQUEST';
+export const FETCH_PAYMENTS_SUCCESS = 'FETCH_PAYMENTS_SUCCESS';
+export const FETCH_PAYMENTS_FAILURE = 'FETCH_PAYMENTS_FAILURE';
+export const ADD_PAYMENT_REQUEST = 'ADD_PAYMENT_REQUEST';
+export const ADD_PAYMENT_SUCCESS = 'ADD_PAYMENT_SUCCESS';
+export const ADD_PAYMENT_FAILURE = 'ADD_PAYMENT_FAILURE';
+export const UPDATE_PAYMENT_REQUEST = 'UPDATE_PAYMENT_REQUEST';
+export const UPDATE_PAYMENT_SUCCESS = 'UPDATE_PAYMENT_SUCCESS';
+export const UPDATE_PAYMENT_FAILURE = 'UPDATE_PAYMENT_FAILURE';
+
+// Initial state
+const initialState = {
+  paymentsData: [],
+  loading: false,
+  error: null,
+};
+
+// Action creator for fetching payments
+export const fetchPayments = () => {
+  return async (dispatch) => {
+    dispatch({ type: FETCH_PAYMENTS_REQUEST }); // Dispatch request action
+    try {
+      const data = await fetchPaymentsApi(); // Call the API
+      dispatch({ type: FETCH_PAYMENTS_SUCCESS, payload: data }); // Dispatch success action with data
+    } catch (err) {
+      dispatch({ type: FETCH_PAYMENTS_FAILURE, payload: err.message }); // Dispatch failure action with error
+    }
+  };
+};
+
+// Action creator for adding a payment
+export const addPayment = (payment) => {
+  return async (dispatch) => {
+    dispatch({ type: ADD_PAYMENT_REQUEST }); // Dispatch request action
+    try {
+      // Simulate a successful API call
+      // const response = await api.addPayment(payment); // Uncomment when real API is ready
+      dispatch({ type: ADD_PAYMENT_SUCCESS, payload: payment }); // Dispatch success action
+    } catch (err) {
+      dispatch({ type: ADD_PAYMENT_FAILURE, payload: err.message }); // Dispatch failure action with error
+    }
+  };
+};
+
+// Action creator for updating a payment
+export const updatePayment = (payment) => {
+  return async (dispatch) => {
+    dispatch({ type: UPDATE_PAYMENT_REQUEST }); // Dispatch request action
+    try {
+      // Simulate a successful API call
+      // const response = await api.updatePayment(payment); // Uncomment when real API is ready
+      dispatch({ type: UPDATE_PAYMENT_SUCCESS, payload: payment }); // Dispatch success action
+    } catch (err) {
+      dispatch({ type: UPDATE_PAYMENT_FAILURE, payload: err.message }); // Dispatch failure action with error
+    }
+  };
+};
+
+// Payments reducer
+const paymentsReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case FETCH_PAYMENTS_REQUEST:
+    case ADD_PAYMENT_REQUEST:
+    case UPDATE_PAYMENT_REQUEST:
+      return { ...state, loading: true, error: null }; // Set loading to true
+
+    case FETCH_PAYMENTS_SUCCESS:
+      return { ...state, loading: false, paymentsData: action.payload }; // Set payments data
+
+    case ADD_PAYMENT_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        paymentsData: [...state.paymentsData, action.payload], // Add new payment to the list
+      };
+
+    case UPDATE_PAYMENT_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        paymentsData: state.paymentsData.map((item) =>
+          item.id === action.payload.id ? action.payload : item
+        ), // Update the specific payment
+      };
+
+    case FETCH_PAYMENTS_FAILURE:
+    case ADD_PAYMENT_FAILURE:
+    case UPDATE_PAYMENT_FAILURE:
+      return { ...state, loading: false, error: action.payload }; // Set error
+
+    default:
+      return state;
+  }
+};
+
+export default paymentsReducer;
+
+
+
+
 // src/redux/actions.js
 
 import { fetchPayments as fetchPaymentsApi } from '../api/mockPaymentsApi'; // Import mock API function
