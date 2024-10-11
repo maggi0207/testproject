@@ -1,34 +1,20 @@
-// src/redux/store.js
-
-import { configureStore } from '@reduxjs/toolkit';
-import paymentsReducer from './reducers'; // Import payments reducer
-
-// Create the Redux store
-const store = configureStore({
-  reducer: {
-    payments: paymentsReducer, // Register the payments reducer
-  },
-});
-
-export default store;
-
-
-
 // src/redux/actions.js
 
-import { fetchPayments as fetchPaymentsApi } from '../api/paymentApi'; // Import mock API function
+import { fetchPayments as fetchPaymentsApi } from '../api/mockPaymentsApi'; // Import mock API function
 
 // Action types
 export const FETCH_PAYMENTS_REQUEST = 'FETCH_PAYMENTS_REQUEST';
 export const FETCH_PAYMENTS_SUCCESS = 'FETCH_PAYMENTS_SUCCESS';
 export const FETCH_PAYMENTS_FAILURE = 'FETCH_PAYMENTS_FAILURE';
+export const ADD_PAYMENT = 'ADD_PAYMENT';
+export const UPDATE_PAYMENT = 'UPDATE_PAYMENT';
 
 // Action creator for fetching payments
 export const fetchPayments = () => {
   return async (dispatch) => {
     dispatch({ type: FETCH_PAYMENTS_REQUEST }); // Dispatch request action
     try {
-      const data = await fetchPaymentsApi(); // Call the API
+      const data = await fetchPaymentsApi(); // Call the mock API
       dispatch({ type: FETCH_PAYMENTS_SUCCESS, payload: data }); // Dispatch success action with data
     } catch (err) {
       dispatch({ type: FETCH_PAYMENTS_FAILURE, payload: err.message }); // Dispatch failure action with error
@@ -36,20 +22,27 @@ export const fetchPayments = () => {
   };
 };
 
+// Action creator for adding a payment
+export const addPayment = (payment) => {
+  return {
+    type: ADD_PAYMENT,
+    payload: payment, // The new payment data to be added
+  };
+};
 
+// Action creator for updating a payment
+export const updatePayment = (payment) => {
+  return {
+    type: UPDATE_PAYMENT,
+    payload: payment, // The updated payment data
+  };
+};
 
-// src/redux/reducers.js
-
-import {
-  FETCH_PAYMENTS_REQUEST,
-  FETCH_PAYMENTS_SUCCESS,
-  FETCH_PAYMENTS_FAILURE,
-} from './actions';
-
+// Initial state for the payments reducer
 const initialState = {
-  paymentsData: [],
   loading: false,
-  error: null,
+  paymentsData: [], // Array to hold payments data
+  error: null, // To hold any error message
 };
 
 // Payments reducer
@@ -61,8 +54,17 @@ const paymentsReducer = (state = initialState, action) => {
       return { ...state, loading: false, paymentsData: action.payload }; // Set payments data
     case FETCH_PAYMENTS_FAILURE:
       return { ...state, loading: false, error: action.payload }; // Set error
+    case ADD_PAYMENT:
+      return { ...state, paymentsData: [...state.paymentsData, action.payload] }; // Add new payment
+    case UPDATE_PAYMENT:
+      return {
+        ...state,
+        paymentsData: state.paymentsData.map((payment) =>
+          payment.activeRunId === action.payload.activeRunId ? action.payload : payment
+        ), // Update payment by activeRunId
+      };
     default:
-      return state;
+      return state; // Return current state if no action matches
   }
 };
 
@@ -139,6 +141,57 @@ export const fetchPayments = async () => {
   }
   */
 };
+
+// Mock API function to simulate adding a payment
+export const addPaymentApi = async (paymentData) => {
+  // Simulate a delay
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const newPayment = {
+        ...paymentData,
+        id: Math.random().toString(36).substr(2, 9), // Generate a random ID for the new payment
+      };
+      resolve(newPayment);
+    }, 1000); // Simulates a 1 second API response time
+  });
+
+  // Uncomment the following code for the real API call when ready:
+  /*
+  try {
+    const response = await axios.post('https://api.example.com/payments', paymentData);
+    return response.data; // Assuming the API response contains the newly added payment
+  } catch (error) {
+    console.error('Error adding payment:', error);
+    throw error; // Rethrow the error for handling in the action
+  }
+  */
+};
+
+// Mock API function to simulate updating a payment
+export const updatePaymentApi = async (paymentData) => {
+  // Simulate a delay
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const updatedPayment = {
+        ...paymentData,
+        updatedAt: new Date().toISOString(), // Add an updated timestamp
+      };
+      resolve(updatedPayment);
+    }, 1000); // Simulates a 1 second API response time
+  });
+
+  // Uncomment the following code for the real API call when ready:
+  /*
+  try {
+    const response = await axios.put(`https://api.example.com/payments/${paymentData.id}`, paymentData);
+    return response.data; // Assuming the API response contains the updated payment
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    throw error; // Rethrow the error for handling in the action
+  }
+  */
+};
+
 
 
 const PaymentsData = () => {
