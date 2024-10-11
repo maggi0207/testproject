@@ -1,51 +1,73 @@
 // src/redux/store.js
-import { createStore, applyMiddleware } from 'redux';
-import { Provider } from 'react-redux';
-import thunk from 'redux-thunk';
-import rootReducer from './reducers';
 
-const store = createStore(rootReducer, applyMiddleware(thunk));
+import { configureStore } from '@reduxjs/toolkit';
+import paymentsReducer from './reducers'; // Import payments reducer
+
+// Create the Redux store
+const store = configureStore({
+  reducer: {
+    payments: paymentsReducer, // Register the payments reducer
+  },
+});
 
 export default store;
 
 
+
 // src/redux/actions.js
-import { fetchPayments } from '../api/paymentApi'; // Import the mock API function
 
+import { fetchPayments as fetchPaymentsApi } from '../api/paymentApi'; // Import mock API function
+
+// Action types
+export const FETCH_PAYMENTS_REQUEST = 'FETCH_PAYMENTS_REQUEST';
 export const FETCH_PAYMENTS_SUCCESS = 'FETCH_PAYMENTS_SUCCESS';
+export const FETCH_PAYMENTS_FAILURE = 'FETCH_PAYMENTS_FAILURE';
 
-export const fetchPaymentsAction = () => {
+// Action creator for fetching payments
+export const fetchPayments = () => {
   return async (dispatch) => {
+    dispatch({ type: FETCH_PAYMENTS_REQUEST }); // Dispatch request action
     try {
-      const response = await fetchPayments(); // Call the mock API
-      dispatch({ type: FETCH_PAYMENTS_SUCCESS, payload: response });
-    } catch (error) {
-      console.error('Error fetching payments:', error);
+      const data = await fetchPaymentsApi(); // Call the API
+      dispatch({ type: FETCH_PAYMENTS_SUCCESS, payload: data }); // Dispatch success action with data
+    } catch (err) {
+      dispatch({ type: FETCH_PAYMENTS_FAILURE, payload: err.message }); // Dispatch failure action with error
     }
   };
 };
 
 
+
 // src/redux/reducers.js
-import { FETCH_PAYMENTS_SUCCESS } from './actions';
+
+import {
+  FETCH_PAYMENTS_REQUEST,
+  FETCH_PAYMENTS_SUCCESS,
+  FETCH_PAYMENTS_FAILURE,
+} from './actions';
 
 const initialState = {
-  payments: [],
+  paymentsData: [],
+  loading: false,
+  error: null,
 };
 
-const rootReducer = (state = initialState, action) => {
+// Payments reducer
+const paymentsReducer = (state = initialState, action) => {
   switch (action.type) {
+    case FETCH_PAYMENTS_REQUEST:
+      return { ...state, loading: true, error: null }; // Set loading to true
     case FETCH_PAYMENTS_SUCCESS:
-      return {
-        ...state,
-        payments: action.payload,
-      };
+      return { ...state, loading: false, paymentsData: action.payload }; // Set payments data
+    case FETCH_PAYMENTS_FAILURE:
+      return { ...state, loading: false, error: action.payload }; // Set error
     default:
       return state;
   }
 };
 
-export default rootReducer;
+export default paymentsReducer;
+
 
 // src/api/paymentApi.js
 
