@@ -143,8 +143,8 @@ export const fetchPayments = async () => {
 
 const PaymentsData = () => {
   const dispatch = useDispatch();
-  const payments = useSelector((state) => state.payments);
+  const { paymentsData, loading, error } = useSelector((state) => state.payments); 
 
   useEffect(() => {
-    dispatch(fetchPaymentsAction()); // Dispatch the fetch action
+    dispatch(fetchPayments()); 
   }, [dispatch]);
