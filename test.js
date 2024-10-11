@@ -1,320 +1,187 @@
-// src/redux/payments.js
+import { useState, useEffect, useRef } from "react";
+import { MapTo } from '@adobe/aem-react-editable-components';
+import { isValidDomain, sentinelcall_for_refresh_token} from "../../../utils/loginFlow";
+import { AuthoringUtils } from '@adobe/aem-spa-page-model-manager';
+import { logout, deleteCookies, deleteTokens } from '../../../utils/logoutFlow';
+import { isUnsecurePage } from "../../../utils/unsecurePage";
+import { ModalAnalyticsCall, dataLayerSessionActiveTimer, dataLayerUserLogoutActiveTimer } from '../../../utils/analyticsUtils';
+import NextgenSimpleModal from './Modal/NextgenSimpleModal';
+import Countdown, { zeroPad } from "react-countdown";
+import jwt_decode from "jwt-decode";
+import { getCookie } from "../../../utils/getCookies";
+import * as constants from "../../../utils/constants";
+import { setLocalStorage } from '../../../utils/genericUtil';
 
-import { fetchPayments as fetchPaymentsApi } from '../api/paymentApi'; // Import mock API function
+export const SessionTimeoutConfig = {
+	emptyLabel: "Session Timeout",
 
-import {
-  FETCH_PAYMENTS_REQUEST,
-  FETCH_PAYMENTS_SUCCESS,
-  FETCH_PAYMENTS_FAILURE,
-  ADD_PAYMENT_REQUEST,
-  ADD_PAYMENT_SUCCESS,
-  ADD_PAYMENT_FAILURE,
-  UPDATE_PAYMENT_REQUEST,
-  UPDATE_PAYMENT_SUCCESS,
-  UPDATE_PAYMENT_FAILURE,
-} from './actionTypes';
-
-// Action types
-export const FETCH_PAYMENTS_REQUEST = 'FETCH_PAYMENTS_REQUEST';
-export const FETCH_PAYMENTS_SUCCESS = 'FETCH_PAYMENTS_SUCCESS';
-export const FETCH_PAYMENTS_FAILURE = 'FETCH_PAYMENTS_FAILURE';
-export const ADD_PAYMENT_REQUEST = 'ADD_PAYMENT_REQUEST';
-export const ADD_PAYMENT_SUCCESS = 'ADD_PAYMENT_SUCCESS';
-export const ADD_PAYMENT_FAILURE = 'ADD_PAYMENT_FAILURE';
-export const UPDATE_PAYMENT_REQUEST = 'UPDATE_PAYMENT_REQUEST';
-export const UPDATE_PAYMENT_SUCCESS = 'UPDATE_PAYMENT_SUCCESS';
-export const UPDATE_PAYMENT_FAILURE = 'UPDATE_PAYMENT_FAILURE';
-
-// Initial state
-const initialState = {
-  paymentsData: [],
-  loading: false,
-  error: null,
+	isEmpty: function(props) {
+		return true;
+	}
 };
 
-// Action creator for fetching payments
-export const fetchPayments = () => {
-  return async (dispatch) => {
-    dispatch({ type: FETCH_PAYMENTS_REQUEST }); // Dispatch request action
-    try {
-      const data = await fetchPaymentsApi(); // Call the API
-      dispatch({ type: FETCH_PAYMENTS_SUCCESS, payload: data }); // Dispatch success action with data
-    } catch (err) {
-      dispatch({ type: FETCH_PAYMENTS_FAILURE, payload: err.message }); // Dispatch failure action with error
-    }
-  };
+export const SessionTimeout = (props) => {
+	const TOKEN_EXPIRY_MINUS_FIVE = 300000;
+	const SET_TEN_SEC_TIMER = 10000;
+	let logoutPath;
+
+	props?.buttonGroup?.map((item) => {
+		let trimmedLinkLabel = item.linkLabel?.toLowerCase()?.trim();
+		if (trimmedLinkLabel === "sign out" || trimmedLinkLabel === "logout") {
+			logoutPath = item.linkPath;
+		}
+	});
+
+	const isEdit = AuthoringUtils.isEditMode();
+	const [isOpen, setIsOpen] = useState(false);
+	const [startTime, setStartTime] = useState(0);
+	const token = getCookie(constants.ACCESS_TOKEN);
+	// Check if refresh_token available, so we can process with sentinel else proceed with exisitng ciam logic
+	const refresh_token = getCookie(constants.REFRESH_TOKEN);
+
+
+	useEffect(() => {
+        // Checks if user is not in Edit mode and the URL hostname includes CHC and page is not unsecure.
+		if (!isEdit && isValidDomain() && !isUnsecurePage()) {
+			const sessionTimer = setInterval(() => {
+				let expired, remainingTime, activeSessionTime;
+                // Fetches cookie from access token.
+				let token_value = getCookie(constants.ACCESS_TOKEN);
+				// Fetch refresh token
+				let refresh_token_value = getCookie(constants.REFRESH_TOKEN);
+                // Checks if cookie is present.
+				if (token_value.length > 0) {
+					let decoded;
+					if(!refresh_token){
+						// Decodes the fetched token value.
+						decoded = jwt_decode(token_value);
+					}else{
+						// Decodes refresh token
+						decoded = jwt_decode(refresh_token_value);
+						const currentTime = Math.floor(Date.now() / 1000);
+						const expTime = jwt_decode(refresh_token_value).exp;
+						const remainingTimeinSecs = expTime - currentTime;
+						const remainingTimeinMins = Math.max(0, Math.floor(remainingTimeinSecs / 60));
+						const activeTime = 30 - remainingTimeinMins;
+						
+						remainingTime = remainingTimeinMins;
+						activeSessionTime = activeTime;
+					}
+                    // Checks if the expiration time of decode value is not null.
+					if (decoded.exp !== null) {
+                        // Subtracts current time from expiration time of decoded value * 1000.
+						expired = (decoded.exp * 1000 - Date.now())
+						const date = new Date(expired);
+                        // Calculates session time left value.
+						window.sessionTimeLeft = `${date.getMinutes()}:${date.getSeconds()}`;
+					}
+                    // Checks if the expired value is less than the token expiry value.
+					if (expired < TOKEN_EXPIRY_MINUS_FIVE) {
+                        // Sets setStartTime state value to expired value.
+						setStartTime(expired);
+                        // Displays the session timeout modal.
+						setIsOpen(true);
+
+						if(refresh_token){
+							dataLayerSessionActiveTimer(activeSessionTime);
+						}
+						
+						clearInterval(sessionTimer);
+						const dataLayerEvents = window.digitalData.events;
+						const hasDisplayed = dataLayerEvents.some(event => event?.modal?.id === 'session-timeout');
+						!hasDisplayed && ModalAnalyticsCall(props, true);
+					}
+				}
+			}, SET_TEN_SEC_TIMER);
+		}
+	}, []);
+
+	useEffect(() => {
+        // Checks if user is not in Edit mode and the URL hostname includes CHC and page is not unsecure.
+		// Existing CIAM logic
+		if (!isEdit && isValidDomain() && !isUnsecurePage()) {
+			setInterval(() => {
+                // Gets new token.
+				let new_token = getCookie(constants.ACCESS_TOKEN);
+                // Checks if new token is not null and not equal to old token. If not then reloads the page.
+				if (new_token !== null & new_token !== token) {
+					window.location.reload();
+				}
+			}, SET_TEN_SEC_TIMER);
+		}
+		// Sentinel Validation logic
+		if (refresh_token && !isEdit && isValidDomain() && !isUnsecurePage()) {
+			setInterval(() => {
+                // Gets new token.
+				let new_refresh_token = getCookie(constants.REFRESH_TOKEN);
+                // Checks if new token is not null and not equal to old token. If not then reloads the page.
+				if (new_refresh_token !== null & new_refresh_token !== refresh_token) {
+					// window.location.reload();
+					console.log("Tokens Updated")
+				}
+			}, SET_TEN_SEC_TIMER);
+		}
+	}, []); 
+
+    /**
+     * Checks if user has clicked on logout  or stay signed in. Executes code depending on the button clicked.
+     * @param {Object} item - Modal button.
+     */
+	const buttonClick = (item) => {
+        // Trims the button label and removes white space.
+		let trimmedLinkLabel = item.linkLabel.toLowerCase().trim();
+        // Checks if the trimmed label is sign out or logout. If yes logouts the user.
+		if (trimmedLinkLabel === "sign out" || trimmedLinkLabel === "logout") {
+			ModalAnalyticsCall(props, false);			
+			logout(item.linkPath);
+		} /* Else deletes the cookies and local storage and reloads the page. */ 
+		else if (trimmedLinkLabel === "stay signed in") {
+			ModalAnalyticsCall(props, false);					
+			// Make a servlet call with refresh token to fetch new refresh and access token
+			
+			//Check logic for setting token and servlet call. servlet call & initiate Logic call
+			// Sentinel logic if refresh token available, if not old CIAM logic
+			if(refresh_token){
+				sentinelcall_for_refresh_token();
+			}else{
+				deleteCookies();
+				setLocalStorage();
+				window.open(constants.CIAM_INITIAL_REDIRECT, constants.SELF)
+			}
+		}
+        // Closes session timeout modal.
+		setIsOpen(false);
+	}	
+
+    /**
+     * Displays the time remaining for the user when the user will be logged out if user does not click on any session timeout button.
+     * @returns
+     */
+	const renderer = ({ minutes, seconds, completed }) => {
+        // If time remaining is completed then user is forced logged out.
+		if (completed) {
+			return logout(logoutPath);
+		} else {
+			return (
+				<>
+					<span>{props?.description}</span> <span className="sessionTimer"> {zeroPad(minutes)}:{zeroPad(seconds)} {'minutes'}</span><span>{'.'}</span></>
+			);
+		}
+	};
+
+	return (
+		<>
+			<NextgenSimpleModal
+				title={props?.title}
+				text={<Countdown date={Date.now() + startTime} renderer={renderer} />}
+				isOpen={isOpen}
+				setIsOpen={setIsOpen}
+				hideCloseIcon={true}
+				buttonGroup={props?.buttonGroup}
+				buttonClick={buttonClick}
+				modalType="countdown"
+			/>
+		</>
+	);
 };
-
-// Action creator for adding a payment
-export const addPayment = (payment) => {
-  return async (dispatch) => {
-    dispatch({ type: ADD_PAYMENT_REQUEST }); // Dispatch request action
-    try {
-      // Simulate a successful API call
-      // const response = await api.addPayment(payment); // Uncomment when real API is ready
-      dispatch({ type: ADD_PAYMENT_SUCCESS, payload: payment }); // Dispatch success action
-    } catch (err) {
-      dispatch({ type: ADD_PAYMENT_FAILURE, payload: err.message }); // Dispatch failure action with error
-    }
-  };
-};
-
-// Action creator for updating a payment
-export const updatePayment = (payment) => {
-  return async (dispatch) => {
-    dispatch({ type: UPDATE_PAYMENT_REQUEST }); // Dispatch request action
-    try {
-      // Simulate a successful API call
-      // const response = await api.updatePayment(payment); // Uncomment when real API is ready
-      dispatch({ type: UPDATE_PAYMENT_SUCCESS, payload: payment }); // Dispatch success action
-    } catch (err) {
-      dispatch({ type: UPDATE_PAYMENT_FAILURE, payload: err.message }); // Dispatch failure action with error
-    }
-  };
-};
-
-// Payments reducer
-const paymentsReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case FETCH_PAYMENTS_REQUEST:
-    case ADD_PAYMENT_REQUEST:
-    case UPDATE_PAYMENT_REQUEST:
-      return { ...state, loading: true, error: null }; // Set loading to true
-
-    case FETCH_PAYMENTS_SUCCESS:
-      return { ...state, loading: false, paymentsData: action.payload }; // Set payments data
-
-    case ADD_PAYMENT_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        paymentsData: [...state.paymentsData, action.payload], // Add new payment to the list
-      };
-
-    case UPDATE_PAYMENT_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        paymentsData: state.paymentsData.map((item) =>
-          item.id === action.payload.id ? action.payload : item
-        ), // Update the specific payment
-      };
-
-    case FETCH_PAYMENTS_FAILURE:
-    case ADD_PAYMENT_FAILURE:
-    case UPDATE_PAYMENT_FAILURE:
-      return { ...state, loading: false, error: action.payload }; // Set error
-
-    default:
-      return state;
-  }
-};
-
-export default paymentsReducer;
-
-
-
-
-// src/redux/actions.js
-
-import { fetchPayments as fetchPaymentsApi } from '../api/mockPaymentsApi'; // Import mock API function
-
-// Action types
-export const FETCH_PAYMENTS_REQUEST = 'FETCH_PAYMENTS_REQUEST';
-export const FETCH_PAYMENTS_SUCCESS = 'FETCH_PAYMENTS_SUCCESS';
-export const FETCH_PAYMENTS_FAILURE = 'FETCH_PAYMENTS_FAILURE';
-export const ADD_PAYMENT = 'ADD_PAYMENT';
-export const UPDATE_PAYMENT = 'UPDATE_PAYMENT';
-
-// Action creator for fetching payments
-export const fetchPayments = () => {
-  return async (dispatch) => {
-    dispatch({ type: FETCH_PAYMENTS_REQUEST }); // Dispatch request action
-    try {
-      const data = await fetchPaymentsApi(); // Call the mock API
-      dispatch({ type: FETCH_PAYMENTS_SUCCESS, payload: data }); // Dispatch success action with data
-    } catch (err) {
-      dispatch({ type: FETCH_PAYMENTS_FAILURE, payload: err.message }); // Dispatch failure action with error
-    }
-  };
-};
-
-// Action creator for adding a payment
-export const addPayment = (payment) => {
-  return {
-    type: ADD_PAYMENT,
-    payload: payment, // The new payment data to be added
-  };
-};
-
-// Action creator for updating a payment
-export const updatePayment = (payment) => {
-  return {
-    type: UPDATE_PAYMENT,
-    payload: payment, // The updated payment data
-  };
-};
-
-// Initial state for the payments reducer
-const initialState = {
-  loading: false,
-  paymentsData: [], // Array to hold payments data
-  error: null, // To hold any error message
-};
-
-// Payments reducer
-const paymentsReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case FETCH_PAYMENTS_REQUEST:
-      return { ...state, loading: true, error: null }; // Set loading to true
-    case FETCH_PAYMENTS_SUCCESS:
-      return { ...state, loading: false, paymentsData: action.payload }; // Set payments data
-    case FETCH_PAYMENTS_FAILURE:
-      return { ...state, loading: false, error: action.payload }; // Set error
-    case ADD_PAYMENT:
-      return { ...state, paymentsData: [...state.paymentsData, action.payload] }; // Add new payment
-    case UPDATE_PAYMENT:
-      return {
-        ...state,
-        paymentsData: state.paymentsData.map((payment) =>
-          payment.activeRunId === action.payload.activeRunId ? action.payload : payment
-        ), // Update payment by activeRunId
-      };
-    default:
-      return state; // Return current state if no action matches
-  }
-};
-
-export default paymentsReducer;
-
-
-// src/api/paymentApi.js
-
-import axios from 'axios';
-
-// Mock API function to simulate fetching payments data
-export const fetchPayments = async () => {
-  // Mock data to simulate an API response
-  const mockData = [
-    {
-      name: "Example Name",
-      sourceSystem: "System A",
-      dateHarvested: "2024-10-10",
-      paymentsCount: 100,
-      activeRunId: 45908,
-    },
-    {
-      name: "Another Name",
-      sourceSystem: "System B",
-      dateHarvested: "2024-10-09",
-      paymentsCount: 0,
-      activeRunId: null,
-    },
-    {
-      name: "Third Name",
-      sourceSystem: "System C",
-      dateHarvested: "2024-10-08",
-      paymentsCount: 50,
-      activeRunId: 45909,
-    },
-    {
-      name: "Fourth Name",
-      sourceSystem: "System D",
-      dateHarvested: "2024-10-07",
-      paymentsCount: 75,
-      activeRunId: 45910,
-    },
-    {
-      name: "Fifth Name",
-      sourceSystem: "System E",
-      dateHarvested: "2024-10-06",
-      paymentsCount: 30,
-      activeRunId: 45911,
-    },
-    {
-      name: "Sixth Name",
-      sourceSystem: "System F",
-      dateHarvested: "2024-10-05",
-      paymentsCount: 20,
-      activeRunId: null,
-    },
-  ];
-
-  return new Promise((resolve) => {
-    // Simulate a delay for the mock API call
-    setTimeout(() => {
-      resolve(mockData);
-    }, 1000); // Simulates a 1 second API response time
-  });
-
-  // Uncomment the following code for the real API call when ready:
-  /*
-  try {
-    const response = await axios.get('https://api.example.com/payments');
-    return response.data; // Assuming the API response contains the payment data directly
-  } catch (error) {
-    console.error('Error fetching payments:', error);
-    throw error; // Rethrow the error for handling in the action
-  }
-  */
-};
-
-// Mock API function to simulate adding a payment
-export const addPaymentApi = async (paymentData) => {
-  // Simulate a delay
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const newPayment = {
-        ...paymentData,
-        id: Math.random().toString(36).substr(2, 9), // Generate a random ID for the new payment
-      };
-      resolve(newPayment);
-    }, 1000); // Simulates a 1 second API response time
-  });
-
-  // Uncomment the following code for the real API call when ready:
-  /*
-  try {
-    const response = await axios.post('https://api.example.com/payments', paymentData);
-    return response.data; // Assuming the API response contains the newly added payment
-  } catch (error) {
-    console.error('Error adding payment:', error);
-    throw error; // Rethrow the error for handling in the action
-  }
-  */
-};
-
-// Mock API function to simulate updating a payment
-export const updatePaymentApi = async (paymentData) => {
-  // Simulate a delay
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const updatedPayment = {
-        ...paymentData,
-        updatedAt: new Date().toISOString(), // Add an updated timestamp
-      };
-      resolve(updatedPayment);
-    }, 1000); // Simulates a 1 second API response time
-  });
-
-  // Uncomment the following code for the real API call when ready:
-  /*
-  try {
-    const response = await axios.put(`https://api.example.com/payments/${paymentData.id}`, paymentData);
-    return response.data; // Assuming the API response contains the updated payment
-  } catch (error) {
-    console.error('Error updating payment:', error);
-    throw error; // Rethrow the error for handling in the action
-  }
-  */
-};
-
-
-
-const PaymentsData = () => {
-  const dispatch = useDispatch();
-  const { paymentsData, loading, error } = useSelector((state) => state.payments); 
-
-  useEffect(() => {
-    dispatch(fetchPayments()); 
-  }, [dispatch]);
+export default MapTo("ECCHub/components/nextgen/session-timeout")(SessionTimeout, SessionTimeoutConfig);
