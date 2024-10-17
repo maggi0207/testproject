@@ -1,17 +1,24 @@
-// Handle different actions when `selectedValueChange` event occurs
+// Define handlers for each action
+  const actionHandlers = {
+    edit: (item) => {
+      console.log(`Editing ${item.name}`);
+      // Additional logic for edit
+    },
+    viewDetails: (item) => {
+      console.log(`Viewing details of ${item.name}`);
+      // Additional logic for viewing details
+    },
+    delete: (item) => {
+      console.log(`Deleting ${item.name}`);
+      // Additional logic for delete
+    }
+  };
+
+  // Handle action based on the value
   const handleSelectedValueChange = (action, item) => {
-    switch (action) {
-      case 'edit':
-        console.log(`Editing ${item.name}`);
-        break;
-      case 'viewDetails':
-        console.log(`Viewing details of ${item.name}`);
-        break;
-      case 'delete':
-        console.log(`Deleting ${item.name}`);
-        break;
-      default:
-        console.log(`Unknown action for ${item.name}`);
+    const actionHandler = actionHandlers[action];
+    if (actionHandler) {
+      actionHandler(item);
     }
     setSelectedAction(action);
   };
