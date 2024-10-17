@@ -1,3 +1,14 @@
+
+{
+  "pagination": {
+    "pageNumber": 1,
+    "itemsPerPage": 10,
+    "sortBy": "name",  // Change this as needed
+    "sortDir": "ASC"  // Change this as needed
+  }
+}
+
+
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchData } from './actions';
