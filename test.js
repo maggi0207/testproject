@@ -1,24 +1,59 @@
-// Define handlers for each action
-  const actionHandlers = {
-    edit: (item) => {
-      console.log(`Editing ${item.name}`);
-      // Additional logic for edit
-    },
-    viewDetails: (item) => {
-      console.log(`Viewing details of ${item.name}`);
-      // Additional logic for viewing details
-    },
-    delete: (item) => {
-      console.log(`Deleting ${item.name}`);
-      // Additional logic for delete
-    }
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchData } from './actions';
+import { Table, Toolbar, Paginator } from 'your-component-library'; // Adjust based on your library
+
+const PaginatorTable = () => {
+  const dispatch = useDispatch();
+  const { data, totalItems } = useSelector((state) => state.dataReducer);
+  
+  const paginatorContainerRef = React.createRef();
+  
+  const [page, setPage] = React.useState(1);
+  const [itemsPerPage, setItemsPerPage] = React.useState(10);
+  
+  useEffect(() => {
+    dispatch(fetchData(page, itemsPerPage));
+  }, [page, itemsPerPage, dispatch]);
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
   };
 
-  // Handle action based on the value
-  const handleSelectedValueChange = (action, item) => {
-    const actionHandler = actionHandlers[action];
-    if (actionHandler) {
-      actionHandler(item);
-    }
-    setSelectedAction(action);
+  const handleItemsPerPageChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setPage(1); // Reset to the first page
   };
+
+  const columns = [
+    { key: 'id', label: 'S.No', align: 'left' },
+    { key: 'price', label: 'Price', align: 'center' },
+    { key: 'lastDate', label: 'Date' },
+  ];
+
+  return (
+    <>
+      <Toolbar aria-label="Table paginator">
+        <div ref={paginatorContainerRef} className="wf-u-text-align-right" />
+      </Toolbar>
+
+      <Table
+        columns={columns}
+        data={data}
+        rowKey="id"
+        paginator={{
+          page,
+          itemsPerPage,
+          totalItems, // Used to determine total pages
+          pageSizes: [10, 20, 30, 40, 50],
+          onPageChange: handlePageChange,
+          onItemsPerPageChange: handleItemsPerPageChange,
+          'aria-label': 'Paginator',
+          container: paginatorContainerRef,
+        }}
+      />
+    </>
+  );
+};
+
+export default PaginatorTable;
