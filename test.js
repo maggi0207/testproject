@@ -8,6 +8,18 @@
   }
 }
 
+const handleSearch = useCallback(
+    debounce((query) => {
+      dispatch(fetchData(query));
+    }, 500),
+    []
+  );
+
+  const onSearchInputChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    handleSearch(query);
+  };
 
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
