@@ -1,4 +1,23 @@
 
+
+  const formData = new FormData();
+    formData.append('file', selectedFile);  // 'file' is the key, selectedFile is the actual file
+
+    try {
+      const response = await axios.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.status === 200) {
+        setUploadStatus('Upload successful!');
+      }
+    } catch (error) {
+      setUploadStatus('Upload failed!');
+      console.error('Error uploading file:', error);
+    }
+
 {
   "pagination": {
     "pageNumber": 1,
