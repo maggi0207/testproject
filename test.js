@@ -1,114 +1,76 @@
+// userActivitySlice.js
+const initialState = {
+  isUserActive: true,
+};
 
+// Action types
+const USER_ACTIVE = 'USER_ACTIVE';
+const USER_INACTIVE = 'USER_INACTIVE';
 
-  const formData = new FormData();
-    formData.append('file', selectedFile);  // 'file' is the key, selectedFile is the actual file
+// Action creators
+export const setUserActive = () => ({
+  type: USER_ACTIVE,
+});
 
-    try {
-      const response = await axios.post('/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+export const setUserInactive = () => ({
+  type: USER_INACTIVE,
+});
 
-      if (response.status === 200) {
-        setUploadStatus('Upload successful!');
-      }
-    } catch (error) {
-      setUploadStatus('Upload failed!');
-      console.error('Error uploading file:', error);
-    }
-
-{
-  "pagination": {
-    "pageNumber": 1,
-    "itemsPerPage": 10,
-    "sortBy": "name",  // Change this as needed
-    "sortDir": "ASC"  // Change this as needed
+// Reducer
+const userActivityReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case USER_ACTIVE:
+      return { ...state, isUserActive: true };
+    case USER_INACTIVE:
+      return { ...state, isUserActive: false };
+    default:
+      return state;
   }
-}
+};
 
-const debounce = (fn, delay) => {
-  let timeoutId;
-  return (...args) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      fn(...args);
-    }, delay);
+export default userActivityReducer;
+
+
+// userActivityTracker.js
+export const initializeUserActivityListeners = (onUserActive, onUserInactive) => {
+  let activityTimeout;
+
+  const resetInactivityTimeout = () => {
+    clearTimeout(activityTimeout);
+    onUserActive(); // Dispatch active status
+    activityTimeout = setTimeout(() => {
+      onUserInactive(); // Dispatch inactive status
+    }, 300000); // 5-minute idle timer (adjust as needed)
+  };
+
+  // Register event listeners for user interactions
+  window.addEventListener('mousemove', resetInactivityTimeout);
+  window.addEventListener('keypress', resetInactivityTimeout);
+  window.addEventListener('scroll', resetInactivityTimeout);
+
+  resetInactivityTimeout(); // Start the initial timeout
+
+  return () => {
+    // Cleanup event listeners
+    window.removeEventListener('mousemove', resetInactivityTimeout);
+    window.removeEventListener('keypress', resetInactivityTimeout);
+    window.removeEventListener('scroll', resetInactivityTimeout);
   };
 };
 
-const handleSearch = useCallback(
-  debounce((query) => {
-    dispatch(fetchData(query));
-  }, 500),
-  []
-);
+const dispatch = useDispatch();
 
-const onSearchInputChange = (e) => {
-  const query = e.target.value;
-  setSearchQuery(query);
-  handleSearch(query);
-};
-
-
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchData } from './actions';
-import { Table, Toolbar, Paginator } from 'your-component-library'; // Adjust based on your library
-
-const PaginatorTable = () => {
-  const dispatch = useDispatch();
-  const { data, totalItems } = useSelector((state) => state.dataReducer);
-  
-  const paginatorContainerRef = React.createRef();
-  
-  const [page, setPage] = React.useState(1);
-  const [itemsPerPage, setItemsPerPage] = React.useState(10);
-  
   useEffect(() => {
-    dispatch(fetchData(page, itemsPerPage));
-  }, [page, itemsPerPage, dispatch]);
+    // Initialize user activity listeners and dispatch Redux actions
+    const cleanupListeners = initializeUserActivityListeners(
+      () => dispatch(setUserActive()),
+      () => dispatch(setUserInactive())
+    );
 
-  const handlePageChange = (newPage) => {
-    setPage(newPage);
-  };
+    // Cleanup on unmount
+    return () => {
+      cleanupListeners();
+    };
+  }, [dispatch]);
 
-  const handleItemsPerPageChange = (newSize) => {
-    setItemsPerPage(newSize);
-    setPage(1); // Reset to the first page
-  };
-
-  const columns = [
-    { key: 'id', label: 'S.No', align: 'left' },
-    { key: 'price', label: 'Price', align: 'center' },
-    { key: 'lastDate', label: 'Date' },
-  ];
-
-  return (
-    <>
-      <Toolbar aria-label="Table paginator">
-        <div ref={paginatorContainerRef} className="wf-u-text-align-right" />
-      </Toolbar>
-
-      <Table
-        columns={columns}
-        data={data}
-        rowKey="id"
-        paginator={{
-          page,
-          itemsPerPage,
-          totalItems, // Used to determine total pages
-          pageSizes: [10, 20, 30, 40, 50],
-          onPageChange: handlePageChange,
-          onItemsPerPageChange: handleItemsPerPageChange,
-          'aria-label': 'Paginator',
-          container: paginatorContainerRef,
-        }}
-      />
-    </>
-  );
-};
-
-export default PaginatorTable;
+const isUserActive = useSelector((state) => state.userActivity.isUserActive);
