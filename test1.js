@@ -1,4 +1,16 @@
-
+const modifiedCartDetailsResult = {
+  ...cartDetailsResult,
+  data: {
+    ...cartDetailsResult.data,
+    cart: {
+      ...cartDetailsResult.data.cart,
+      cartHeader: {
+        ...cartDetailsResult.data.cart.cartHeader,
+        sourceSystem: undefined 
+      }
+    }
+  }
+};
  const cartDetailsResult = {
   data: {
     cart: {
