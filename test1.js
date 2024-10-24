@@ -1,3 +1,27 @@
+
+ const lines = [
+      {
+        lineActivityType: 'CPC',
+        itemsInfo: [
+          {
+            cartItems: {
+              cartItem: []  // No items in the cart
+            }
+          }
+        ]
+      },
+      {
+        lineActivityType: 'FEA',
+        itemsInfo: [
+          {
+            cartItems: {
+              cartItem: []  // No items in the cart
+            }
+          }
+        ]
+      }
+    ];
+
 import { useDispatch } from 'react-redux';
 import { hide } from 'onevzsoemfecommon/AppLoaderActions';
 import PreviewBill from 'onevzsoemfecommon/PreviewBill';
