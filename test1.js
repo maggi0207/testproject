@@ -1,26 +1,38 @@
 
- const lines = [
-      {
-        lineActivityType: 'CPC',
-        itemsInfo: [
+ const cartDetailsResult = {
+  data: {
+    cart: {
+      lineDetails: {
+        lineInfo: [
           {
-            cartItems: {
-              cartItem: []  // No items in the cart
-            }
+            lineActivityType: 'CPC',
+            itemsInfo: [
+              {
+                cartItems: {
+                  cartItem: [] 
+                }
+              }
+            ]
+          },
+          {
+            lineActivityType: 'FEA',
+            itemsInfo: [
+              {
+                cartItems: {
+                  cartItem: [] 
+                }
+              }
+            ]
           }
         ]
       },
-      {
-        lineActivityType: 'FEA',
-        itemsInfo: [
-          {
-            cartItems: {
-              cartItem: []  // No items in the cart
-            }
-          }
-        ]
+      cartHeader: {
+        sourceSystem: 'SomeSource'
       }
-    ];
+    }
+  }
+};
+
 
 import { useDispatch } from 'react-redux';
 import { hide } from 'onevzsoemfecommon/AppLoaderActions';
