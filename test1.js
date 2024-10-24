@@ -1,3 +1,44 @@
+const dummyData = [
+  {
+    runId: "001",
+    name: "Collection A",
+    startDate: "2024/10/10 08:00 AM",
+    endDate: "2024/10/10 12:00 PM",
+    status: "inprogress",
+    matches: 120,
+    mismatches: 5,
+    actions: "View Details"
+  },
+  {
+    runId: "002",
+    name: "Collection B",
+    startDate: "2024/10/09 09:00 AM",
+    endDate: "2024/10/09 01:00 PM",
+    status: "cancelled",
+    matches: 85,
+    mismatches: 20,
+    actions: "View Details"
+  },
+  {
+    runId: "003",
+    name: "Collection C",
+    startDate: "2024/10/08 10:30 AM",
+    endDate: "2024/10/08 02:30 PM",
+    status: "scheduled",
+    matches: 150,
+    mismatches: 8,
+    actions: "View Details"
+  }
+];
+
+// Format the dates using moment.js
+dummyData.forEach(item => {
+  item.startDate = moment(item.startDate).format("YYYY/MM/DD LT");
+  item.endDate = moment(item.endDate).format("YYYY/MM/DD LT");
+});
+
+
+
 '?customerType=N&locationCode=0026301&salesRepId=ENC&newCustomerWithoutCredit=true&salesRepUserId=motrn1&email=ravidas@gmail.com'
  const queryParam = window.location.search;
       if (
