@@ -1,3 +1,10 @@
+'?customerType=N&locationCode=0026301&salesRepId=ENC&newCustomerWithoutCredit=true&salesRepUserId=motrn1&email=ravidas@gmail.com'
+ const queryParam = window.location.search;
+      if (
+        queryParam?.indexOf('vhi=Y') !== -1 &&
+        lines?.selected < 1 &&
+        lines?.assigned < 1 &&
+
 const modifiedCartDetailsResult = {
   ...cartDetailsResult,
   data: {
@@ -12,6 +19,12 @@ const modifiedCartDetailsResult = {
   }
 };
  const cartDetailsResult = {
+
+    const queryParam = window.location.search;
+      if (
+        queryParam?.indexOf('vhi=Y') !== -1 &&
+        lines?.selected < 1 &&
+        lines?.assigned < 1 &&
   data: {
     cart: {
       lineDetails: {
