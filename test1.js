@@ -5,3 +5,8 @@ const scmClearQuerPParam =
         body: { cartId: '', enableAssistedTagging: true, selectedMtn: sessionStorage.getItem('activeMTN') },
       });
     }
+ Object.defineProperty(window, 'location', {
+      value: {
+        search: '?foo=bar&scr=Y',
+      },
+    });
