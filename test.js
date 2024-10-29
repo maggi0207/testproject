@@ -1,5 +1,13 @@
 // Debounced search handler
-  const debouncedSearch = debounce((query) => {
+  const customDebounce = (func, delay) => {
+    let debounceTimer;
+    return (...args) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => func(...args), delay);
+    };
+  };
+    
+onst debouncedSearch = debounce((query) => {
     setPage(1); // Reset to first page on new search
     setSearchQuery(query);
   }, 500);
