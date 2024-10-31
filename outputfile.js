@@ -4,15 +4,13 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import withTheme from './withTheme';
 
-// MockComponent to wrap with HOC
-const MockComponent = ({ surface, color, className, children }) => (
-  <div data-testid="mock-component" className={className} style={{ backgroundColor: color }}>
+function MockComponent({surface,  color, className, children }) {
+  return <div data-testid="mock-component" className={className} style={{ backgroundColor: color }}>
     {children}
   </div>
-);
+}
 
 MockComponent.propTypes = {
-  surface: PropTypes.string,
   color: PropTypes.string,
   className: PropTypes.string,
   children: PropTypes.node,
