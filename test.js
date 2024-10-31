@@ -1,29 +1,40 @@
-// Debounced search handler
-  const customDebounce = (func, delay) => {
-    let debounceTimer;
-    return (...args) => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => func(...args), delay);
-    };
-  };
-    
-onst debouncedSearch = debounce((query) => {
-    setPage(1); // Reset to first page on new search
-    setSearchQuery(query);
-  }, 500);
+import React from 'react';
+import PropTypes from 'prop-types';
+import './hoc-theme.css';
 
-  // Handle search input change
-  const handleSearchChange = (event) => {
-    const query = event.target.value;
-    debouncedSearch(query);
-  };
+function withTheme(WrappedComponent) {
+  const isDark = window?.mfe?.scmDeviceMfeEnable && window?.mfe?.isDark;
+  const wrapper = (props) => (
+    <WrappedComponent
+      {...props}
+      surface={isDark ? 'dark' : 'light'}
+      color={isDark ? '#ffffff' : props.color}
+      className={isDark ? `${props.className} dark-theme` : props.className}
+    >
+      {props.children}
+    </WrappedComponent>
+  );
+  return wrapper;
+}
 
-  // Filter and paginate data
-  const filteredData = useMemo(() => {
-    const filtered = initialData.filter((item) =>
-      item.id.toString().includes(searchQuery)
-    );
-    const start = (page - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    return filtered.slice(start, end);
-  }, [initialData, searchQuery, page]);
+withTheme.propTypes = {
+  chidren: PropTypes.any,
+  className: PropTypes.string,
+  onOpenedChange: PropTypes.func,
+  theme: PropTypes.string,
+};
+
+export default withTheme;
+
+import React from 'react';
+import { render } from '@testing-library/react';
+import withTheme from './withTheme';
+
+describe('withTheme component render', () => {
+  const props = {
+  };
+  test('HOC Component should render', () => {
+    render(<withTheme {...props} />);
+  });
+});
+
