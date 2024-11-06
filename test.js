@@ -1,201 +1,152 @@
-import styled from 'styled-components';
-import { Button } from '@vds/buttons';
-import PropTypes from 'prop-types';
-import { useState } from 'react';
-import { getQueryParamByName } from 'onevzsoemfeframework/DomService';
-import { getAssistedCradleProperty } from 'onevzsoemfeframework/AssistedCradleService';
-import IncompatibleModal from './IncompatibleModal';
+import { fireEvent, render, screen } from '../../../modules/test-utils/renderHelper';
+import Footer from '../Footer';
+import rootReducer from '../../../modules/store/reducer';
+import { rootSaga } from '../../../modules/store/saga';
 
-const bgColor = window?.mfe?.scmDeviceMfeEnable && window?.mfe?.acssThemeProps?.background;
-const isDark = window?.mfe?.scmDeviceMfeEnable && window?.mfe?.isDark;
-const FooterArea = styled.div`
-  background-color: ${isDark ? bgColor : '#ffffff'};
-  bottom: 0px;
-  display: flex;
-  flex-wrap: wrap;
-  width: 252px;
-  button:enabled:focus {
-    color: white;
-  }
-`;
+jest.mock(
+  'onevzsoemfeframework/AssistedCradleService',
+  () => ({
+    __esModule: true,
+    default: jest.fn(() => ({})),
+    getAssistedCradleProperty: () => ['TRUE'],
+  }),
+  { virtual: true },
+);
 
-function Footer(props) {
-  const {
-    btnLabel,
-    callDeviceAddToCart,
-    isCartBtnEnable,
-    deviceFromCart,
-    isDWOS,
-    disableUpdateBtn,
-    removeLines,
-    disableUpdateButtonSimFlow,
-    isPdpUpdated,
-    ispuItemInCart,
-    navigateToIspu,
-    isDropshipDisabled,
-  } = props;
-  const { isPromoEligible = true } = props;
-  const [inEligibleDevice, setIinEligibleDevice] = useState(false);
-  const prospectByodFlow = getQueryParamByName('prospectByodFlow');
-  const prospectByodFlowcompitable = getQueryParamByName('ByodDeviceCompitable');
-  const isDWOSFlow = getQueryParamByName('isDWOS') || ''; // for DWOS flow we are sending Y
-  const [isDeviceCompatible] = getAssistedCradleProperty(['isDeviceCompatible']);
-  const isSecondNumDfill = sessionStorage.getItem('isSecondNumDfill');
-  const enableInEligibleDevice = () => {
-    setIinEligibleDevice(!inEligibleDevice);
-  };
-  const handleAddDeviceCall = () => {
-    if (deviceFromCart || (deviceFromCart && !isDWOS)) {
-      callDeviceAddToCart();
-    } else {
-      AddDeviceCall();
-    }
-  };
-  const handleModal = () => {
-    props?.setSecondNumberWarningModal(true);
-  };
-  const AddDeviceCall = () => {
-    if (
-      (isPromoEligible === true && !(prospectByodFlow === 'false' && prospectByodFlowcompitable === 'false')) ||
-      isDWOSFlow === 'Y'
-    ) {
-      callDeviceAddToCart();
-    } else if (
-      (((prospectByodFlow === null || prospectByodFlow === 'false') && isPromoEligible === false) ||
-        (prospectByodFlow === 'false' && prospectByodFlowcompitable === 'false') ||
-        (prospectByodFlow === 'true' && prospectByodFlowcompitable === 'false')) &&
-      isDeviceCompatible === 'TRUE'
-    ) {
-      enableInEligibleDevice();
-    } else {
-      callDeviceAddToCart();
-    }
-  };
-  return (
-    <>
-      <FooterArea>
-        {inEligibleDevice && (
-          <IncompatibleModal
-            showModal={inEligibleDevice}
-            setIinEligibleDevice={setIinEligibleDevice}
-            onAddDeviceToCart={callDeviceAddToCart}
-            activeMtn={props.activeMtn}
-            onClose={enableInEligibleDevice}
-          />
-        )}
-        {(btnLabel === 'Add to Cart' ||
-          btnLabel === 'Ship It' ||
-          btnLabel === 'Update' ||
-          btnLabel === 'BYTD' ||
-          btnLabel === 'Pick Up') &&
-          !deviceFromCart &&
-          !isSecondNumDfill && (
-            <>
-              {isDropshipDisabled && <div>This item is unavailable.</div>}
-              <Button
-                width='154px'
-                size='large'
-                inverted
-                secondary
-                surface={isDark ? 'dark' : 'light'}
-                onClick={props?.checkSecondNumberFlag ? handleModal : handleAddDeviceCall}
-                disabled={
-                  !isCartBtnEnable ||
-                  disableUpdateButtonSimFlow ||
-                  (props?.dpEligibilityCallFailure && props?.contractType === 'DEVICE_PAYMENT') ||
-                  isDropshipDisabled
-                }
-                data-track={btnLabel}
-              >
-                {btnLabel}
-              </Button>
-            </>
-          )}
-        {btnLabel === 'BYOD' && !deviceFromCart && !isSecondNumDfill && (
-          <Button
-            width='154px'
-            size='large'
-            inverted
-            secondary
-            disabled={!props?.enableBYODbtn || disableUpdateButtonSimFlow}
-            onClick={callDeviceAddToCart}
-            data-track={btnLabel}
-          >
-            {btnLabel}
-          </Button>
-        )}
+let renderComponent;
 
-        {btnLabel === 'Find Stores' && !deviceFromCart && (
-          <Button size='large' disabled={!isCartBtnEnable} data-track={btnLabel}>
-            {btnLabel}
-          </Button>
-        )}
-      </FooterArea>
-      {(deviceFromCart || isSecondNumDfill) && (
-        <FooterArea>
-          <>
-            {!isSecondNumDfill && (
-              <Button
-                inverted
-                secondary
-                size='large'
-                data-track='Remove'
-                label='Remove'
-                data-testid='remove'
-                surface={isDark ? 'dark' : 'light'}
-                style={{ marginRight: '10px', marginBottom: '10px', width: '154px' }}
-                onClick={removeLines}
-              >
-                Remove
-              </Button>
-            )}
-            {((!isDWOS && !ispuItemInCart) || isSecondNumDfill) && (
-              <Button
-                inverted
-                secondary
-                size='large'
-                style={{ marginBottom: '10px', width: '154px' }}
-                data-track='Update'
-                disabled={disableUpdateBtn || disableUpdateButtonSimFlow}
-                label='Update'
-                surface={isDark ? 'dark' : 'light'}
-                data-testid='update'
-                onClick={handleAddDeviceCall}
-              >
-                Update
-              </Button>
-            )}
-            {ispuItemInCart && !isPdpUpdated && (
-              <Button
-                inverted
-                secondary
-                size='large'
-                style={{ marginBottom: '10px', width: '154px' }}
-                disabled={!isCartBtnEnable}
-                data-track='Find Stores'
-                surface={isDark ? 'dark' : 'light'}
-                onClick={navigateToIspu}
-              >
-                Find Stores
-              </Button>
-            )}
-          </>
-        </FooterArea>
-      )}
-    </>
-  );
-}
-export default Footer;
+describe('<Footer/>', () => {
+  beforeAll(() => {
+    window.mfe = { scmDeviceMfeEnable: true , isDark : true, acssThemeProps: {background: "#00000"}};
+   renderComponent = (
+      buttonLabel,
+      callDeviceAddToCart,
+      isCartBtnEnable,
+      deviceFromCart,
+      isDWOS,
+      disableUpdateBtn,
+      removeLines,
+      isPromoEligible,
+      enableBYODbtn,
+    ) => {
+      render(
+        <Footer
+          btnLabel={buttonLabel}
+          callDeviceAddToCart={callDeviceAddToCart}
+          isCartBtnEnable={isCartBtnEnable}
+          deviceFromCart={deviceFromCart}
+          isDWOS={isDWOS}
+          disableUpdateBtn={disableUpdateBtn}
+          removeLines={removeLines}
+          isPromoEligible={isPromoEligible}
+          enableBYODbtn={enableBYODbtn}
+        />,
+        {
+          reducers: rootReducer,
+          sagas: rootSaga,
+        },
+      );
+    };
+  });
+  describe('button should be disabled if isCartBtnEnable is false', () => {
+   
+    const mockCallDeviceAddToCart = jest.fn();
+    const mockCallRemoveLines = jest.fn();
+    it("should test 'Add to Cart' button should be disabled", () => {
+      renderComponent('Add to Cart', mockCallDeviceAddToCart, false, false, true, false, mockCallRemoveLines, false);
+      expect(
+        screen.getByRole('button', {
+          name: /add to cart/i,
+        }),
+      ).toBeDisabled();
+    });
 
-Footer.propTypes = {
-  btnLabel: PropTypes.string,
-  callDeviceAddToCart: PropTypes.func,
-  isCartBtnEnable: PropTypes.bool,
-  activeMtn: PropTypes.any,
-  isPromoEligible: PropTypes.bool,
-  enableBYODbtn: PropTypes.bool,
-  isPdpUpdated: PropTypes.bool,
-  ispuItemInCart: PropTypes.bool,
-  navigateToIspu: PropTypes.func,
-  dpEligibilityCallFailure: PropTypes.bool,
-};
+    it("should test 'Ship It' button should be disabled", () => {
+      renderComponent('Ship It', mockCallDeviceAddToCart, false, false, true, false, mockCallRemoveLines, false);
+      expect(
+        screen.getByRole('button', {
+          name: /Ship It/i,
+        }),
+      ).toBeDisabled();
+    });
+
+    it("should test 'Find Stores' button should be disabled", () => {
+      renderComponent('Find Stores', mockCallDeviceAddToCart, false, false, true, false, mockCallRemoveLines, false);
+      expect(
+        screen.getByRole('button', {
+          name: /Find Stores/i,
+        }),
+      ).toBeDisabled();
+    });
+  });
+  describe('button click should call the function', () => {
+    beforeAll(() => {
+      window.mfe = { scmDeviceMfeEnable: false , isDark : true, acssThemeProps: {background: "#00000"}};
+    });
+    it("should test function should be called on clicking the 'Add to Cart' button", () => {
+      const mockCallDeviceAddToCart = jest.fn();
+      const mockCallRemoveLines = jest.fn();
+      renderComponent('Add to Cart', mockCallDeviceAddToCart, true, false, true, false, mockCallRemoveLines, true);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /add to cart/i,
+        }),
+      );
+      expect(mockCallDeviceAddToCart).toBeCalled();
+    });
+
+    it("should test function should be called on clicking the 'Ship It' button", () => {
+      const mockCallDeviceAddToCart = jest.fn();
+      const mockCallRemoveLines = jest.fn();
+      renderComponent('Ship It', mockCallDeviceAddToCart, true, false, true, false, mockCallRemoveLines, false);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /Ship It/i,
+        }),
+      );
+      expect(mockCallDeviceAddToCart).toBeCalledTimes(0);
+    });
+
+    it("should test function should be called on clicking the 'BYOD' button", () => {
+      const mockCallDeviceAddToCart = jest.fn();
+      const mockCallRemoveLines = jest.fn();
+      renderComponent('BYOD', mockCallDeviceAddToCart, true, false, true, false, true, mockCallRemoveLines);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /BYOD/i,
+        }),
+      );
+      expect(mockCallDeviceAddToCart).toBeCalledTimes(0);
+    });
+    describe('button click should call the function', () => {
+      it("should test function should be called on clicking the 'Remove' button", () => {
+        const mockCallDeviceAddToCart = jest.fn();
+        const mockCallRemoveLines = jest.fn();
+        renderComponent('Add to Cart', mockCallDeviceAddToCart, true, true, false, mockCallRemoveLines, false);
+        fireEvent.click(
+          screen.getByRole('button', {
+            name: /Remove/i,
+          }),
+        );
+      });
+    });
+  });
+  describe('test second number dfill', () => {
+    beforeEach(() => {
+      sessionStorage.setItem("isSecondNumDfill", true);
+    })
+    const mockCallDeviceAddToCart = jest.fn();
+    const mockCallRemoveLines = jest.fn();
+
+    it("should test 'Find Stores' button should be disabled", () => {
+      renderComponent('Find Stores', mockCallDeviceAddToCart, false, false, true, false, mockCallRemoveLines, false);
+      expect(
+        screen.getByRole('button', {
+          name: /Find Stores/i,
+        }),
+      ).toBeDisabled();
+    });
+  });
+  
+});
+
