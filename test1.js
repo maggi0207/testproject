@@ -47,4 +47,48 @@ const CommunicationNotificationPreferences = () => {
   );
 };
 
+$description-color: #666;
+
+.communication-preferences-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+
+  .communication-preferences-paper {
+    padding: 20px;
+    max-width: 600px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+
+    h6 {
+      font-weight: bold;
+    }
+
+    .preference-toggles-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+
+      .toggle-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .toggle-control {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 4px;
+
+          span {
+            color: $description-color;
+          }
+        }
+      }
+    }
+  }
+}
+
+
 export default CommunicationNotificationPreferences;
