@@ -1,6 +1,66 @@
+$primary-color: #3f51b5;
+$description-color: #666;
+$divider-color: #e0e0e0;
+
+.notification-preferences-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+
+  .notification-preferences-paper {
+    padding: 20px;
+    max-width: 500px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    
+    h6 {
+      font-weight: bold;
+    }
+
+    .notification-section {
+      margin-bottom: 16px;
+
+      .notification-description {
+        color: $description-color;
+        margin-top: 8px;
+      }
+
+      .toggle-section {
+        display: flex;
+        align-items: center;
+        margin-top: 8px;
+
+        .toggle-label {
+          flex: 1;
+          font-weight: 500;
+          margin-right: 8px;
+        }
+
+        .checkbox-section {
+          display: flex;
+          align-items: center;
+          margin-left: 16px;
+
+          span {
+            margin-left: 4px;
+          }
+        }
+      }
+    }
+
+    .divider {
+      height: 1px;
+      background-color: $divider-color;
+      margin: 16px 0;
+    }
+  }
+}
+
+
 import React, { useState } from 'react';
 import { Typography, Switch, Checkbox } from '@mui/material';
-import './EmailNotificationPreferences.css';
+import './EmailNotificationPreferences.scss';
 
 const EmailNotificationPreferences = () => {
   const [dailySummary, setDailySummary] = useState(true);
