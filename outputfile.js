@@ -1,31 +1,83 @@
 /* CommunicationNotificationPreferences.scss */
-.custom-switch {
-  & .MuiSwitch-switchBase.Mui-checked {
-    color: #fff;  /* Ball color when checked (white) */
+.custom-switch  {
+  width: 42px;
+  height: 26px;
+  padding: 0;
+
+  .MuiSwitch-switchBase {
+    padding: 0;
+    margin: 2px;
+    transition-duration: 300ms;
+
+    &.Mui-checked {
+      transform: translateX(16px);
+      color: #fff;
+
+      & + .MuiSwitch-track {
+        background-color: #65c466;
+        opacity: 1;
+        border: 0;
+      }
+
+      &.Mui-focusVisible + .MuiSwitch-track {
+        background-color: #2eca45;
+      }
+
+      &.Mui-disabled + .MuiSwitch-track {
+        opacity: 0.5;
+      }
+    }
+
+    &.Mui-focusVisible .MuiSwitch-thumb {
+      color: #33cf4d;
+      border: 6px solid #fff;
+    }
+
+    &.Mui-disabled .MuiSwitch-thumb {
+      color: #e0e0e0; // gray equivalent for disabled state
+    }
+
+    &.Mui-disabled + .MuiSwitch-track {
+      opacity: 0.7;
+    }
   }
 
-  & .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
-    background-color: #65C466;  /* Track color when checked (green) */
+  .MuiSwitch-thumb {
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
   }
 
-  /* Optional: Styling for when the switch is focused */
-  & .MuiSwitch-focusVisible .MuiSwitch-thumb {
-    color: #33cf4d; /* Focused thumb color */
-    border: 6px solid #fff; /* Border around thumb when focused */
+  .MuiSwitch-track {
+    border-radius: 50%;
+    background-color: #e9e9ea;
+    opacity: 1;
+    transition: background-color 500ms ease-in-out;
+
+    &.Mui-checked {
+      background-color: #65c466;
+    }
   }
 
-  /* Styling for disabled state */
-  & .MuiSwitch-switchBase.Mui-disabled + .MuiSwitch-track {
-    opacity: 0.5;  /* Track opacity when disabled */
-  }
+  &.dark {
+    .MuiSwitch-switchBase {
+      &.Mui-checked {
+        & + .MuiSwitch-track {
+          background-color: #2eca45;
+        }
+      }
 
-  & .MuiSwitch-switchBase.Mui-disabled {
-    color: #bdbdbd;  /* Thumb color when disabled */
-  }
+      &.Mui-disabled + .MuiSwitch-track {
+        opacity: 0.3;
+      }
+    }
 
-  /* Optional: Track color when the switch is off */
-  & .MuiSwitch-track {
-    background-color: #E9E9EA;  /* Default track color */
-    transition: background-color 0.3s ease;
+    .MuiSwitch-track {
+      background-color: #39393d;
+    }
+
+    .MuiSwitch-thumb {
+      color: #757575; // Grey for dark mode disabled thumb
+    }
   }
 }
