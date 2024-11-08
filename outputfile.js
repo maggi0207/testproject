@@ -1,4 +1,5 @@
- <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
+const CustomSwitch = styled((props) => (
+  <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
 ))(({ theme }) => ({
   width: 42,
   height: 26,
