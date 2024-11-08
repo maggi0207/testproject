@@ -1,22 +1,25 @@
+import React from 'react';
+import { Switch, withStyles } from '@material-ui/core';
+
 const AntSwitch = withStyles((theme) => ({
   root: {
-    width: 28,
-    height: 16,
+    width: 42, // Set width to 42px
+    height: 24, // Set height to 24px
     padding: 0,
     display: 'flex',
     '&:active': {
       '& $thumb': {
-        width: 15,
+        width: 20, // Adjust thumb width when active
       },
       '& $switchBase.Mui-checked': {
-        transform: 'translateX(9px)',
+        transform: 'translateX(18px)', // Adjust translation for checked state
       },
     },
   },
   switchBase: {
-    padding: 2,
+    padding: 2, // Adjust padding for larger switch
     '&$checked': {
-      transform: 'translateX(12px)',
+      transform: 'translateX(20px)', // Adjust translation for checked state
       color: '#fff',
       '& + $track': {
         opacity: 1,
@@ -29,15 +32,15 @@ const AntSwitch = withStyles((theme) => ({
   },
   thumb: {
     boxShadow: '0 2px 4px 0 rgba(0, 35, 11, 0.2)',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 20, // Increased thumb width
+    height: 20, // Increased thumb height
+    borderRadius: '50%', // Make thumb circular
     transition: theme.transitions.create(['width'], {
       duration: 200,
     }),
   },
   track: {
-    borderRadius: 8,
+    borderRadius: 12, // Adjusted border radius for larger track
     opacity: 1,
     backgroundColor: 'rgba(0,0,0,.25)',
     boxSizing: 'border-box',
