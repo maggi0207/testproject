@@ -43,6 +43,14 @@ const notificationSlice = createSlice({
         updateEmailPreferenceToggle: (state, action) => {
             const { key, value } = action.payload;
             state.emailPreferences.current[key] = value;
+
+            // Mutually exclusive behavior between dailySummary and instantNotification
+            if (key === 'dailySummary' && value === true) {
+                state.emailPreferences.current.instantNotification = false;
+            } else if (key === 'instantNotification' && value === true) {
+                state.emailPreferences.current.dailySummary = false;
+            }
+
             state.isModified = checkIfModified(state);
         },
         updateCommunicationPreferenceToggle: (state, action) => {
