@@ -26,19 +26,31 @@ const initialState = {
     isModified: false,
 };
 
- const handleToggle = (key) => {
-        const newValue = !emailPreferences[key];
-        
-        if (key === 'dailySummary' && newValue) {
-            // If 'dailySummary' is turned on, automatically turn off 'instantNotification'
+const handleToggle = (key) => {
+    const newValue = !emailPreferences[key];
+    
+    if (key === 'dailySummary') {
+        if (newValue) {
+            // Turn on 'dailySummary' and ensure 'instantNotification' is off
             dispatch(updateEmailPreferenceToggle({ key: 'instantNotification', value: false }));
-        } else if (key === 'instantNotification' && newValue) {
-            // If 'instantNotification' is turned on, automatically turn off 'dailySummary'
-            dispatch(updateEmailPreferenceToggle({ key: 'dailySummary', value: false }));
+        } else {
+            // If turning off 'dailySummary', make sure 'instantNotification' is on
+            dispatch(updateEmailPreferenceToggle({ key: 'instantNotification', value: true }));
         }
-        
-        dispatch(updateEmailPreferenceToggle({ key, value: newValue }));
-    };
+    } else if (key === 'instantNotification') {
+        if (newValue) {
+            // Turn on 'instantNotification' and ensure 'dailySummary' is off
+            dispatch(updateEmailPreferenceToggle({ key: 'dailySummary', value: false }));
+        } else {
+            // If turning off 'instantNotification', make sure 'dailySummary' is on
+            dispatch(updateEmailPreferenceToggle({ key: 'dailySummary', value: true }));
+        }
+    }
+
+    // Finally, update the current key with its new value
+    dispatch(updateEmailPreferenceToggle({ key, value: newValue }));
+};
+
 
 const notificationSlice = createSlice({
     name: 'notification',
