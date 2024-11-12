@@ -1,113 +1,40 @@
-// notificationSlice.js
-import { createSlice } from '@reduxjs/toolkit';
+import React, { useEffect, useState } from 'react';
+import ReactDiffViewer from 'react-diff-viewer';
 
-const initialState = {
-    // Separate initial and current values for each section
-    emailPreferences: {
-        initial: {
-            dailySummary: true,
-            instantNotification: false,
-        },
-        current: {
-            dailySummary: true,
-            instantNotification: false,
-        },
-    },
-    communicationPreferences: {
-        initial: {
-            emailNotification: true,
-            webNotification: true,
-        },
-        current: {
-            emailNotification: true,
-            webNotification: true,
-        },
-    },
-    isModified: false,
-};
+const XmlComparison = () => {
+  const [xml1, setXml1] = useState('');
+  const [xml2, setXml2] = useState('');
 
-const handleToggle = (key) => {
-    const newValue = !emailPreferences[key];
-    
-    if (key === 'dailySummary') {
-        if (newValue) {
-            // Turn on 'dailySummary' and ensure 'instantNotification' is off
-            dispatch(updateEmailPreferenceToggle({ key: 'instantNotification', value: false }));
-        } else {
-            // If turning off 'dailySummary', make sure 'instantNotification' is on
-            dispatch(updateEmailPreferenceToggle({ key: 'instantNotification', value: true }));
-        }
-    } else if (key === 'instantNotification') {
-        if (newValue) {
-            // Turn on 'instantNotification' and ensure 'dailySummary' is off
-            dispatch(updateEmailPreferenceToggle({ key: 'dailySummary', value: false }));
-        } else {
-            // If turning off 'instantNotification', make sure 'dailySummary' is on
-            dispatch(updateEmailPreferenceToggle({ key: 'dailySummary', value: true }));
-        }
+  // Function to fetch XML file content
+  const fetchXmlFile = async (filePath, setXml) => {
+    try {
+      const response = await fetch(filePath);
+      const text = await response.text();
+      setXml(text);
+    } catch (error) {
+      console.error('Error loading file:', error);
     }
+  };
 
-    // Finally, update the current key with its new value
-    dispatch(updateEmailPreferenceToggle({ key, value: newValue }));
+  useEffect(() => {
+    // Fetch both XML files from the public directory on component mount
+    fetchXmlFile('/oldFile.xml', setXml1);
+    fetchXmlFile('/newFile.xml', setXml2);
+  }, []);
+
+  return (
+    <div>
+      <h2>XML Comparison Tool</h2>
+
+      <ReactDiffViewer
+        oldValue={xml1}
+        newValue={xml2}
+        splitView={true}
+        leftTitle="Original XML"
+        rightTitle="Modified XML"
+      />
+    </div>
+  );
 };
 
-
-const notificationSlice = createSlice({
-    name: 'notification',
-    initialState,
-    reducers: {
-        setEmailPreferencesInitialValues: (state, action) => {
-            state.emailPreferences.initial = action.payload;
-            state.emailPreferences.current = action.payload;
-            state.isModified = false;
-        },
-        setCommunicationPreferencesInitialValues: (state, action) => {
-            state.communicationPreferences.initial = action.payload;
-            state.communicationPreferences.current = action.payload;
-            state.isModified = false;
-        },
-        updateEmailPreferenceToggle: (state, action) => {
-            const { key, value } = action.payload;
-            state.emailPreferences.current[key] = value;
-
-            // Mutually exclusive behavior between dailySummary and instantNotification
-            if (key === 'dailySummary' && value === true) {
-                state.emailPreferences.current.instantNotification = false;
-            } else if (key === 'instantNotification' && value === true) {
-                state.emailPreferences.current.dailySummary = false;
-            }
-
-            state.isModified = checkIfModified(state);
-        },
-        updateCommunicationPreferenceToggle: (state, action) => {
-            const { key, value } = action.payload;
-            state.communicationPreferences.current[key] = value;
-            state.isModified = checkIfModified(state);
-        },
-        resetValues: (state) => {
-            state.emailPreferences.current = state.emailPreferences.initial;
-            state.communicationPreferences.current = state.communicationPreferences.initial;
-            state.isModified = false;
-        },
-    },
-});
-
-const checkIfModified = (state) => {
-    const emailModified = Object.keys(state.emailPreferences.initial).some(
-        (key) => state.emailPreferences.initial[key] !== state.emailPreferences.current[key]
-    );
-    const communicationModified = Object.keys(state.communicationPreferences.initial).some(
-        (key) => state.communicationPreferences.initial[key] !== state.communicationPreferences.current[key]
-    );
-    return emailModified || communicationModified;
-};
-
-export const {
-    setEmailPreferencesInitialValues,
-    setCommunicationPreferencesInitialValues,
-    updateEmailPreferenceToggle,
-    updateCommunicationPreferenceToggle,
-    resetValues,
-} = notificationSlice.actions;
-
-export default notificationSlice.reducer;
+export default XmlComparison;
