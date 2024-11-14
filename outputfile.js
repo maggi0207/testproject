@@ -6,10 +6,15 @@ $neutral100: #323334;
 
 .notification__title {
   font-family: 'Enterprise Sans Bold';
-  width: 100%;
+  width: 904px;
+  height: 24px;
   margin-top: 16px;
   margin-bottom: 16px;
-  text-align: left;  // left-align title text
+
+  @media only screen and (max-width: 768px) {
+    width: 100%;
+    font-size: 18px;
+  }
 }
 
 .notification__desc {
@@ -18,8 +23,10 @@ $neutral100: #323334;
   color: #4B4D4F;
   border-bottom: 1px solid #dee4ec;
   padding-bottom: 24px;
-  width: 100%;
-  text-align: left;  // left-align description text
+
+  @media only screen and (max-width: 480px) {
+    font-size: 14px;
+  }
 }
 
 .primarySub_title {
@@ -27,10 +34,18 @@ $neutral100: #323334;
   margin-top: 14px;
   margin-bottom: 16px;
   line-height: 24px;
-  width: 100%;
+  width: 725px;
+  height: 24px;
   font-family: 'Enterprise Sans Regular';
   font-size: 20px;
-  text-align: left;  // left-align subtitle
+
+  @media only screen and (max-width: 768px) {
+    width: 100%;
+  }
+
+  @media only screen and (max-width: 480px) {
+    font-size: 18px;
+  }
 }
 
 .primarySub_desc {
@@ -38,8 +53,10 @@ $neutral100: #323334;
   color: #4B4D4F;
   margin-top: 8px;
   font-size: 16px;
-  width: 100%;
-  text-align: left;  // left-align sub-description
+
+  @media only screen and (max-width: 480px) {
+    font-size: 14px;
+  }
 }
 
 .notification-preferences {
@@ -50,77 +67,108 @@ $neutral100: #323334;
   &__container {
     max-width: 1040px;
     margin: 20px;
-    width: auto;
-    padding: 0 20px;
+    padding: 0 16px;
+    position: relative;
 
-    .notification-preferences-paper {
-      padding: 20px;
-      max-width: 100%;
-      background-color: white;
-      overflow: hidden;
-      border-radius: 16px;
-      border: 1px solid #E5E6E6;
+    @media only screen and (max-width: 1024px) {
+      padding: 0 24px;
+      margin: 0 auto;
+    }
 
-      .notification__title, .primarySub_title, .primarySub_desc {
-        font-size: 18px;
-        text-align: left;  // left-align all main text elements
+    @media only screen and (max-width: 768px) {
+      padding: 0 12px;
+    }
 
-        @media only screen and (max-width: 768px) {
-          font-size: 16px;
-        }
+    @media only screen and (max-width: 480px) {
+      padding: 0 8px;
+    }
+  }
+
+  .notification-preferences-paper {
+    padding: 20px;
+    width: 100%;
+    max-width: 100%;
+    background-color: white;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid #E5E6E6;
+
+    .title {
+      color: $primary-color;
+    }
+
+    h6 {
+      font-weight: bold;
+    }
+
+    .notification-section {
+      margin-bottom: 16px;
+      margin-right: 200px;
+
+      @media only screen and (max-width: 768px) {
+        margin-right: 0;
       }
+    }
 
-      .notification-section, .toggle-section {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;  // left-align all sections
-        margin: 16px 0;
-
-        @media only screen and (min-width: 768px) {
-          flex-direction: row;
-          align-items: center;
-        }
-      }
+    .toggle-section {
+      display: flex;
+      align-items: center;
+      margin-top: 24px;
 
       .toggle-control {
-        width: 100%;
         display: flex;
-        justify-content: flex-start;  // left-align toggle control
-        margin-top: 10px;
+        align-items: center;
+        width: 105px;
+        justify-content: space-between;
+      }
+
+      .toggle-label {
+        flex: 1;
+        font-weight: 500;
+        margin-right: 4px;
       }
 
       .checkbox-section {
-        margin-left: 0;
-        margin-top: 10px;
         display: flex;
         align-items: center;
-        
-        @media only screen and (min-width: 768px) {
-          margin-left: 20px;
-        }
+        margin-left: 185px;
 
         .instant_checkbox {
           margin-left: 4px;
           color: $neutral100;
           font-size: 16px;
-          text-align: left;  // ensure checkbox label is left-aligned
+
+          @media only screen and (max-width: 480px) {
+            font-size: 14px;
+          }
         }
       }
 
-      .button-container {
-        display: flex;
-        justify-content: flex-start;  // left-align buttons
+      @media only screen and (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
         margin-top: 16px;
-        
-        button {
-          margin-right: 10px;  // add spacing between buttons without center alignment
+
+        .toggle-control {
+          width: 100%;
+        }
+
+        .checkbox-section {
+          margin-left: 0;
+          .instant_checkbox {
+            font-size: 14px;
+          }
         }
       }
+    }
 
-      .divider {
-        height: 1px;
-        background-color: $divider-color;
-        margin: 16px 0;
+    .divider {
+      height: 1px;
+      background-color: $divider-color;
+      margin: 16px 0;
+
+      @media only screen and (max-width: 480px) {
+        margin: 12px 0;
       }
     }
   }
@@ -143,6 +191,7 @@ $neutral100: #323334;
       & + .MuiSwitch-track {
         background-color: #65c466;
         opacity: 1;
+        border: 0;
       }
 
       &.Mui-focusVisible + .MuiSwitch-track {
@@ -179,5 +228,31 @@ $neutral100: #323334;
     background-color: #e9e9ea;
     opacity: 1;
     transition: background-color 500ms ease-in-out;
+
+    &.Mui-checked {
+      background-color: #65c466;
+    }
+  }
+
+  &.dark {
+    .MuiSwitch-switchBase {
+      &.Mui-checked {
+        & + .MuiSwitch-track {
+          background-color: #2eca45;
+        }
+      }
+
+      &.Mui-disabled + .MuiSwitch-track {
+        opacity: 0.3;
+      }
+    }
+
+    .MuiSwitch-track {
+      background-color: #39393d;
+    }
+
+    .MuiSwitch-thumb {
+      color: #757575;
+    }
   }
 }
