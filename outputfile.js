@@ -11,9 +11,16 @@ $neutral100: #323334;
   margin-top: 16px;
   margin-bottom: 16px;
 
-  @media only screen and (max-width: 768px) {
-    width: 100%;
+  @media (max-width: 1024px) {
+    width: auto;
+    font-size: 20px;
+    text-align: left;
+    margin-left: 16px;
+  }
+
+  @media (max-width: 768px) {
     font-size: 18px;
+    margin: 12px 16px;
   }
 }
 
@@ -23,9 +30,18 @@ $neutral100: #323334;
   color: #4B4D4F;
   border-bottom: 1px solid #dee4ec;
   padding-bottom: 24px;
+  margin-left: 16px;
 
-  @media only screen and (max-width: 480px) {
+  @media (max-width: 1024px) {
     font-size: 14px;
+    text-align: left;
+    width: auto;
+    margin-left: 16px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+    margin: 8px 16px;
   }
 }
 
@@ -38,14 +54,6 @@ $neutral100: #323334;
   height: 24px;
   font-family: 'Enterprise Sans Regular';
   font-size: 20px;
-
-  @media only screen and (max-width: 768px) {
-    width: 100%;
-  }
-
-  @media only screen and (max-width: 480px) {
-    font-size: 18px;
-  }
 }
 
 .primarySub_desc {
@@ -53,10 +61,6 @@ $neutral100: #323334;
   color: #4B4D4F;
   margin-top: 8px;
   font-size: 16px;
-
-  @media only screen and (max-width: 480px) {
-    font-size: 14px;
-  }
 }
 
 .notification-preferences {
@@ -67,26 +71,16 @@ $neutral100: #323334;
   &__container {
     max-width: 1040px;
     margin: 20px;
-    padding: 0 16px;
     position: relative;
-
+    width: auto;
     @media only screen and (max-width: 1024px) {
-      padding: 0 24px;
-      margin: 0 auto;
-    }
-
-    @media only screen and (max-width: 768px) {
-      padding: 0 12px;
-    }
-
-    @media only screen and (max-width: 480px) {
-      padding: 0 8px;
+      padding: 0 20px;
+      margin: 20px auto;
     }
   }
 
   .notification-preferences-paper {
     padding: 20px;
-    width: 100%;
     max-width: 100%;
     background-color: white;
     overflow: hidden;
@@ -104,10 +98,6 @@ $neutral100: #323334;
     .notification-section {
       margin-bottom: 16px;
       margin-right: 200px;
-
-      @media only screen and (max-width: 768px) {
-        margin-right: 0;
-      }
     }
 
     .toggle-section {
@@ -137,27 +127,6 @@ $neutral100: #323334;
           margin-left: 4px;
           color: $neutral100;
           font-size: 16px;
-
-          @media only screen and (max-width: 480px) {
-            font-size: 14px;
-          }
-        }
-      }
-
-      @media only screen and (max-width: 768px) {
-        flex-direction: column;
-        align-items: flex-start;
-        margin-top: 16px;
-
-        .toggle-control {
-          width: 100%;
-        }
-
-        .checkbox-section {
-          margin-left: 0;
-          .instant_checkbox {
-            font-size: 14px;
-          }
         }
       }
     }
@@ -166,10 +135,6 @@ $neutral100: #323334;
       height: 1px;
       background-color: $divider-color;
       margin: 16px 0;
-
-      @media only screen and (max-width: 480px) {
-        margin: 12px 0;
-      }
     }
   }
 }
@@ -228,10 +193,6 @@ $neutral100: #323334;
     background-color: #e9e9ea;
     opacity: 1;
     transition: background-color 500ms ease-in-out;
-
-    &.Mui-checked {
-      background-color: #65c466;
-    }
   }
 
   &.dark {
