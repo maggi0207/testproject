@@ -14,7 +14,7 @@ import { loadingIndicatorActions } from '../../../../store/LoadingIndicator/Load
 import { getPreferenceFromBooleans } from '../../../../utils/communicationNotificationUtils';
 import updateDistributionListMembers from '../../../../Services/updateDistributionListMembers';
 import ReactTooltip from 'react-tooltip';
-import { Snackbar, Box, Typography } from '@material-ui/core'; // Use Snackbar and Material-UI components
+import ToastNotification from './ToastNotification'; // Import ToastNotification component
 
 const CommunicationMessageNotificationsConfig = {
     emptyLabel: 'CCH Communication Message Notification',
@@ -25,7 +25,7 @@ const CommunicationMessageNotificationsConfig = {
 };
 
 const CommunicationDistributionListMembers = (props) => {
-    const [alert, setAlert] = useState({ open: false, severity: 'success', message: '' });
+    const [alert, setAlert] = useState({ open: false, severity: 'success', message: '', heading: '' });
 
     const currentEmailPreference = useSelector((state) => state.emailPreferenceSlice.emailPreferences.current);
     const communicationPreferences = useSelector((state) => state.emailPreferenceSlice.communicationPreferences.current);
@@ -78,10 +78,20 @@ const CommunicationDistributionListMembers = (props) => {
             await updateEmailDeliveryPreferences(currentPreference);
             await updateDistributionListMembers(deliveryMethod);
             dispatch(setCurrentPreferencesInitialValues());
-            setAlert({ open: true, severity: 'success', message: 'Your preferences have been successfully updated.' });
+            setAlert({
+                open: true,
+                severity: 'success',
+                message: 'Your preferences have been successfully updated.',
+                heading: 'Preferences Updated',
+            });
         } catch (error) {
             console.error('Error occurred:', error);
-            setAlert({ open: true, severity: 'error', message: 'Failed to update preferences. Please try again.' });
+            setAlert({
+                open: true,
+                severity: 'error',
+                message: 'Failed to update preferences. Please try again.',
+                heading: 'Update Failed',
+            });
         } finally {
             dispatch(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: false }));
         }
@@ -89,7 +99,12 @@ const CommunicationDistributionListMembers = (props) => {
 
     const cancelButtonHandler = () => {
         dispatch(resetValues());
-        setAlert({ open: true, severity: 'error', message: 'Preferences reset. No changes were saved.' });
+        setAlert({
+            open: true,
+            severity: 'error',
+            message: 'Preferences reset. No changes were saved.',
+            heading: 'Preferences Reset',
+        });
     };
 
     const handleToggleChange = () => {
@@ -177,23 +192,14 @@ const CommunicationDistributionListMembers = (props) => {
                 </div>
             </div>
 
-            {/* Snackbar Alert */}
-            <Snackbar
+            {/* ToastNotification for Alert */}
+            <ToastNotification
                 open={alert.open}
-                autoHideDuration={6000}
-                onClose={handleCloseAlert}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Box
-                    bgcolor={alert.severity === 'success' ? 'green' : 'red'}
-                    color="white"
-                    px={2}
-                    py={1}
-                    borderRadius="4px"
-                >
-                    <Typography variant="body2">{alert.message}</Typography>
-                </Box>
-            </Snackbar>
+                handleClose={handleCloseAlert}
+                message={alert.message}
+                type={alert.severity}
+                heading={alert.heading}
+            />
         </>
     );
 };
