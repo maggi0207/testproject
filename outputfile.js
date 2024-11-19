@@ -1,168 +1,130 @@
-import {MapTo} from '@adobe/aem-react-editable-components';
-import React, {useEffect} from 'react';
-import {Checkbox} from '@material-ui/core';
-import {ToggleSwitch} from '../ToggleSwitch';
-import getEmailDeliveryPreferences from '../../../../Services/getEmailDeliveryPreferences';
-import {
-    setEmailPreferencesInitialValues,
-    updateEmailPreferenceToggle,
-} from '../../../../store/CommunicationNotification/EmailPreferenceSlice';
-import {useDispatch, useSelector} from 'react-redux';
-import {loadingIndicatorActions} from '../../../../store/LoadingIndicator/LoadingIndicatorSlice';
-import {dataLayerAccountNotifications}  from "../../../../utils/analyticsUtils";
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import EmailDeliveryPreferences from './EmailDeliveryPreferences'; // Adjust the import path
+import { useDispatch, useSelector } from 'react-redux';
+import getEmailDeliveryPreferences from '../../../../Services/getEmailDeliveryPreferences'; // Adjust the import path
+import { loadingIndicatorActions } from '../../../../store/LoadingIndicator/LoadingIndicatorSlice';
+import { dataLayerAccountNotifications } from '../../../../utils/analyticsUtils';
+import { updateEmailPreferenceToggle, setEmailPreferencesInitialValues } from '../../../../store/CommunicationNotification/EmailPreferenceSlice';
 
+// Mock the Redux hooks
+jest.mock('react-redux', () => ({
+  useDispatch: jest.fn(),
+  useSelector: jest.fn(),
+}));
 
-const NextGenNotificationConfig = {
-    emptyLabel: 'CCH Case Email Notification',
+// Mock the API service
+jest.mock('../../../../Services/getEmailDeliveryPreferences');
 
-    isEmpty: function (props) {
-        return !props || !props.heading;
-    },
-};
+// Mock the analytics utility
+jest.mock('../../../../utils/analyticsUtils', () => ({
+  dataLayerAccountNotifications: jest.fn(),
+}));
 
-const EmailDeliveryPreferences = (props) => {
-    const currentEmailPreference = useSelector((state) => state.emailPreferenceSlice.emailPreferences.current);
+describe('EmailDeliveryPreferences', () => {
+  let mockDispatch;
+  let mockPreferences;
 
-
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        dispatch(loadingIndicatorActions.setLoadingIndicatorProps({isLoading: true}));
-        getEmailDeliveryPreferences().then(response => {
-            dispatch(loadingIndicatorActions.setLoadingIndicatorProps({isLoading: false}));
-            if (response.records && response.records.length > 0) {
-                const preference = response.records[0].Case_Email_Delivery_Preference__c;
-                updateToggleStatus(preference ? preference : null);
-            } else {
-                updateToggleStatus(null);
-            }
-        }).catch(error => {
-            dispatch(loadingIndicatorActions.setLoadingIndicatorProps({isLoading: false}));
-        });
-    }, [dispatch]);
-
-    const updateToggleStatus = (preference) => {
-        switch (preference) {
-            case null:
-            case "Normal":
-                dispatch(setEmailPreferencesInitialValues({
-                    dailySummary: false,
-                    instantNotification: true,
-                    pendingActionNotification: false
-                }));
-                break;
-            case "Digest Only":
-                dispatch((setEmailPreferencesInitialValues({
-                    dailySummary: true,
-                    instantNotification: false,
-                    pendingActionNotification: false
-                })));
-                break;
-            case "Digest and Pending":
-                dispatch(setEmailPreferencesInitialValues({
-                    dailySummary: true,
-                    instantNotification: false,
-                    pendingActionNotification: true
-                }));
-                break;
-            default:
-                dispatch(setEmailPreferencesInitialValues({
-                    dailySummary: false,
-                    instantNotification: true,
-                    pendingActionNotification: false
-                }));
-                break;
-        }
-    }
-
-
-    const handleToggle = (key) => {
-        const newValue = currentEmailPreference ? !currentEmailPreference[key] : false;
-
-        if (key === 'dailySummary') {
-            if (newValue) {
-                // Turn on 'dailySummary' and ensure 'instantNotification' is off
-                dispatch(updateEmailPreferenceToggle({key: 'instantNotification', value: false}));
-                dataLayerAccountNotifications("daily summary off to on")
-                dataLayerAccountNotifications("instant on to off")
-            } else {
-                // If turning off 'dailySummary', make sure 'instantNotification' is on
-                dispatch(updateEmailPreferenceToggle({key: 'instantNotification', value: true}));
-                dispatch(updateEmailPreferenceToggle({key: 'pendingActionNotification', value: false}));
-                dataLayerAccountNotifications("daily summary on to off")
-                dataLayerAccountNotifications("instant off to on")
-            }
-        } else if (key === 'instantNotification') {
-            if (newValue) {
-                // Turn on 'instantNotification' and ensure 'dailySummary' is off
-                dispatch(updateEmailPreferenceToggle({key: 'dailySummary', value: false}));
-                dispatch(updateEmailPreferenceToggle({key: 'pendingActionNotification', value: false}));
-                dataLayerAccountNotifications("instant off to on")
-                dataLayerAccountNotifications("daily summary on to off")
-            } else {
-                // If turning off 'instantNotification', make sure 'dailySummary' is on
-                dispatch(updateEmailPreferenceToggle({key: 'dailySummary', value: true}));
-                dataLayerAccountNotifications("instant on to off")
-                dataLayerAccountNotifications("daily summary off to on")
-            }
-        }
-
-        // Finally, update the current key with its new value
-        dispatch(updateEmailPreferenceToggle({key, value: newValue}));
+  beforeEach(() => {
+    mockDispatch = jest.fn();
+    useDispatch.mockReturnValue(mockDispatch);
+    
+    mockPreferences = {
+      dailySummary: false,
+      instantNotification: true,
+      pendingActionNotification: false,
     };
 
-    return (
-        <div className="notification-preferences-container ">
-            <div className="notification-preferences-paper">
-                <h4 className="notification__title">{props?.title}</h4>
-                <p className="notification__desc">{props?.description}</p>
+    useSelector.mockReturnValue({ emailPreferences: { current: mockPreferences } });
+  });
 
-                {/* Daily Summary Section */}
-                <div className="notification-section">
-                    <h6 className="primarySub_title">{props?.primarySubTitle}</h6>
-                    <p className="primarySub_desc">{props?.primarySubDescription}</p>
-                </div>
-                <div className="toggle-section">
-                    <div className="toggle-control">
-                        <span>Off</span>
-                        <ToggleSwitch
-                            checked={currentEmailPreference?.dailySummary || false}
-                            onChange={() => handleToggle('dailySummary')}
-                        ></ToggleSwitch>
-                        <span>On</span>
-                    </div>
-                    {/* Instant Checkbox */}
-                    <div className="checkbox-section">
-                        <Checkbox
-                            checked={currentEmailPreference?.pendingActionNotification || false}
-                            disabled={!currentEmailPreference?.dailySummary || false}
-                            onClick={() => handleToggle('pendingActionNotification')}
-                            color="primary"
-                        />
-                        <span className='instant_checkbox'>{props?.checkboxDescription}</span>
-                    </div>
-                </div>
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
+  test('should render the component with the correct title and description', () => {
+    const props = {
+      title: 'Email Preferences',
+      description: 'Configure your email preferences.',
+      primarySubTitle: 'Daily Summary',
+      primarySubDescription: 'Receive daily summaries of your activities.',
+      secondarySubTitle: 'Instant Notification',
+      secondarySubDescription: 'Get instant notifications when actions are required.',
+      checkboxDescription: 'Enable pending action notifications.',
+    };
 
-                <div className="divider"/>
-                {/* Instant Toogle */}
-                <div className="notification-section">
-                    <h6 className="primarySub_title">{props?.secondarySubTitle}</h6>
-                    <p className="primarySub_desc">{props?.secondarySubDescription}</p>
-                    <div className="toggle-section">
-                        <div className="toggle-control">
-                            <span>Off</span>
-                            <ToggleSwitch
-                                color="primary"
-                                checked={currentEmailPreference?.instantNotification || false}
-                                onChange={() => handleToggle('instantNotification')}
-                            />
-                            <span>On</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-export default MapTo('ECCHub/components/nextgen/caseemailnotification')(EmailDeliveryPreferences, NextGenNotificationConfig);
+    render(<EmailDeliveryPreferences {...props} />);
+
+    expect(screen.getByText('Email Preferences')).toBeTruthy();
+    expect(screen.getByText('Configure your email preferences.')).toBeTruthy();
+    expect(screen.getByText('Daily Summary')).toBeTruthy();
+    expect(screen.getByText('Instant Notification')).toBeTruthy();
+  });
+
+  test('should dispatch setEmailPreferencesInitialValues when API call returns preferences', async () => {
+    getEmailDeliveryPreferences.mockResolvedValue({
+      records: [{ Case_Email_Delivery_Preference__c: 'Digest Only' }],
+    });
+
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith(
+        setEmailPreferencesInitialValues({
+          dailySummary: true,
+          instantNotification: false,
+          pendingActionNotification: false,
+        })
+      );
+    });
+  });
+
+  test('should handle toggle for dailySummary', () => {
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    const toggleSwitch = screen.getByRole('checkbox', { name: /off/i });
+    fireEvent.click(toggleSwitch); // Simulate toggling
+
+    expect(mockDispatch).toHaveBeenCalledWith(updateEmailPreferenceToggle({
+      key: 'dailySummary',
+      value: true,
+    }));
+
+    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('daily summary off to on');
+    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('instant on to off');
+  });
+
+  test('should handle toggle for instantNotification', () => {
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    const toggleSwitch = screen.getByRole('checkbox', { name: /off/i });
+    fireEvent.click(toggleSwitch); // Simulate toggling
+
+    expect(mockDispatch).toHaveBeenCalledWith(updateEmailPreferenceToggle({
+      key: 'instantNotification',
+      value: true,
+    }));
+
+    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('instant off to on');
+    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('daily summary on to off');
+  });
+
+  test('should disable pendingActionNotification when dailySummary is off', () => {
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    const checkbox = screen.getByLabelText('Enable pending action notifications.');
+    expect(checkbox).toBeDisabled();
+  });
+
+  test('should dispatch loading indicator actions during API call', async () => {
+    getEmailDeliveryPreferences.mockResolvedValue({
+      records: [{ Case_Email_Delivery_Preference__c: 'Normal' }],
+    });
+
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: true }));
+      expect(mockDispatch).toHaveBeenCalledWith(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: false }));
+    });
+  });
+});
