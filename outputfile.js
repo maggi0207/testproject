@@ -1,62 +1,65 @@
-import React from "react";
-import {Snackbar, Box, Typography, Grid} from "@material-ui/core";
+import React from 'react';
+import { render, fireEvent, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import ToastNotification from './ToastNotification';
 
-const ToastNotification = ({open, handleClose, message, type, heading}) => {
-    return (
-        <Snackbar
-            open={open}
-            autoHideDuration={6000}
-            onClose={handleClose}
-            anchorOrigin={{vertical: "top", horizontal: "right"}}
-        >
-            <Box
-                display="flex"
-                flexDirection="column"
-                p={2}
-                gap={9}
-                width="292px"
-                height="auto"
-                top="390px"
-                bgcolor={type === "success" ? "#EFF6EF" : "#E9F1FF"}
-                border={`1px solid ${type === "success" ? "#007000" : "#0C55B8"}`}
-                boxShadow="0px 4px 8px 0px #19191A29"
-                borderRadius="8px"
-            >
-                <Grid container spacing={1}>
-                    <Grid item>
-                        <Box style={{marginTop: "5px", marginRight: "2px"}}>
-                            {type === "success" ? (
-                                <span className="Toast_Positive"></span>
+describe('ToastNotification', () => {
+  const mockHandleClose = jest.fn();
 
-                            ) : (
-                                <span className="Toast_Activity"></span>
-                            )}
-                        </Box>
-                    </Grid>
-
-
-                    <Grid item xs>
-                        <Typography
-                            variant="h6"
-                            style={{
-                                fontWeight: "bold",
-                                color: type === "success" ? "#007000" : "#323334",
-                                fontSize: "16px",
-                            }}
-                        >
-                            {heading || (type === "success" ? "Success" : "Failure")}
-                        </Typography>
-                        <Typography
-                            variant="body2"
-                            style={{color: "#19191A"}}
-                        >
-                            {message}
-                        </Typography>
-                    </Grid>
-                </Grid>
-            </Box>
-        </Snackbar>
+  test('should render success notification correctly', () => {
+    render(
+      <ToastNotification
+        open={true}
+        handleClose={mockHandleClose}
+        message="This is a success message"
+        type="success"
+        heading="Success"
+      />
     );
-};
+    expect(screen.getByText(/This is a success message/i)).toBeInTheDocument();
+    expect(screen.getByText(/Success/i)).toBeInTheDocument();
+    expect(screen.getByText(/Success/i).parentElement).toHaveStyle('background-color: #EFF6EF');
+  });
 
-export default ToastNotification;
+  test('should render failure notification correctly', () => {
+    render(
+      <ToastNotification
+        open={true}
+        handleClose={mockHandleClose}
+        message="This is a failure message"
+        type="failure"
+        heading="Failure"
+      />
+    );
+    expect(screen.getByText(/This is a failure message/i)).toBeInTheDocument();
+    expect(screen.getByText(/Failure/i)).toBeInTheDocument();
+    expect(screen.getByText(/Failure/i).parentElement).toHaveStyle('background-color: #E9F1FF');
+  });
+
+  test('should call handleClose when Snackbar is closed', () => {
+    render(
+      <ToastNotification
+        open={true}
+        handleClose={mockHandleClose}
+        message="This is a message"
+        type="success"
+        heading="Success"
+      />
+    );
+    fireEvent.click(screen.getByRole('button'));
+    expect(mockHandleClose).toHaveBeenCalledTimes(1);
+  });
+
+  test('should not render when open is false', () => {
+    render(
+      <ToastNotification
+        open={false}
+        handleClose={mockHandleClose}
+        message="This is a message"
+        type="success"
+        heading="Success"
+      />
+    );
+    expect(screen.queryByText(/This is a message/i)).not.toBeInTheDocument();
+  });
+});
