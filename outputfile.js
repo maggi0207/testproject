@@ -1,111 +1,31 @@
 import axios from "axios";
-import store from "../store/index";
 import { getCookie } from "../utils/getCookies";
 import * as constants from "../utils/constants";
+import store from "../store/index";
 import { handleServerError } from "../utils/genericUtil";
-import updateDistributionListMembers from "../path/to/updateDistributionListMembers";
 
-jest.mock("axios");
-jest.mock("../store/index", () => ({
-  getState: jest.fn(),
-}));
-jest.mock("../utils/getCookies", () => ({
-  getCookie: jest.fn(),
-}));
-jest.mock("../utils/genericUtil", () => ({
-  handleServerError: jest.fn(),
-}));
+const updateEmailDeliveryPreferences = (payload, setErrorModalMessage) => {
+    const state = store.getState();
+    const endPoints = state.externalEndPoints.externalEndPointsProps.endpoints;
+    let api = endPoints?.apigeeToLmdUedpEndPoint;
 
-describe("updateDistributionListMembers", () => {
-  let setErrorModalMessage;
-
-  beforeEach(() => {
-    setErrorModalMessage = jest.fn();
-    store.getState.mockReturnValue({
-      externalEndPoints: {
-        externalEndPointsProps: {
-          endpoints: {
-            apigeeToLmdUdlmEndPoint: "http://mock-endpoint.com",
-          },
-        },
-      },
-    });
-    getCookie.mockReturnValue("mock_access_token");
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("should update distribution list members with payload 'Email'", async () => {
-    const mockResponse = { success: true, message: "Updated successfully" };
-    const payload = "Email";
-
-    axios.post.mockResolvedValue({ data: mockResponse });
-
-    const result = await updateDistributionListMembers(payload, setErrorModalMessage);
-
-    expect(axios.post).toHaveBeenCalledWith(
-      "http://mock-endpoint.com",
-      { dlm: payload },
-      {
-        headers: {
-          Authorization: "Bearer mock_access_token",
-        },
-      }
-    );
-    expect(result).toEqual(mockResponse);
-    expect(setErrorModalMessage).not.toHaveBeenCalled();
-  });
-
-  it("should handle empty API response", async () => {
-    const payload = "Email";
-    axios.post.mockResolvedValue({ data: null });
-
-    const result = await updateDistributionListMembers(payload, setErrorModalMessage);
-
-    expect(axios.post).toHaveBeenCalledWith(
-      "http://mock-endpoint.com",
-      { dlm: payload },
-      {
-        headers: {
-          Authorization: "Bearer mock_access_token",
-        },
-      }
-    );
-    expect(result).toBeNull();
-    expect(setErrorModalMessage).not.toHaveBeenCalled();
-  });
-
-  it("should handle API error and call setErrorModalMessage", async () => {
-    const mockError = new Error("API error");
-    const errorModalMock = {
-      errorModalTitleConst: "Error Title",
-      errorModalDescriptionConst: "Error Description",
+    const postData = {
+        "cedp": payload
     };
-    const payload = "Email";
-
-    axios.post.mockRejectedValue(mockError);
-    handleServerError.mockReturnValue(errorModalMock);
-
-    await updateDistributionListMembers(payload, setErrorModalMessage);
-
-    expect(axios.post).toHaveBeenCalledWith(
-      "http://mock-endpoint.com",
-      { dlm: payload },
-      {
+    const axiosConfig = {
         headers: {
-          Authorization: "Bearer mock_access_token",
-        },
-      }
-    );
-    expect(handleServerError).toHaveBeenCalledWith(mockError, {
-      errorModalTitleConst: "",
-      errorModalDescriptionConst: "",
-    });
-    expect(setErrorModalMessage).toHaveBeenCalledWith({
-      errorModalTitle: "Error Title",
-      errorModalDescription: "Error Description",
-    });
-  });
-});
+            'Authorization': 'Bearer ' + getCookie(constants.ACCESS_TOKEN)
+        }
+    };
+
+    return axios.post(api, postData, axiosConfig)
+        .then(response => response.data)
+        .catch((err) => {
+            console.error('API error:', err);
+            let errorModalConst = { errorModalTitleConst: '', errorModalDescriptionConst: '' };
+            errorModalConst = handleServerError(err, errorModalConst);
+            setErrorModalMessage({ errorModalTitle: errorModalConst.errorModalTitleConst, errorModalDescription: errorModalConst.errorModalDescriptionConst });
+        });
+}
+
+export default updateEmailDeliveryPreferences;
