@@ -1,45 +1,146 @@
 import axios from "axios";
+import store from "../store/index";
 import { getCookie } from "../utils/getCookies";
 import * as constants from "../utils/constants";
-import store from "../store/index";
 import { handleServerError } from "../utils/genericUtil";
+import getEmailDeliveryPreferences from "../path/to/getEmailDeliveryPreferences";
 
-const getEmailDeliveryPreferences = (setErrorModalMessage) => {
-    const state = store.getState();
-    const endPoints = state.externalEndPoints.externalEndPointsProps.endpoints;
-    let api = endPoints?.apigeeToLmdGetedpEndPoint;
+jest.mock("axios");
+jest.mock("../store/index", () => ({
+  getState: jest.fn(),
+}));
+jest.mock("../utils/getCookies", () => ({
+  getCookie: jest.fn(),
+}));
+jest.mock("../utils/genericUtil", () => ({
+  handleServerError: jest.fn(),
+}));
 
-    const postData = {};
-    const axiosConfig = {
-        headers: {
-            'Authorization': 'Bearer ' + getCookie(constants.ACCESS_TOKEN)
-        }
+describe("getEmailDeliveryPreferences", () => {
+  let setErrorModalMessage;
+
+  beforeEach(() => {
+    setErrorModalMessage = jest.fn();
+    store.getState.mockReturnValue({
+      externalEndPoints: {
+        externalEndPointsProps: {
+          endpoints: {
+            apigeeToLmdGetedpEndPoint: "http://mock-endpoint.com",
+          },
+        },
+      },
+    });
+    getCookie.mockReturnValue("mock_access_token");
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should return preference as 'Normal'", async () => {
+    const mockResponse = {
+      data: {
+        records: [
+          {
+            Case_Email_Delivery_Preference__c: "Normal",
+          },
+        ],
+      },
     };
+    axios.post.mockResolvedValue(mockResponse);
 
-    return axios.post(api, postData, axiosConfig)
-        .then(response => response.data)
-        .catch((err) => {
-            console.error('API error:', err);
-            let errorModalConst = { errorModalTitleConst: '', errorModalDescriptionConst: '' };
-            errorModalConst = handleServerError(err, errorModalConst);
-            setErrorModalMessage({ errorModalTitle: errorModalConst.errorModalTitleConst, errorModalDescription: errorModalConst.errorModalDescriptionConst });
-        });
-}
+    const result = await getEmailDeliveryPreferences(setErrorModalMessage);
 
-export default getEmailDeliveryPreferences;
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://mock-endpoint.com",
+      {},
+      {
+        headers: {
+          Authorization: "Bearer mock_access_token",
+        },
+      }
+    );
+    expect(result).toEqual(mockResponse.data);
+    expect(setErrorModalMessage).not.toHaveBeenCalled();
+  });
 
-uage
-useEffect(() => {
-        dispatch(loadingIndicatorActions.setLoadingIndicatorProps({isLoading: true}));
-        getEmailDeliveryPreferences().then(response => {
-            dispatch(loadingIndicatorActions.setLoadingIndicatorProps({isLoading: false}));
-            if (response.records && response.records.length > 0) {
-                const preference = response.records[0].Case_Email_Delivery_Preference__c;
-                updateToggleStatus(preference ? preference : null);
-            } else {
-                updateToggleStatus(null);
-            }
-        }).catch(error => {
-            dispatch(loadingIndicatorActions.setLoadingIndicatorProps({isLoading: false}));
-        });
-    }, [dispatch]);
+  it("should return preference as 'Digest'", async () => {
+    const mockResponse = {
+      data: {
+        records: [
+          {
+            Case_Email_Delivery_Preference__c: "Digest",
+          },
+        ],
+      },
+    };
+    axios.post.mockResolvedValue(mockResponse);
+
+    const result = await getEmailDeliveryPreferences(setErrorModalMessage);
+
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://mock-endpoint.com",
+      {},
+      {
+        headers: {
+          Authorization: "Bearer mock_access_token",
+        },
+      }
+    );
+    expect(result).toEqual(mockResponse.data);
+    expect(setErrorModalMessage).not.toHaveBeenCalled();
+  });
+
+  it("should handle empty records and return null preference", async () => {
+    const mockResponse = {
+      data: {
+        records: [],
+      },
+    };
+    axios.post.mockResolvedValue(mockResponse);
+
+    const result = await getEmailDeliveryPreferences(setErrorModalMessage);
+
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://mock-endpoint.com",
+      {},
+      {
+        headers: {
+          Authorization: "Bearer mock_access_token",
+        },
+      }
+    );
+    expect(result).toEqual(mockResponse.data);
+    expect(setErrorModalMessage).not.toHaveBeenCalled();
+  });
+
+  it("should handle API errors and call setErrorModalMessage", async () => {
+    const mockError = new Error("API error");
+    const errorModalMock = {
+      errorModalTitleConst: "Error Title",
+      errorModalDescriptionConst: "Error Description",
+    };
+    axios.post.mockRejectedValue(mockError);
+    handleServerError.mockReturnValue(errorModalMock);
+
+    await getEmailDeliveryPreferences(setErrorModalMessage);
+
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://mock-endpoint.com",
+      {},
+      {
+        headers: {
+          Authorization: "Bearer mock_access_token",
+        },
+      }
+    );
+    expect(handleServerError).toHaveBeenCalledWith(mockError, {
+      errorModalTitleConst: "",
+      errorModalDescriptionConst: "",
+    });
+    expect(setErrorModalMessage).toHaveBeenCalledWith({
+      errorModalTitle: "Error Title",
+      errorModalDescription: "Error Description",
+    });
+  });
+});
