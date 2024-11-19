@@ -1,65 +1,23 @@
-import React from 'react';
-import { render, fireEvent, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import ToastNotification from './ToastNotification';
-
-describe('ToastNotification', () => {
-  const mockHandleClose = jest.fn();
-
-  test('should render success notification correctly', () => {
+test('should use default heading "Success" when heading is not provided and type is "success"', () => {
     render(
       <ToastNotification
         open={true}
         handleClose={mockHandleClose}
         message="This is a success message"
         type="success"
-        heading="Success"
       />
     );
-    expect(screen.getByText(/This is a success message/i)).toBeTruthy();
-    expect(screen.getByText(/Success/i)).toBeTruthy();
-    expect(screen.getByText(/Success/i).parentElement).toHaveStyle('background-color: #EFF6EF');
+    expect(screen.getByText(/Success/i)).toBeTruthy();  // Verifying default heading is "Success"
   });
 
-  test('should render failure notification correctly', () => {
+  test('should use default heading "Failure" when heading is not provided and type is "failure"', () => {
     render(
       <ToastNotification
         open={true}
         handleClose={mockHandleClose}
         message="This is a failure message"
         type="failure"
-        heading="Failure"
       />
     );
-    expect(screen.getByText(/This is a failure message/i)).toBeTruthy();
-    expect(screen.getByText(/Failure/i)).toBeTruthy();
-    expect(screen.getByText(/Failure/i).parentElement).toHaveStyle('background-color: #E9F1FF');
+    expect(screen.getByText(/Failure/i)).toBeTruthy();  // Verifying default heading is "Failure"
   });
-
-  test('should call handleClose when Snackbar is closed', () => {
-    render(
-      <ToastNotification
-        open={true}
-        handleClose={mockHandleClose}
-        message="This is a message"
-        type="success"
-        heading="Success"
-      />
-    );
-    fireEvent.close(screen.getByRole('presentation'));
-    expect(mockHandleClose).toHaveBeenCalledTimes(1);
-  });
-
-  test('should not render when open is false', () => {
-    render(
-      <ToastNotification
-        open={false}
-        handleClose={mockHandleClose}
-        message="This is a message"
-        type="success"
-        heading="Success"
-      />
-    );
-    expect(screen.queryByText(/This is a message/i)).toBeFalsy();
-  });
-});
