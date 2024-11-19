@@ -1,40 +1,20 @@
- <body>
-      <div>
-        <div
-          style="display: flex; align-items: center;"
-        >
-          <span
-            class="MuiSwitch-root WithStyles(ForwardRef(Switch))-root-37"
-          >
-            <span
-              aria-disabled="false"
-              class="MuiButtonBase-root MuiIconButton-root PrivateSwitchBase-root-42 MuiSwitch-switchBase WithStyles(ForwardRef(Switch))-switchBase-38 MuiSwitch-colorSecondary"
-              role="switch"
-            >
-              <span
-                class="MuiIconButton-label"
-              >
-                <input
-                  aria-label="Dynamic Switch"
-                  class="PrivateSwitchBase-input-45 MuiSwitch-input"
-                  name="toggleSwitch"
-                  type="checkbox"
-                  value=""
-                />
-                <span
-                  class="MuiSwitch-thumb WithStyles(ForwardRef(Switch))-thumb-39"
-                />
-              </span>
-              <span
-                class="MuiTouchRipple-root"
-              />
-            </span>
-            <span
-              class="MuiSwitch-track WithStyles(ForwardRef(Switch))-track-40"
-            />
-          </span>
-        </div>
-      </div>
-    </body>
+import React from 'react';
+import { render, fireEvent, screen } from '@testing-library/react';
+import { ToggleSwitch } from './ToggleSwitch';  // Path to the ToggleSwitch component
 
-   
+describe('ToggleSwitch Component', () => {
+
+  test('should render the ToggleSwitch component correctly', () => {
+    render(<ToggleSwitch checked={false} onChange={() => {}} label="Toggle switch" />);
+    const switchElement = screen.getByRole('switch');  // Query by role
+    expect(switchElement).toBeInTheDocument();
+  });
+
+  test('should call onChange when the switch is clicked', () => {
+    const onChangeMock = jest.fn();
+    render(<ToggleSwitch checked={false} onChange={onChangeMock} label="Toggle switch" />);
+    const switchElement = screen.getByRole('switch');  // Query by role
+    fireEvent.click(switchElement);  // Simulate click on the switch
+    expect(onChangeMock).toHaveBeenCalledTimes(1);
+  });
+});
