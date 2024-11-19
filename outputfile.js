@@ -1,48 +1,119 @@
 import axios from "axios";
+import store from "../store/index";
 import { getCookie } from "../utils/getCookies";
 import * as constants from "../utils/constants";
-import store from "../store/index";
 import { handleServerError } from "../utils/genericUtil";
+import getDistributionListMembers from "../path/to/getDistributionListMembers";
 
-const getDistributionListMembers = (setErrorModalMessage) => {
-    const state = store.getState();
-    const endPoints = state.externalEndPoints.externalEndPointsProps.endpoints;
-    let api = endPoints?.apigeeToLmdGetdlmEndPoint;
+jest.mock("axios");
+jest.mock("../store/index", () => ({
+  getState: jest.fn(),
+}));
+jest.mock("../utils/getCookies", () => ({
+  getCookie: jest.fn(),
+}));
+jest.mock("../utils/genericUtil", () => ({
+  handleServerError: jest.fn(),
+}));
 
-    const postData = {};
-    const axiosConfig = {
-        headers: {
-            'Authorization': 'Bearer ' + getCookie(constants.ACCESS_TOKEN)
-        }
+describe("getDistributionListMembers", () => {
+  let setErrorModalMessage;
+
+  beforeEach(() => {
+    setErrorModalMessage = jest.fn();
+    store.getState.mockReturnValue({
+      externalEndPoints: {
+        externalEndPointsProps: {
+          endpoints: {
+            apigeeToLmdGetdlmEndPoint: "http://mock-endpoint.com",
+          },
+        },
+      },
+    });
+    getCookie.mockReturnValue("mock_access_token");
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should return delivery method as 'Email'", async () => {
+    const mockResponse = {
+      data: {
+        records: [
+          {
+            Delivery_Method__c: "Email",
+          },
+        ],
+      },
     };
+    axios.post.mockResolvedValue(mockResponse);
 
-    return axios.post(api, postData, axiosConfig)
-        .then(response => response.data)
-        .catch((err) => {
-            console.error('API error:', err);
-            let errorModalConst = { errorModalTitleConst: '', errorModalDescriptionConst: '' };
-            errorModalConst = handleServerError(err, errorModalConst);
-            setErrorModalMessage({ errorModalTitle: errorModalConst.errorModalTitleConst, errorModalDescription: errorModalConst.errorModalDescriptionConst });
-        });
-}
+    const result = await getDistributionListMembers(setErrorModalMessage);
 
-export default getDistributionListMembers;
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://mock-endpoint.com",
+      {},
+      {
+        headers: {
+          Authorization: "Bearer mock_access_token",
+        },
+      }
+    );
+    expect(result).toEqual(mockResponse.data);
+    expect(setErrorModalMessage).not.toHaveBeenCalled();
+  });
 
- useEffect(() => {
-        dispatch(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: true }));
-        getDistributionListMembers()
-            .then((response) => {
-                dispatch(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: false }));
-                if (response.records && response.records.length > 0) {
-                    const deliveryMethod = response.records[0].Delivery_Method__c;
-                    updateToggleStatus(deliveryMethod);
-                } else {
-                    console.log('No records found:', response);
-                    updateToggleStatus(null);
-                }
-            })
-            .catch((error) => {
-                dispatch(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: false }));
-                console.error('Error fetching distribution list members:', error);
-            });
-    }, [dispatch]);
+  it("should handle empty records and return null delivery method", async () => {
+    const mockResponse = {
+      data: {
+        records: [],
+      },
+    };
+    axios.post.mockResolvedValue(mockResponse);
+
+    const result = await getDistributionListMembers(setErrorModalMessage);
+
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://mock-endpoint.com",
+      {},
+      {
+        headers: {
+          Authorization: "Bearer mock_access_token",
+        },
+      }
+    );
+    expect(result).toEqual(mockResponse.data);
+    expect(setErrorModalMessage).not.toHaveBeenCalled();
+  });
+
+  it("should handle API errors and call setErrorModalMessage", async () => {
+    const mockError = new Error("API error");
+    const errorModalMock = {
+      errorModalTitleConst: "Error Title",
+      errorModalDescriptionConst: "Error Description",
+    };
+    axios.post.mockRejectedValue(mockError);
+    handleServerError.mockReturnValue(errorModalMock);
+
+    await getDistributionListMembers(setErrorModalMessage);
+
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://mock-endpoint.com",
+      {},
+      {
+        headers: {
+          Authorization: "Bearer mock_access_token",
+        },
+      }
+    );
+    expect(handleServerError).toHaveBeenCalledWith(mockError, {
+      errorModalTitleConst: "",
+      errorModalDescriptionConst: "",
+    });
+    expect(setErrorModalMessage).toHaveBeenCalledWith({
+      errorModalTitle: "Error Title",
+      errorModalDescription: "Error Description",
+    });
+  });
+});
