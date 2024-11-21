@@ -1,130 +1,102 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import EmailDeliveryPreferences from './EmailDeliveryPreferences'; // Adjust the import path
-import { useDispatch, useSelector } from 'react-redux';
-import getEmailDeliveryPreferences from '../../../../Services/getEmailDeliveryPreferences'; // Adjust the import path
-import { loadingIndicatorActions } from '../../../../store/LoadingIndicator/LoadingIndicatorSlice';
-import { dataLayerAccountNotifications } from '../../../../utils/analyticsUtils';
-import { updateEmailPreferenceToggle, setEmailPreferencesInitialValues } from '../../../../store/CommunicationNotification/EmailPreferenceSlice';
+import { apiCall } from './apiCall';
+import { LOCAL_ENV_CONFIG } from '../constants';
 
-// Mock the Redux hooks
-jest.mock('react-redux', () => ({
-  useDispatch: jest.fn(),
-  useSelector: jest.fn(),
-}));
-
-// Mock the API service
-jest.mock('../../../../Services/getEmailDeliveryPreferences');
-
-// Mock the analytics utility
-jest.mock('../../../../utils/analyticsUtils', () => ({
-  dataLayerAccountNotifications: jest.fn(),
-}));
-
-describe('EmailDeliveryPreferences', () => {
-  let mockDispatch;
-  let mockPreferences;
-
+describe('apiCall', () => {
+  // Mocking sessionStorage and fetch
   beforeEach(() => {
-    mockDispatch = jest.fn();
-    useDispatch.mockReturnValue(mockDispatch);
-    
-    mockPreferences = {
-      dailySummary: false,
-      instantNotification: true,
-      pendingActionNotification: false,
-    };
-
-    useSelector.mockReturnValue({ emailPreferences: { current: mockPreferences } });
+    global.fetch = jest.fn();
+    sessionStorage.setItem('authToken', 'mockAuthToken');
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  test('should render the component with the correct title and description', () => {
-    const props = {
-      title: 'Email Preferences',
-      description: 'Configure your email preferences.',
-      primarySubTitle: 'Daily Summary',
-      primarySubDescription: 'Receive daily summaries of your activities.',
-      secondarySubTitle: 'Instant Notification',
-      secondarySubDescription: 'Get instant notifications when actions are required.',
-      checkboxDescription: 'Enable pending action notifications.',
-    };
-
-    render(<EmailDeliveryPreferences {...props} />);
-
-    expect(screen.getByText('Email Preferences')).toBeTruthy();
-    expect(screen.getByText('Configure your email preferences.')).toBeTruthy();
-    expect(screen.getByText('Daily Summary')).toBeTruthy();
-    expect(screen.getByText('Instant Notification')).toBeTruthy();
-  });
-
-  test('should dispatch setEmailPreferencesInitialValues when API call returns preferences', async () => {
-    getEmailDeliveryPreferences.mockResolvedValue({
-      records: [{ Case_Email_Delivery_Preference__c: 'Digest Only' }],
+  test('should return LOCAL_ENV_CONFIG for local environment with config/metadata URL', async () => {
+    // Mock window.location.host for localhost
+    Object.defineProperty(window, 'location', {
+      value: { host: 'localhost' },
+      writable: true,
     });
 
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
+    const url = 'http://localhost/config/metadata';
+    const result = await apiCall(url, 'GET', null, {});
 
-    await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith(
-        setEmailPreferencesInitialValues({
-          dailySummary: true,
-          instantNotification: false,
-          pendingActionNotification: false,
-        })
-      );
-    });
+    expect(result).toEqual(LOCAL_ENV_CONFIG);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
-  test('should handle toggle for dailySummary', () => {
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
-
-    const toggleSwitch = screen.getByRole('checkbox', { name: /off/i });
-    fireEvent.click(toggleSwitch); // Simulate toggling
-
-    expect(mockDispatch).toHaveBeenCalledWith(updateEmailPreferenceToggle({
-      key: 'dailySummary',
-      value: true,
-    }));
-
-    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('daily summary off to on');
-    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('instant on to off');
-  });
-
-  test('should handle toggle for instantNotification', () => {
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
-
-    const toggleSwitch = screen.getByRole('checkbox', { name: /off/i });
-    fireEvent.click(toggleSwitch); // Simulate toggling
-
-    expect(mockDispatch).toHaveBeenCalledWith(updateEmailPreferenceToggle({
-      key: 'instantNotification',
-      value: true,
-    }));
-
-    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('instant off to on');
-    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('daily summary on to off');
-  });
-
-  test('should disable pendingActionNotification when dailySummary is off', () => {
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
-
-    const checkbox = screen.getByLabelText('Enable pending action notifications.');
-    expect(checkbox).toBeDisabled();
-  });
-
-  test('should dispatch loading indicator actions during API call', async () => {
-    getEmailDeliveryPreferences.mockResolvedValue({
-      records: [{ Case_Email_Delivery_Preference__c: 'Normal' }],
+  test('should return JSON response on success (status 200)', async () => {
+    const mockResponse = { data: 'test' };
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
+    const url = 'http://example.com/data';
+    const result = await apiCall(url, 'GET', null, {});
 
-    await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: true }));
-      expect(mockDispatch).toHaveBeenCalledWith(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: false }));
+    expect(result).toEqual(mockResponse);
+    expect(fetch).toHaveBeenCalledWith(
+      url,
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer mockAuthToken',
+        }),
+      })
+    );
+  });
+
+  test('should throw error on failed fetch (non-200 status)', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      json: jest.fn().mockResolvedValueOnce({ error: 'Something went wrong' }),
     });
+
+    const url = 'http://example.com/data';
+    await expect(apiCall(url, 'GET', null, {})).rejects.toThrow();
+  });
+
+  test('should handle 401 unauthorized status', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: jest.fn().mockResolvedValueOnce({ error: 'Unauthorized' }),
+    });
+
+    const url = 'http://example.com/data';
+    const result = await apiCall(url, 'GET', null, {});
+
+    expect(result).toEqual({ error: 'Unauthorized' });
+    // You can also check for console logs if necessary (mock console.log)
+    // expect(console.log).toHaveBeenCalledWith('unauthenticated');
+  });
+
+  test('should correctly handle headers and body for POST requests', async () => {
+    const mockResponse = { data: 'post success' };
+    const data = { key: 'value' };
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
+    });
+
+    const url = 'http://example.com/submit';
+    const result = await apiCall(url, 'POST', data, {}, true);
+
+    expect(result).toEqual(mockResponse);
+    expect(fetch).toHaveBeenCalledWith(
+      url,
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer mockAuthToken',
+        }),
+        body: JSON.stringify(data),
+      })
+    );
   });
 });
