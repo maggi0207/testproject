@@ -2,10 +2,19 @@ import { apiCall } from './apiCall';
 import { LOCAL_ENV_CONFIG } from '../constants';
 
 describe('apiCall', () => {
-  // Mocking sessionStorage and fetch
   beforeEach(() => {
+    const sessionStorageMock = (() => {
+      let store = {};
+      return {
+        getItem: (key) => store[key] || null,
+        setItem: (key, value) => { store[key] = value; },
+        removeItem: (key) => { delete store[key]; },
+        clear: () => { store = {}; },
+      };
+    })();
+
+    global.sessionStorage = sessionStorageMock;
     global.fetch = jest.fn();
-    sessionStorage.setItem('authToken', 'mockAuthToken');
   });
 
   afterEach(() => {
@@ -13,7 +22,6 @@ describe('apiCall', () => {
   });
 
   test('should return LOCAL_ENV_CONFIG for local environment with config/metadata URL', async () => {
-    // Mock window.location.host for localhost
     Object.defineProperty(window, 'location', {
       value: { host: 'localhost' },
       writable: true,
@@ -70,8 +78,7 @@ describe('apiCall', () => {
     const result = await apiCall(url, 'GET', null, {});
 
     expect(result).toEqual({ error: 'Unauthorized' });
-    // You can also check for console logs if necessary (mock console.log)
-    // expect(console.log).toHaveBeenCalledWith('unauthenticated');
+    
   });
 
   test('should correctly handle headers and body for POST requests', async () => {
