@@ -1,86 +1,121 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import PaginatedTable from "./PaginatedTable";
-import Loader from "../Loader";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { Provider } from "react-redux";
+import configureStore from "redux-mock-store";
+import Payments from "./Payments";
 
-describe("PaginatedTable Component", () => {
-  const mockOnPagination = jest.fn();
-  const mockColumns = [
-    { key: "name", header: "Name" },
-    { key: "age", header: "Age" },
-  ];
-  const mockData = {
-    items: [
-      { name: "John", age: 30 },
-      { name: "Doe", age: 25 },
-    ],
-    totalItems: 2,
-    pageNumber: 1,
-    itemsPerPage: 10,
-  };
+const mockStore = configureStore([]);
+const initialState = {
+  paymentDataset: {
+    data: {
+      items: [
+        {
+          id: "1",
+          name: "Dataset 1",
+          sourceSystem: "System A",
+          harvestedDate: "2024-11-20T12:00:00Z",
+          paymentsCount: 100,
+          activeRunId: "Run123",
+        },
+      ],
+      totalItems: 1,
+    },
+    error: null,
+    loading: false,
+    createNewDatasetStatus: null,
+  },
+};
 
-  it("renders the loader when loading is true", () => {
-    render(
-      <PaginatedTable
-        loading={true}
-        tableColumns={mockColumns}
-        data={mockData}
-      />
-    );
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+describe("Payments Component", () => {
+  let store;
+
+  beforeEach(() => {
+    store = mockStore(initialState);
+    store.dispatch = jest.fn();
   });
 
-  it("renders table columns and data", () => {
+  it("renders table with data", () => {
     render(
-      <PaginatedTable
-        loading={false}
-        tableColumns={mockColumns}
-        data={mockData}
-        pageNumber={1}
-        itemsPerPage={10}
-        onPagination={mockOnPagination}
-      />
+      <Provider store={store}>
+        <Payments />
+      </Provider>
     );
 
-    expect(screen.getByText("Name")).toBeInTheDocument();
-    expect(screen.getByText("Age")).toBeInTheDocument();
-    expect(screen.getByText(JSON.stringify(mockData.items[0]))).toBeInTheDocument();
-    expect(screen.getByText(JSON.stringify(mockData.items[1]))).toBeInTheDocument();
+    expect(screen.getByText("Payment Datasets")).toBeInTheDocument();
+    expect(screen.getByText("Dataset 1")).toBeInTheDocument();
+    expect(screen.getByText("System A")).toBeInTheDocument();
+    expect(screen.getByText("No. of Payments")).toBeInTheDocument();
   });
 
-  it("calls onPagination when paginator buttons are clicked", () => {
+  it("shows error feedback when there is an error", () => {
+    store = mockStore({
+      ...initialState,
+      paymentDataset: { ...initialState.paymentDataset, error: "Failed to fetch data" },
+    });
+
     render(
-      <PaginatedTable
-        loading={false}
-        tableColumns={mockColumns}
-        data={mockData}
-        pageNumber={1}
-        itemsPerPage={10}
-        onPagination={mockOnPagination}
-      />
+      <Provider store={store}>
+        <Payments />
+      </Provider>
     );
 
-    const nextButton = screen.getByText("Next");
-    fireEvent.click(nextButton);
-
-    expect(mockOnPagination).toHaveBeenCalledWith(2);
-
-    const prevButton = screen.getByText("Previous");
-    fireEvent.click(prevButton);
-
-    expect(mockOnPagination).toHaveBeenCalledWith(0);
+    expect(screen.getByText("Failed to fetch data")).toBeInTheDocument();
   });
 
-  it("renders empty table data when loading is true", () => {
+  it("handles Create Payment Dataset button click", () => {
     render(
-      <PaginatedTable
-        loading={true}
-        tableColumns={mockColumns}
-        data={mockData}
-      />
+      <Provider store={store}>
+        <Payments />
+      </Provider>
     );
 
-    const tableData = screen.queryByTestId("row-0");
-    expect(tableData).not.toBeInTheDocument();
+    const createButton = screen.getByRole("button", { name: /create payment dataset/i });
+    fireEvent.click(createButton);
+
+    expect(screen.getByText("Add Payment Dataset")).toBeInTheDocument();
+  });
+
+  it("handles Actions menu interaction", async () => {
+    render(
+      <Provider store={store}>
+        <Payments />
+      </Provider>
+    );
+
+    const actionsMenu = screen.getByRole("menu", { name: /actions/i });
+    fireEvent.click(actionsMenu);
+
+    const scheduleRunOption = screen.getByRole("menuitem", { name: /schedule a run/i });
+    fireEvent.click(scheduleRunOption);
+
+    await waitFor(() => {
+      expect(screen.getByText("Initiate Run")).toBeInTheDocument();
+    });
+  });
+
+  it("handles pagination changes", () => {
+    render(
+      <Provider store={store}>
+        <Payments />
+      </Provider>
+    );
+
+    const nextPageButton = screen.getByRole("button", { name: /next/i });
+    fireEvent.click(nextPageButton);
+
+    expect(store.dispatch).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it("updates search query", () => {
+    render(
+      <Provider store={store}>
+        <Payments />
+      </Provider>
+    );
+
+    const searchInput = screen.getByLabelText(/search datasets/i);
+    fireEvent.change(searchInput, { target: { value: "Dataset 1" } });
+
+    expect(searchInput).toHaveValue("Dataset 1");
   });
 });
