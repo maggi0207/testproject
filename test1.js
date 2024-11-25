@@ -12,6 +12,16 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"), // Preserve other functionalities
+  NavLink: ({ children, to, ...props }) => (
+    <div data-testid="navlink-mock" {...props}>
+      MockNavLink to: {to}
+      {children}
+    </div>
+  ),
+}));
+
 // Mock the API service
 jest.mock('../../../../Services/getEmailDeliveryPreferences');
 
