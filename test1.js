@@ -1,94 +1,130 @@
-import React, { useState } from 'react';
-import { Typography, Switch } from '@mui/material';
-import './CommunicationNotificationPreferences.scss';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import EmailDeliveryPreferences from './EmailDeliveryPreferences'; // Adjust the import path
+import { useDispatch, useSelector } from 'react-redux';
+import getEmailDeliveryPreferences from '../../../../Services/getEmailDeliveryPreferences'; // Adjust the import path
+import { loadingIndicatorActions } from '../../../../store/LoadingIndicator/LoadingIndicatorSlice';
+import { dataLayerAccountNotifications } from '../../../../utils/analyticsUtils';
+import { updateEmailPreferenceToggle, setEmailPreferencesInitialValues } from '../../../../store/CommunicationNotification/EmailPreferenceSlice';
 
-const CommunicationNotificationPreferences = () => {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [webNotifications, setWebNotifications] = useState(true);
+// Mock the Redux hooks
+jest.mock('react-redux', () => ({
+  useDispatch: jest.fn(),
+  useSelector: jest.fn(),
+}));
 
-  return (
-    <div className="communication-preferences-container">
-      <div className="communication-preferences-paper">
-        <Typography variant="h6" gutterBottom>
-          Communication notification preferences
-        </Typography>
-        <Typography variant="body2" color="textSecondary" paragraph>
-          Select Communication message notifications preferences below.
-        </Typography>
+// Mock the API service
+jest.mock('../../../../Services/getEmailDeliveryPreferences');
 
-        <div className="preference-toggles-row">
-          <div className="toggle-group">
-            <Typography variant="subtitle1">Email notifications</Typography>
-            <div className="toggle-control">
-              <span>Off</span>
-              <Switch
-                checked={emailNotifications}
-                onChange={() => setEmailNotifications(!emailNotifications)}
-                color="primary"
-              />
-              <span>On</span>
-            </div>
-          </div>
-          <div className="toggle-group">
-            <Typography variant="subtitle1">Web notifications</Typography>
-            <div className="toggle-control">
-              <span>Off</span>
-              <Switch
-                checked={webNotifications}
-                onChange={() => setWebNotifications(!webNotifications)}
-                color="primary"
-              />
-              <span>On</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Mock the analytics utility
+jest.mock('../../../../utils/analyticsUtils', () => ({
+  dataLayerAccountNotifications: jest.fn(),
+}));
 
-$description-color: #666;
+describe('EmailDeliveryPreferences', () => {
+  let mockDispatch;
+  let mockPreferences;
 
-.communication-preferences-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
+  beforeEach(() => {
+    mockDispatch = jest.fn();
+    useDispatch.mockReturnValue(mockDispatch);
+    
+    mockPreferences = {
+      dailySummary: false,
+      instantNotification: true,
+      pendingActionNotification: false,
+    };
 
-  .communication-preferences-paper {
-    padding: 20px;
-    max-width: 600px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    useSelector.mockReturnValue({ emailPreferences: { current: mockPreferences } });
+  });
 
-    h6 {
-      font-weight: bold;
-    }
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-    .preference-toggles-row {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 16px;
+  test('should render the component with the correct title and description', () => {
+    const props = {
+      title: 'Email Preferences',
+      description: 'Configure your email preferences.',
+      primarySubTitle: 'Daily Summary',
+      primarySubDescription: 'Receive daily summaries of your activities.',
+      secondarySubTitle: 'Instant Notification',
+      secondarySubDescription: 'Get instant notifications when actions are required.',
+      checkboxDescription: 'Enable pending action notifications.',
+    };
 
-      .toggle-group {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    render(<EmailDeliveryPreferences {...props} />);
 
-        .toggle-control {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-top: 4px;
+    expect(screen.getByText('Email Preferences')).toBeTruthy();
+    expect(screen.getByText('Configure your email preferences.')).toBeTruthy();
+    expect(screen.getByText('Daily Summary')).toBeTruthy();
+    expect(screen.getByText('Instant Notification')).toBeTruthy();
+  });
 
-          span {
-            color: $description-color;
-          }
-        }
-      }
-    }
-  }
-}
+  test('should dispatch setEmailPreferencesInitialValues when API call returns preferences', async () => {
+    getEmailDeliveryPreferences.mockResolvedValue({
+      records: [{ Case_Email_Delivery_Preference__c: 'Digest Only' }],
+    });
 
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
 
-export default CommunicationNotificationPreferences;
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith(
+        setEmailPreferencesInitialValues({
+          dailySummary: true,
+          instantNotification: false,
+          pendingActionNotification: false,
+        })
+      );
+    });
+  });
+
+  test('should handle toggle for dailySummary', () => {
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    const toggleSwitch = screen.getByRole('checkbox', { name: /off/i });
+    fireEvent.click(toggleSwitch); // Simulate toggling
+
+    expect(mockDispatch).toHaveBeenCalledWith(updateEmailPreferenceToggle({
+      key: 'dailySummary',
+      value: true,
+    }));
+
+    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('daily summary off to on');
+    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('instant on to off');
+  });
+
+  test('should handle toggle for instantNotification', () => {
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    const toggleSwitch = screen.getByRole('checkbox', { name: /off/i });
+    fireEvent.click(toggleSwitch); // Simulate toggling
+
+    expect(mockDispatch).toHaveBeenCalledWith(updateEmailPreferenceToggle({
+      key: 'instantNotification',
+      value: true,
+    }));
+
+    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('instant off to on');
+    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('daily summary on to off');
+  });
+
+  test('should disable pendingActionNotification when dailySummary is off', () => {
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    const checkbox = screen.getByLabelText('Enable pending action notifications.');
+    expect(checkbox).toBeDisabled();
+  });
+
+  test('should dispatch loading indicator actions during API call', async () => {
+    getEmailDeliveryPreferences.mockResolvedValue({
+      records: [{ Case_Email_Delivery_Preference__c: 'Normal' }],
+    });
+
+    render(<EmailDeliveryPreferences {...mockPreferences} />);
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: true }));
+      expect(mockDispatch).toHaveBeenCalledWith(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: false }));
+    });
+  });
+});
