@@ -1,150 +1,176 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import RemoteLoader from 'onevzsoemfeframework/RemoteLoader';
+import { GetAppConfig } from 'onevzsoemfeframework/GetAppConfig';
+import Emitter from 'onevzsoemfeframework/Emitter';
+import { Notification } from '@vds/notifications';
+import { Tabs, Tab } from '@vds/tabs';
+import { memo } from 'react';
+import styled from 'styled-components';
+import PropTypes from 'prop-types';
 import { getQueryParamByName } from 'onevzsoemfecommon/Helpers';
-import DeviceGridwall from './index';
+import FederatedWrapper from '../../modules/errorHandling/FederatedWrapper';
 
+function WrapperInfo11(propsVal) {
+  return (
+    <FederatedWrapper
+      error={<Notification type='error' title='' subtitle='' fullBleed inline disableFocus />}
+      delayed={<div />}
+    >
+      <RemoteLoader {...propsVal.propsData} />
+    </FederatedWrapper>
+  );
+}
 
+const DeviceGridwall = memo((props) => {
+  const scmUpgradeMfeEnable = window?.mfe?.scmUpgradeMfeEnable;
+  const appConfig = GetAppConfig();
+  const { messages } = appConfig;
+  const { mfe_down_title, mfe_down_subtitle } = messages;
 
+  const TabContainer = styled.div`
+    padding: 0 1.25rem;
+    flex: 1;
+    height: 100%;
+    overflow: auto;
+    background-color: ${({ bgColor }) => bgColor};
+  `;
+  const ACSSGridWallWrapper = styled.div`
+    display: flex;
+    height: 560px;
+  `;
+  const LeftWrapper = styled.div`
+    width: 269px;
+    background-color: #f6f6f6;
+    // overflow: auto;
+    box-sizing: border-box;
+  `;
 
-
-
-jest.mock('onevzsoemfeframework/RemoteLoader', () => jest.fn(() => <div data-testid='RemoteLoader'>RemoteLoader</div>));
-jest.mock('../../modules/errorHandling/FederatedWrapper', () => jest.fn(({ children }) => <div>{children}</div>));
-jest.mock('@vds/notifications', () => ({
-  Notification: jest.fn(() => <div data-testid='Notification'>Notification</div>),
-}));
-
-describe('DeviceGridwall Component', () => {
-  const defaultProps = {
-    moduleProps: {},
-    acssThemeProps: {
-      background: '#ffffff',
-    },
-    transformedValidateDeviceSimIdData: {},
-  };
-
-  const appConfigMock = {
-    messages: {
-      mfe_down_title: 'MFE Down',
-      mfe_down_subtitle: 'Please try again later.',
-    },
-  };
-
-  jest.mock('onevzsoemfeframework/GetAppConfig', () => ({
-    GetAppConfig: jest.fn(() => appConfigMock),
-  }));
-
-  beforeEach(() => {
-    // Reset window.mfe and mocks before each test
-    window.mfe = {};
-  });
-
-  it('renders DeviceGridwall with RemoteLoader and Notification components', () => {
-    render(<DeviceGridwall {...defaultProps} />);
-
-    expect(screen.getAllByTestId('flex-left-rail-section')[0]).toBeInTheDocument();
-    expect(screen.getByTestId('flex-review-plans-section')).toBeInTheDocument();
-  });
-
-  it('applies the correct background color when window.mfe.csMfeFlow is true', () => {
-    window.mfe.csMfeFlow = true;
-
-    const customProps = {
-      ...defaultProps,
-      acssThemeProps: {
-        background: '#123456',
-      },
-    };
-
-    render(<DeviceGridwall {...customProps} />);
-
-    const tabContainer = screen.getByTestId('flex-review-plans-section').parentElement;
-    expect(tabContainer).toHaveStyle('background-color: #123456');
-  });
-
-  it('applies no background color when window.mfe.csMfeFlow is false', () => {
-    window.mfe.csMfeFlow = false;
-
-    const customProps = {
-      ...defaultProps,
-      acssThemeProps: {
-        background: '#123456',
-      },
-    };
-
-    render(<DeviceGridwall {...customProps} />);
-
-    const tabContainer = screen.getByTestId('flex-review-plans-section').parentElement;
-    expect(tabContainer).toHaveStyle('background-color: ');
-  });
-
-  it('applies no background color when acssThemeProps.background is not provided', () => {
-    window.mfe.csMfeFlow = true;
-
-    const customProps = {
-      ...defaultProps,
-      acssThemeProps: {
-        background: '',
-      },
-    };
-
-    render(<DeviceGridwall {...customProps} />);
-
-    const tabContainer = screen.getByTestId('flex-review-plans-section').parentElement;
-    expect(tabContainer).toHaveStyle('background-color: ');
-  });
-});
-
-describe('DeviceGridwall Component', () => {
-  const defaultProps = {
-    moduleProps: {},
-    acssThemeProps: {
-      background: '#ffffff',
-    },
-    transformedValidateDeviceSimIdData: {},
-  };
-
-  const appConfigMock = {
-    messages: {
-      mfe_down_title: 'MFE Down',
-      mfe_down_subtitle: 'Please try again later.',
+  const DeviceLoadRoute = {
+    scope: 'onevzsoemfeassisteddevice',
+    app: 'onevzsoemfeassistedhost',
+    module: './PDP',
+    moduleProps: {
+      pageContext: 'Product-Detail',
+      transformedValidateDeviceSimIdData: props?.transformedValidateDeviceSimIdData,
+      moduleProps: props,
     },
   };
 
-  jest.mock('onevzsoemfeframework/GetAppConfig', () => ({
-    GetAppConfig: jest.fn(() => appConfigMock),
-  }));
+  const AccessoryloadRoute = {
+    scope: 'onevzsoemfeassistedaccessory',
+    app: 'onevzsoemfeassistedhost',
+    module: './Accessory',
+    moduleProps: {
+      pageContext: 'Accessory',
+      moduleProps: props,
+    },
+  };
 
-  beforeEach(() => {
-    jest.mock(
-      'onevzsoemfecommon/Helpers',
-      () => ({
-        __esModule: true,
-        ...jest.requireActual('onevzsoemfecommon/Helpers'),
-        getQueryParamByName: (value) => {
-          if (value === 'defaultTab') {
-            return 'APDP';
+  const AccessoryPDPloadRoute = {
+    scope: 'onevzsoemfeassistedaccessory',
+    app: 'onevzsoemfeassistedhost',
+    module: './AccessoryPdp',
+    moduleProps: {
+      pageContext: 'AccessoryPdp',
+      moduleProps: props,
+    },
+  };
+
+  const SideBarloadRoute = {
+    scope: 'onevzsoemfeassistedaccount',
+    app: 'onevzsoemfeassistedhost',
+    module: './LineTrail',
+    moduleProps: {
+      pageContext: 'Account Line Trail',
+      moduleProps: props,
+    },
+  };
+
+  const onTabClick = (e, idx) => {
+    if (idx === 0) {
+      Emitter.emit('ACSS_SCM_DEVICE_SUBTAB', true);
+    }
+  };
+  const selectedAccessoriesSubTab = ['A', 'APDP'].includes(getQueryParamByName('defaultTab'));
+  const AccessoryRouteHandler = getQueryParamByName('defaultTab') === 'APDP' ? AccessoryPDPloadRoute : AccessoryloadRoute;
+  return (
+    <div data-testid='flex-plans-gridwall-section'>
+      <ACSSGridWallWrapper>
+        <LeftWrapper data-testid='flex-left-rail-section'>
+          <WrapperInfo11 propsData={SideBarloadRoute} />
+        </LeftWrapper>
+        <TabContainer
+          bgColor={window?.mfe?.csMfeFlow && props?.acssThemeProps?.background ? props.acssThemeProps.background : ''}
+        >
+          {scmUpgradeMfeEnable ? <Tabs orientation='horizontal' indicatorPosition='bottom' size='large' onTabChange={onTabClick}>
+            <Tab label='Devices' data-track='CombineGridwall_Devices'>
+              <FederatedWrapper
+                error={
+                  <Notification
+                    type='error'
+                    title={mfe_down_title}
+                    subtitle={mfe_down_subtitle}
+                    fullBleed
+                    inline
+                    disableFocus
+                  />
+                }
+                delayed={<div />}
+              >
+                <RemoteLoader {...DeviceLoadRoute} />
+              </FederatedWrapper>
+            </Tab>
+            <Tab label='AccessorySCM' selected={selectedAccessoriesSubTab} data-track='CombineGridwall_Plans'>
+              <FederatedWrapper
+                error={
+                  <Notification
+                    type='error'
+                    title={mfe_down_title}
+                    subtitle={mfe_down_subtitle}
+                    fullBleed
+                    inline
+                    disableFocus
+                  />
+                }
+                delayed={<div />}
+              >
+                <RemoteLoader {...AccessoryRouteHandler} />
+              </FederatedWrapper>
+            </Tab>
+          </Tabs> : <div data-testid='flex-review-plans-section'>
+            <FederatedWrapper
+              error={
+                <Notification
+                  type='error'
+                  title={mfe_down_title}
+                  subtitle={mfe_down_subtitle}
+                  fullBleed
+                  inline
+                  disableFocus
+                />
+              }
+              delayed={<div />}
+            >
+              <RemoteLoader {...DeviceLoadRoute} />
+            </FederatedWrapper>
+          </div>
           }
-          // if (value === 'activeMtn') {
-          //   return 'newLine1';
-          // }
-          return null;
-        },
-      }),
-      { virtual: true },
-    );
-    // Reset window.mfe and mocks before each test
-    window.mfe = { scmUpgradeMfeEnable: true };
-  });
-
-  it('renders DeviceGridwall with RemoteLoader and Notification components', () => {
-    render(<DeviceGridwall {...defaultProps} />);
-
-    expect(screen.getAllByTestId('flex-left-rail-section')[0]).toBeInTheDocument();
-  });
-
-
+        </TabContainer>
+      </ACSSGridWallWrapper>
+    </div>
+  );
 });
 
-
+DeviceGridwall.defaultProps = {
+  moduleProps: {},
+  acssThemeProps: {
+    background: '',
+  },
+};
+DeviceGridwall.propTypes = {
+  moduleProps: PropTypes.shape({}),
+  acssThemeProps: PropTypes.shape({
+    background: PropTypes.string,
+  }),
+  transformedValidateDeviceSimIdData: PropTypes.object,
+};
+export default DeviceGridwall;
