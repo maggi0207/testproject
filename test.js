@@ -1,78 +1,150 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { configureStore } from "@reduxjs/toolkit";
-import { Provider } from "react-redux";
-import Payments from "./Payments";
-import paymentDatasetReducer from "../../reducers/paymentdataset.reducer";
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
+import { getQueryParamByName } from 'onevzsoemfecommon/Helpers';
+import DeviceGridwall from './index';
 
-describe("Payments Component with Reducer", () => {
-  let store;
+
+
+
+
+
+jest.mock('onevzsoemfeframework/RemoteLoader', () => jest.fn(() => <div data-testid='RemoteLoader'>RemoteLoader</div>));
+jest.mock('../../modules/errorHandling/FederatedWrapper', () => jest.fn(({ children }) => <div>{children}</div>));
+jest.mock('@vds/notifications', () => ({
+  Notification: jest.fn(() => <div data-testid='Notification'>Notification</div>),
+}));
+
+describe('DeviceGridwall Component', () => {
+  const defaultProps = {
+    moduleProps: {},
+    acssThemeProps: {
+      background: '#ffffff',
+    },
+    transformedValidateDeviceSimIdData: {},
+  };
+
+  const appConfigMock = {
+    messages: {
+      mfe_down_title: 'MFE Down',
+      mfe_down_subtitle: 'Please try again later.',
+    },
+  };
+
+  jest.mock('onevzsoemfeframework/GetAppConfig', () => ({
+    GetAppConfig: jest.fn(() => appConfigMock),
+  }));
 
   beforeEach(() => {
-    // Create a real Redux store with the actual reducer
-    store = configureStore({
-      reducer: {
-        paymentDatasetState: paymentDatasetReducer,
+    // Reset window.mfe and mocks before each test
+    window.mfe = {};
+  });
+
+  it('renders DeviceGridwall with RemoteLoader and Notification components', () => {
+    render(<DeviceGridwall {...defaultProps} />);
+
+    expect(screen.getAllByTestId('flex-left-rail-section')[0]).toBeInTheDocument();
+    expect(screen.getByTestId('flex-review-plans-section')).toBeInTheDocument();
+  });
+
+  it('applies the correct background color when window.mfe.csMfeFlow is true', () => {
+    window.mfe.csMfeFlow = true;
+
+    const customProps = {
+      ...defaultProps,
+      acssThemeProps: {
+        background: '#123456',
       },
-      preloadedState: {
-        paymentDatasetState: {
-          data: {
-            items: [
-              {
-                id: "1",
-                name: "Dataset 1",
-                sourceSystem: "System A",
-                harvestedDate: "2023-12-01T12:00:00Z",
-                paymentsCount: 10,
-                activeRunId: "RUN123",
-              },
-            ],
-            totalItems: 1,
-          },
-          error: null,
-          loading: false,
-          createNewDatasetStatus: null,
-        },
+    };
+
+    render(<DeviceGridwall {...customProps} />);
+
+    const tabContainer = screen.getByTestId('flex-review-plans-section').parentElement;
+    expect(tabContainer).toHaveStyle('background-color: #123456');
+  });
+
+  it('applies no background color when window.mfe.csMfeFlow is false', () => {
+    window.mfe.csMfeFlow = false;
+
+    const customProps = {
+      ...defaultProps,
+      acssThemeProps: {
+        background: '#123456',
       },
-    });
+    };
+
+    render(<DeviceGridwall {...customProps} />);
+
+    const tabContainer = screen.getByTestId('flex-review-plans-section').parentElement;
+    expect(tabContainer).toHaveStyle('background-color: ');
   });
 
-  it("renders Payment Datasets table", () => {
-    render(
-      <Provider store={store}>
-        <Payments />
-      </Provider>
-    );
+  it('applies no background color when acssThemeProps.background is not provided', () => {
+    window.mfe.csMfeFlow = true;
 
-    expect(screen.getByText("Payment Datasets")).toBeInTheDocument();
-    expect(screen.getByText("Dataset 1")).toBeInTheDocument();
-    expect(screen.getByText("System A")).toBeInTheDocument();
-    expect(screen.getByText("10")).toBeInTheDocument();
-  });
+    const customProps = {
+      ...defaultProps,
+      acssThemeProps: {
+        background: '',
+      },
+    };
 
-  it("handles Create Payment Dataset button click", () => {
-    render(
-      <Provider store={store}>
-        <Payments />
-      </Provider>
-    );
+    render(<DeviceGridwall {...customProps} />);
 
-    const createButton = screen.getByText("Create Payment Dataset");
-    fireEvent.click(createButton);
-
-    expect(screen.getByText("Add Payment Dataset")).toBeInTheDocument();
-  });
-
-  it("handles Search Datasets input", () => {
-    render(
-      <Provider store={store}>
-        <Payments />
-      </Provider>
-    );
-
-    const searchInput = screen.getByLabelText("Search Datasets");
-    fireEvent.change(searchInput, { target: { value: "Dataset" } });
-
-    expect(searchInput.value).toBe("Dataset");
+    const tabContainer = screen.getByTestId('flex-review-plans-section').parentElement;
+    expect(tabContainer).toHaveStyle('background-color: ');
   });
 });
+
+describe('DeviceGridwall Component', () => {
+  const defaultProps = {
+    moduleProps: {},
+    acssThemeProps: {
+      background: '#ffffff',
+    },
+    transformedValidateDeviceSimIdData: {},
+  };
+
+  const appConfigMock = {
+    messages: {
+      mfe_down_title: 'MFE Down',
+      mfe_down_subtitle: 'Please try again later.',
+    },
+  };
+
+  jest.mock('onevzsoemfeframework/GetAppConfig', () => ({
+    GetAppConfig: jest.fn(() => appConfigMock),
+  }));
+
+  beforeEach(() => {
+    jest.mock(
+      'onevzsoemfecommon/Helpers',
+      () => ({
+        __esModule: true,
+        ...jest.requireActual('onevzsoemfecommon/Helpers'),
+        getQueryParamByName: (value) => {
+          if (value === 'defaultTab') {
+            return 'APDP';
+          }
+          // if (value === 'activeMtn') {
+          //   return 'newLine1';
+          // }
+          return null;
+        },
+      }),
+      { virtual: true },
+    );
+    // Reset window.mfe and mocks before each test
+    window.mfe = { scmUpgradeMfeEnable: true };
+  });
+
+  it('renders DeviceGridwall with RemoteLoader and Notification components', () => {
+    render(<DeviceGridwall {...defaultProps} />);
+
+    expect(screen.getAllByTestId('flex-left-rail-section')[0]).toBeInTheDocument();
+  });
+
+
+});
+
+
