@@ -1,25 +1,26 @@
-jest.mock('../../../service/api.service', () => ({
-  apiCall: (
-    url,
-    method,
-    data,
-    headers,
-    includeJsonHeader = true,
-    includeFormDataHeader = false
-  ) => {
-    if (url.includes("api/v1/payments/datasets/all")) {
-      return Promise.resolve({
-        items: [
-          {
-            id: "673d09c874e7d05da2ec7fc0",
-            name: "sai_epods_test_128239923",
-            sourceSystem: "EPODS",
-            paymentsCount: 36,
-            harvestedDate: "2024-11-19T16:57:24.206",
-          },
-        ],
-      });
-    }
-    return Promise.resolve({});
-  },
+import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import YourComponent from './YourComponent'; // Replace with your component path
+
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'), // Keep other functionalities intact
+  useParams: jest.fn(),
 }));
+
+test('should mock useParams and verify the component behavior', () => {
+  // Mock the return value of useParams
+  useParams.mockReturnValue({
+    paymntDatasetId: '12345', // Provide the mock parameter
+  });
+
+  // Render your component inside MemoryRouter to handle routing context
+  const { getByText } = render(
+    <MemoryRouter>
+      <YourComponent />
+    </MemoryRouter>
+  );
+
+  // Perform assertions based on the mocked parameter
+  expect(getByText('12345')).toBeInTheDocument(); // Replace with your expected behavior
+});
