@@ -1,58 +1,39 @@
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getPaymentDatasetAPI } from "./api"; // Import your API call
+import { updateItemsAction } from "./actions"; // Import Redux action
+import { COMPLETED, FAILURE } from "./constants"; // Import status constants
 
-import { Page, withModel } from '@adobe/aem-react-editable-components';
-import { Provider } from "react-redux";
-import LoadingIndicator from './components/NextGen/components/LoadingIndicator';
-import store from "./store/index";
-import { setUserActive, setUserInactive } from './store/UserActivity/userActivitySlice';
-import { initializeUserActivityListeners } from './utils/userActivityTracker';
+const PollingComponent = ({ paymentDataset }) => {
+  const dispatch = useDispatch();
+  const items = useSelector((state) => state.paymentDatasetState.items); // Get current items from Redux
 
-// This component is the application entry point
-class App extends Page {
+  const WAIT_FOR = 30000; // 30 seconds delay
 
-    constructor(props) {
-        super(props);
-        console.log("clas props", props);
-        this.activityTimeout = null;
-    }
+  useEffect(() => {
+    const poll = async () => {
+      await new Promise((resolve) => setTimeout(resolve, WAIT_FOR)); // Wait for 30 seconds
 
-    componentDidMount() {
-        this.initUserActivityListeners();
-    }
+      try {
+        const response = await getPaymentDatasetAPI(paymentDataset.id); // Fetch updated data
+        if (response) {
+          const updatedItems = items.map((item) =>
+            item.id === response.id ? response : item
+          );
 
-    componentWillUnmount() {
-        this.cleanupUserActivityListeners();
-    }
-
-    initUserActivityListeners = () => {
-        this.cleanupListeners = initializeUserActivityListeners(
-            this.handleUserActive,
-            this.handleUserInactive
-        );
-    }
-
-    cleanupUserActivityListeners = () => {
-        if (this.cleanupListeners) {
-            this.cleanupListeners();
+          dispatch(updateItemsAction(updatedItems)); // Dispatch updated items to Redux
         }
-    }
+      } catch (error) {
+        console.error("Error while polling:", error);
+      }
+    };
 
-    handleUserActive = () => {
-        store.dispatch(setUserActive());
+    if (![COMPLETED, FAILURE].includes(paymentDataset.status)) {
+      poll();
     }
+  }, [dispatch, items, paymentDataset]);
 
-    handleUserInactive = () => {
-        store.dispatch(setUserInactive());
-    }
+  return <div>Polling payment dataset...</div>;
+};
 
-    render() {
-        return (
-            <Provider store={store}>
-                {this.childComponents}
-                {this.childPages}
-                <LoadingIndicator />
-            </Provider>
-        );
-    }
-}
-
-export default withModel(App);
+export default PollingComponent;
