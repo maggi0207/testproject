@@ -1,69 +1,22 @@
-{editTradeIn && !tradeInOpened && (
-  window?.mfe?.scmUpgradeMfeEnable ? (
-    <ModalWrap
-      id={!window?.mfe?.scmDeviceMfeEnable && 'modalcontainer'}
-      border={'1px solid'}
-      height={'80%'}
-      opened={editTradeIn}
-      fullScreenDialog
-      disableAnimation={false}
-      closeButton={
-        <Icon name='close' onClick={() => hideEditTradeIn()} />
-      }
-      disableOutsideClick
-      contentContainer
-      ariaLabel='Testing Modal'
-      surface={'light'}
-    >
-      <BodyWrapper>
-        <EditTradeIn
-          enableReturnAnywhereAssisted={enableReturnAnywhereAssisted}
-          showTradeAnywhereForBEWithoutEcpdCustomers={props?.tradeInData?.showTradeAnywhereForBEWithoutEcpdCustomers}
-          hideEditTradeIn={() => hideEditTradeIn()}
-          isModalView={true}
-          editTradeIn={editTradeIn}
-          tradeInDueMonthlyItems={props?.tradeInData?.tradeInDueMonthlyItems}
-          tradeInDueTodayItems={props?.tradeInData?.tradeInDueTodayItems}
-          removeTradeInRequest={(data) => removeTradeInRequest(data)}
-          cartTradeInTypeHelper={() => cartTradeInTypeHelper()}
-          customerInfo={props?.customerInfo}
-          cartDetails={props?.cartDetails}
-          tradeInItems={props?.tradeInData?.tradeInItems}
-          addAppMessage={props?.addAppMessage}
-          landing={props?.landing}
-          assistedFlags={assistedFlags}
-          enableReturnOptionsInContactCenterApps={enableReturnOptionsInContactCenterApps}
-          makeSelectTradeInLocation={props?.tradeInLocation || ''}
-          isAcctICEligible={props?.isAcctICEligible || ''}
-          showReturnChoiceScreen={showReturnChoiceScreen}
-          setShowReturnChoiceScreen={setShowReturnChoiceScreen}
-          removeTradeinShippingType={removeTradeinShippingType}
-        />
-      </BodyWrapper>
-    </ModalWrap>
-  ) : (
-    <EditTradeIn
-      enableReturnAnywhereAssisted={enableReturnAnywhereAssisted}
-      showTradeAnywhereForBEWithoutEcpdCustomers={props?.tradeInData?.showTradeAnywhereForBEWithoutEcpdCustomers}
-      hideEditTradeIn={() => hideEditTradeIn()}
-      isModalView={false}
-      editTradeIn={editTradeIn}
-      tradeInDueMonthlyItems={props?.tradeInData?.tradeInDueMonthlyItems}
-      tradeInDueTodayItems={props?.tradeInData?.tradeInDueTodayItems}
-      removeTradeInRequest={(data) => removeTradeInRequest(data)}
-      cartTradeInTypeHelper={() => cartTradeInTypeHelper()}
-      customerInfo={props?.customerInfo}
-      cartDetails={props?.cartDetails}
-      tradeInItems={props?.tradeInData?.tradeInItems}
-      addAppMessage={props?.addAppMessage}
-      landing={props?.landing}
-      assistedFlags={assistedFlags}
-      enableReturnOptionsInContactCenterApps={enableReturnOptionsInContactCenterApps}
-      makeSelectTradeInLocation={props?.tradeInLocation || ''}
-      isAcctICEligible={props?.isAcctICEligible || ''}
-      showReturnChoiceScreen={showReturnChoiceScreen}
-      setShowReturnChoiceScreen={setShowReturnChoiceScreen}
-      removeTradeinShippingType={removeTradeinShippingType}
-    />
-  )
-)}
+const BuyoutAmountModal = styled.div`
+ ${({ scmUpgradeMfeEnable }) =>
+    scmUpgradeMfeEnable
+      ? `
+  z-index: 0;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  margin: auto;
+  overflow-y: scroll;
+  background: #0a0a0a;
+  ${({ showReturnChoiceScreen }) =>
+    showReturnChoiceScreen &&
+    `
+    background-color: #ffffff !important;
+  `}
+  ` :
+`;
