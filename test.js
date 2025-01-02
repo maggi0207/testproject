@@ -193,6 +193,37 @@ const FooterContainer = styled.div`
   text-align: center;
   background-color: #f5f5f5;
   border-top: 1px solid #d3d3d3;
+  padding: 0.5rem 0;
+
+  ${({ scmUpgradeMfeEnable }) =>
+    scmUpgradeMfeEnable
+      ? `
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-top: 1px solid #d8dada;
+  `
+      : `
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64rem;
+    border-top: 1px solid #d3d3d3;
+  `}
+`;
+
+const FooterContent = styled.div`
+  padding: 0.5rem 0;
+  margin: 0 auto;
+`;
+
+
+const FooterContainer = styled.div`
+  text-align: center;
+  background-color: #f5f5f5;
+  border-top: 1px solid #d3d3d3;
   width: 64rem;
   position: fixed;
   bottom: 0;
