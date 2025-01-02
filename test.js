@@ -13,30 +13,30 @@ const FixedHeader = styled(Grid)`
   background-color: #f5f5f5;
   text-align: center;
   background: #ffffff;
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 64rem;
   padding: 1.5rem 0.5rem;
   border-bottom: 1px solid #d3d3d3;
-  top: 0;
 
   ${({ scmUpgradeMfeEnable }) =>
     scmUpgradeMfeEnable
       ? `
     position: sticky;
     top: 0;
-     left :unset;
+    left: 0;
+    width: 100%;
+    z-index: 1000; /* Ensure it's above modal content */
     border-bottom: 1px solid #d8dada;
   `
       : `
     position: fixed;
     top: 0;
-    z-index: 1;
-    width: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64rem;
+    z-index: 1000;
+    border-bottom: 1px solid #d3d3d3;
   `}
 `;
-`;
+
 
 const Grid = styled.div`
   display: flex;
