@@ -8,6 +8,35 @@ import { formatCurrency } from 'onevzsoemfecommon/Helpers/validation';
 import StoreLocatorModal from './EditTradeIn/StoreLocatorModal';
 import { useLazyGetStoreInformationQuery } from '../../modules/services/APIService/APIServiceHooks';
 import { returnChoiceContinueBtn } from '../../utils/index';
+const FixedHeader = styled(Grid)`
+  margin: 0 !important;
+  background-color: #f5f5f5;
+  text-align: center;
+  background: #ffffff;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64rem;
+  padding: 1.5rem 0.5rem;
+  border-bottom: 1px solid #d3d3d3;
+  top: 0;
+
+  ${({ scmUpgradeMfeEnable }) =>
+    scmUpgradeMfeEnable
+      ? `
+    position: sticky;
+    top: 0;
+     left :unset;
+    border-bottom: 1px solid #d8dada;
+  `
+      : `
+    position: fixed;
+    top: 0;
+    z-index: 1;
+    width: 100%;
+  `}
+`;
+`;
 
 const Grid = styled.div`
   display: flex;
