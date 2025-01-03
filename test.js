@@ -1,16 +1,16 @@
-export default function ReturnChoice({
-  selectedDevice,
-  mdn,
-  setPreferredStoreId,
-  setPreferredStoreInfo,
-  preferredStoreInfo,
-  chooseTradeInSelected,
-  updateChooseTradeInSelected,
-  setEnableContinue,
-  setCurrentSection,
-  selectedTradeStoreId,
-  setDefaultZipCode,
-  cartDetails,
-  isEnabledTradeReturnOptionsInContactCenterApps,
-  customerType
-})
+ReturnChoice.propTypes = {
+  selectedDevice: PropTypes.object.isRequired,
+  mdn: PropTypes.string.isRequired,
+  setPreferredStoreId: PropTypes.func.isRequired,
+  setPreferredStoreInfo: PropTypes.func.isRequired,
+  preferredStoreInfo: PropTypes.object,
+  chooseTradeInSelected: PropTypes.string.isRequired,
+  updateChooseTradeInSelected: PropTypes.func.isRequired,
+  setEnableContinue: PropTypes.func.isRequired,
+  setCurrentSection: PropTypes.func.isRequired,
+  selectedTradeStoreId: PropTypes.string,
+  setDefaultZipCode: PropTypes.func.isRequired,
+  cartDetails: PropTypes.object.isRequired,
+  isEnabledTradeReturnOptionsInContactCenterApps: PropTypes.bool.isRequired,
+  customerType: PropTypes.string.isRequired
+};
