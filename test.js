@@ -14,3 +14,17 @@ ReturnChoice.propTypes = {
   isEnabledTradeReturnOptionsInContactCenterApps: PropTypes.bool.isRequired,
   customerType: PropTypes.string.isRequired
 };
+
+const propTypes = {
+  selectedDevice: PropTypes.object,
+  preferredStoreInfo: PropTypes.object,
+  mdn: PropTypes.string,
+  setPreferredStoreId: PropTypes.func,
+  setPreferredStoreInfo: PropTypes.func,
+  updateChooseTradeInSelected: PropTypes.func,
+  chooseTradeInSelected: PropTypes.string,
+  setEnableContinue: PropTypes.func,
+  setCurrentSection: PropTypes.func,
+  selectedTradeStoreId: PropTypes.string,
+  setDefaultZipCode: PropTypes.func,
+};
