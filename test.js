@@ -1,4 +1,40 @@
+During deployment of Case email preferences and Communication preferences within the My Account page, a few maintenance items were identified that are needing corrected:
 
+Remove titles from toast messaging - message will float to topDistinct  (updated) messaging for each section (success/failure)Errors should be RED not BLUE
+
+Titles, messages, and color of toast notifications need to be updated to the following:
+
+Case email success message (GREEN toast - Remove title): 
+
+Your case email notifications preferences have been updated.
+Case email error/cancel message (RED toast - Remove title): 
+
+Your case email notification preferences were not saved. If you wish to make changes, please update your preferences again.
+
+
+
+Case notification success message (GREEN toast - Remove title):
+
+Your communication message notifications preferences have been updated. 
+Case notification error/cancel message (RED toast - Remove title):
+
+Your communication message notifications preferences were not saved. If you wish to make changes, please update your preferences again.
+
+
+
+
+
+Identified defect:
+
+If a particular preference is not changed still corresponding API is being called and two popup displays : 
+
+
+
+Given the user is on the My Account page 
+
+When the user updates the communication messages notification section to off/on for second time..
+
+Then two popups appear, and two update API calls are made until a hard refresh is performed on the HUB My Account page.
 
 
 Scenario 1: Case Email notification preferences Toggle Email Notification and/or Instant Email checkbox On/Off successful
