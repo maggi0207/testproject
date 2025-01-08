@@ -1,15 +1,21 @@
-// components/PdfViewer.js
-'use client'; // Important to ensure the component renders only on the client side
+'use client'; // Important for Next.js app directory or when using client-side rendering
 
 import React, { useState } from 'react';
-import { Document, Page } from 'react-pdf/dist/esm/entry.webpack';
+import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 
-const PdfViewer = ({ fileUrl }) => {
-  const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
+// Set the worker source for pdfjs
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
+interface PdfViewerProps {
+  fileUrl: string;
+}
+
+const PdfViewer: React.FC<PdfViewerProps> = ({ fileUrl }) => {
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
   };
 
@@ -18,12 +24,13 @@ const PdfViewer = ({ fileUrl }) => {
       <Document
         file={fileUrl}
         onLoadSuccess={onDocumentLoadSuccess}
+        loading={<p>Loading PDF...</p>}
       >
         <Page pageNumber={pageNumber} />
       </Document>
       <div>
         <p>
-          Page {pageNumber} of {numPages}
+          Page {pageNumber} of {numPages || 0}
         </p>
         <button
           onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
@@ -32,8 +39,8 @@ const PdfViewer = ({ fileUrl }) => {
           Previous
         </button>
         <button
-          onClick={() => setPageNumber((prev) => Math.min(prev + 1, numPages))}
-          disabled={pageNumber >= numPages}
+          onClick={() => setPageNumber((prev) => Math.min(prev + 1, numPages || 1))}
+          disabled={numPages && pageNumber >= numPages}
         >
           Next
         </button>
