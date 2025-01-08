@@ -1,3 +1,42 @@
+
+const nextConfig = {
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.css$/,
+      use: [
+        'style-loader',
+        'css-loader',
+        {
+          loader: 'postcss-loader',
+          options: {
+            postcssOptions: {
+              plugins: [
+                require('autoprefixer'),
+              ],
+            },
+          },
+        },
+      ],
+    });
+    return config;
+  },
+};
+
+module.exports = nextConfig;
+
+/* styles/react-pdf-annotation-layer.css */
+.react-pdf__Page__annotations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+import '../styles/react-pdf-annotation-layer.css';
+
+
 'use client'; // Important for Next.js app directory or when using client-side rendering
 
 import React, { useState } from 'react';
