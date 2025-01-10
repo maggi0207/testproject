@@ -15,7 +15,7 @@ interface Row {
   id: number;
   header: string;
   direction: string;
-  isNew?: boolean;
+  isNew?: boolean; // Optional property
 }
 
 const headers = ["Fund", "Cusip", "Deal Code", "Side", "Category"];
@@ -46,13 +46,13 @@ const AddFundGrid: React.FC = () => {
     setIsAdding(false); // Allow the "Add" button to appear if the new row is deleted
   };
 
-  const processRowUpdate = (newRow: GridRowModel) => {
+  const processRowUpdate = (newRow: GridRowModel): Row => {
     if (!newRow.header || !newRow.direction) {
       setRows((prevRows) => prevRows.filter((row) => row.id !== newRow.id));
-      return null;
+      throw new Error("Row update failed: missing required fields");
     }
 
-    const updatedRow = { ...newRow, isNew: false };
+    const updatedRow: Row = { ...newRow, isNew: false };
     setRows((prevRows) =>
       prevRows.map((row) => (row.id === newRow.id ? updatedRow : row))
     );
@@ -75,15 +75,14 @@ const AddFundGrid: React.FC = () => {
 
   const handleAddRow = () => {
     const id = rows.length + 1;
-    setRows((prevRows) => [
-      ...prevRows,
-      {
-        id,
-        header: "",
-        direction: "",
-        isNew: true,
-      } as Row,
-    ]);
+    const newRow: Row = {
+      id,
+      header: "",
+      direction: "",
+      isNew: true,
+    };
+
+    setRows((prevRows) => [...prevRows, newRow]);
     setRowModesModel((prev) => ({
       ...prev,
       [id]: { mode: GridRowModes.Edit, fieldToFocus: "header" },
