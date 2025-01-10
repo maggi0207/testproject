@@ -21,7 +21,7 @@ interface Row {
 const headers = ["Fund", "Cusip", "Deal Code", "Side", "Category"];
 const directions = ["Ascending", "Descending"];
 
-const App: React.FC = () => {
+const AddFundGrid: React.FC = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
   const [isAdding, setIsAdding] = useState(false); // Track if a new row is being added
@@ -193,4 +193,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default AddFundGrid;
