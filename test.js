@@ -2,25 +2,31 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  entry: './src/index.js',  // Your entry file
+  entry: './src/index.tsx',  // Entry file, change to .tsx for React with TypeScript
   output: {
     filename: 'bundle.js',  // Output file name
     path: path.resolve(__dirname, 'dist'),  // Output directory
   },
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js'],  // Resolve .ts and .tsx extensions
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.tsx?$/,  // Match .ts and .tsx files
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',  // Transpiles JavaScript using Babel
+          loader: 'ts-loader',  // Transpile TypeScript
         },
       },
       {
-        test: /\.jsx$/,  // For React JSX files
+        test: /\.jsx?$/,  // For React JSX files
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',  // Transpiles JSX to JS
+          loader: 'babel-loader',  // Transpile JSX to JS
+          options: {
+            presets: ['@babel/preset-env', '@babel/preset-react'],  // Babel presets for React and modern JavaScript
+          },
         },
       },
     ],
