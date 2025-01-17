@@ -1,41 +1,51 @@
-import { Document, Page, pdfjs } from 'react-pdf';
-import React, { useState } from 'react';
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-export interface PdfRendererProps {
-  url: string;
-}
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-const PdfRenderer: React.FC<PdfRendererProps> = ({ url }) => {
-  const [numPages, setNumPages] = useState(null);
-  function onDocumentLoadSuccess(props: any) {
-    setNumPages(props.numPages);
-  }
-
-  return (
-    <div className='pdf-wrapper'>
+module.exports = {
+  entry: './src/index.js',  // Your entry file
+  output: {
+    filename: 'bundle.js',  // Output file name
+    path: path.resolve(__dirname, 'dist'),  // Output directory
+  },
+  module: {
+    rules: [
       {
-        <Document
-          className='pdf-document'
-          file={url}
-          onLoadSuccess={onDocumentLoadSuccess}
-          onLoadError={(err: any) => {
-            console.error('FAILED LOADING DOC ', err.message);
-          }}
-        >
-          {Array.from(new Array(numPages), (el, index) => (
-            <Page
-              height={900}
-              width={900}
-              className='pdf-page'
-              key={`page_${index + 1}`}
-              pageNumber={index + 1}
-            />
-          ))}
-        </Document>
-      }
-    </div>
-  );
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',  // Transpiles JavaScript using Babel
+        },
+      },
+      {
+        test: /\.jsx$/,  // For React JSX files
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',  // Transpiles JSX to JS
+        },
+      },
+    ],
+  },
+  devServer: {
+    proxy: {
+      '/mysshome': {
+        target: 'http://myssc-dev-services.statestr.com:81',  // Backend API URL
+        changeOrigin: true,
+        secure: false,
+        pathRewrite: {
+          '^/mysshome': '',  // Remove '/mysshome' before proxying
+        },
+        onProxyReq: (proxyReq, req, res) => {
+          // Add custom headers or other configurations as needed
+          proxyReq.setHeader('Access-Control-Allow-Origin', '*');
+          proxyReq.setHeader('Content-Type', 'application/json');
+          proxyReq.setHeader('sm_user', 'p871422');
+        },
+      },
+    },
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/index.html',  // Path to your HTML file
+    }),
+  ],
 };
-
-export default PdfRenderer;
