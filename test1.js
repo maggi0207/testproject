@@ -1,82 +1,274 @@
-import React, { useState } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-import { Icon } from '@material-tailwind/react';
-import { MdClose, MdZoomIn, MdZoomOut } from 'react-icons/md'; // React Icons
+dll response
+[
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gGZQYA2"
+        },
+        "Name": "* Payer Processing Issues testing"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaHZYAY"
+        },
+        "Name": "Assurance Reimbursement Management"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaHeYAI"
+        },
+        "Name": "Clearance Patient Access Suite"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaHtYAI"
+        },
+        "Name": "Exchange"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaHoYAI"
+        },
+        "Name": "Intelligent EDI"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gZMfYAM"
+        },
+        "Name": "JoAnn Distro List 1"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gc0CYAQ"
+        },
+        "Name": "JoAnn Testing"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gbq9YAA"
+        },
+        "Name": "Kelsi - Test DL"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaMFYAY"
+        },
+        "Name": "Lee"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaOzYAI"
+        },
+        "Name": "Live Training DL"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaNrYAI"
+        },
+        "Name": "Live Training Test DL"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gc0bYAA"
+        },
+        "Name": "Medical Network – Assurance Reimbursement Management – Claims"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gbtxYAA"
+        },
+        "Name": "Revenue Performance Advisor"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gbq4YAA"
+        },
+        "Name": "somes"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaHUYAY"
+        },
+        "Name": "Test Active member Count"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gWcdYAE"
+        },
+        "Name": "Test Active member Count"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaRKYAY"
+        },
+        "Name": "Test Task"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gGXUYA2"
+        },
+        "Name": "Testing"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gGv4YAE"
+        },
+        "Name": "Testing DL"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaKnYAI"
+        },
+        "Name": "Testing ECP DL - Existing"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaKsYAI"
+        },
+        "Name": "Testing ECP DL - Existing + Manual"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaKiYAI"
+        },
+        "Name": "Testing ECP DL - Manual"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gYOhYAM"
+        },
+        "Name": "Testing List"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaMeYAI"
+        },
+        "Name": "ttt"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gZPBYA2"
+        },
+        "Name": "UAT Distribution List 1 - 25k"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gZPGYA2"
+        },
+        "Name": "UAT Distribution List 25,000+"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gbiBYAQ"
+        },
+        "Name": "UAT OPTUM EMAILS"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gbi6YAA"
+        },
+        "Name": "UAT PERSONAL EMAILS"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gbqEYAQ"
+        },
+        "Name": "v2"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gZskYAE"
+        },
+        "Name": "vtest"
+    }
+]
 
-export interface PdfRendererProps {
-  url: string;
-  open: boolean;
-  onClose: () => void;
-}
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const PdfRenderer: React.FC<PdfRendererProps> = ({ url, open, onClose }) => {
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [scale, setScale] = useState(1); // Zoom level
 
-  const onDocumentLoadSuccess = (props: any) => {
-    setNumPages(props.numPages);
-  };
 
-  const zoomIn = () => setScale((prevScale) => Math.min(prevScale + 0.1, 2)); // Max zoom 2x
-  const zoomOut = () => setScale((prevScale) => Math.max(prevScale - 0.1, 0.5)); // Min zoom 0.5x
 
-  return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center ${
-        open ? '' : 'hidden'
-      } bg-gray-900 bg-opacity-75`}
-    >
-      {/* Modal Content */}
-      <div className="bg-white w-full max-w-5xl rounded-lg shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="bg-gray-100 p-4 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-800">PDF Viewer</h2>
-          <Icon className="cursor-pointer text-red-500" onClick={onClose}>
-            <MdClose size={24} />
-          </Icon>
-        </div>
+udl
 
-        {/* Body */}
-        <div className="p-4">
-          <Document
-            file={url}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={(err: any) =>
-              console.error('FAILED LOADING DOC', err.message)
-            }
-            className="flex justify-center"
-          >
-            {Array.from(new Array(numPages || 0), (el, index) => (
-              <Page
-                key={`page_${index + 1}`}
-                pageNumber={index + 1}
-                scale={scale}
-                className="pdf-page my-4 shadow-lg"
-              />
-            ))}
-          </Document>
-        </div>
-
-        {/* Footer */}
-        <div className="bg-gray-100 p-4 flex items-center justify-center gap-4">
-          <Icon
-            className="cursor-pointer text-blue-500 hover:text-blue-700"
-            onClick={zoomOut}
-          >
-            <MdZoomOut size={24} />
-          </Icon>
-          <Icon
-            className="cursor-pointer text-blue-500 hover:text-blue-700"
-            onClick={zoomIn}
-          >
-            <MdZoomIn size={24} />
-          </Icon>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default PdfRenderer;
+[
+    {
+        "attributes": {
+            "type": "Distribution_List_Member__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List_Member__c/a0iDG000002pjFjYAI"
+        },
+        "Contact__c": "0037V00002zfRLrQAM",
+        "Email__c": null,
+        "Delivery_Method__c": null,
+        "Distribution_List__r": {
+            "attributes": {
+                "type": "Distribution_List__c",
+                "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gGZQYA2"
+            },
+            "Name": "* Payer Processing Issues testing"
+        },
+        "Status__c": "Removed"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List_Member__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List_Member__c/a0iDG000002pk0NYAQ"
+        },
+        "Contact__c": "0037V00002zfRLrQAM",
+        "Email__c": null,
+        "Delivery_Method__c": "Email",
+        "Distribution_List__r": {
+            "attributes": {
+                "type": "Distribution_List__c",
+                "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaHtYAI"
+            },
+            "Name": "Exchange"
+        },
+        "Status__c": "Active"
+    },
+    {
+        "attributes": {
+            "type": "Distribution_List_Member__c",
+            "url": "/services/data/v57.0/sobjects/Distribution_List_Member__c/a0iDG000002pk0OYAQ"
+        },
+        "Contact__c": "0037V00002zfRLrQAM",
+        "Email__c": null,
+        "Delivery_Method__c": "Email",
+        "Distribution_List__r": {
+            "attributes": {
+                "type": "Distribution_List__c",
+                "url": "/services/data/v57.0/sobjects/Distribution_List__c/a0oDG000002gaHoYAI"
+            },
+            "Name": "Intelligent EDI"
+        },
+        "Status__c": "Removed"
+    }
+]
