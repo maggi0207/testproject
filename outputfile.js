@@ -1,33 +1,33 @@
 import React from "react";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { Provider } from "react-redux";
-import configureStore from "redux-mock-store";
+import { configureStore } from "@reduxjs/toolkit";
 import PollingComponent from "./PollingComponent";
+import paymentDatasetReducer from "../../reducers/paymentdataset.reducer";
 import { getPaymentDatasetAPI } from "../../service/paymentdataset.service";
 
 jest.mock("../../service/paymentdataset.service", () => ({
   getPaymentDatasetAPI: jest.fn(),
 }));
 
-const mockStore = configureStore([]);
 let store;
 
-describe("PollingComponent", () => {
+describe("PollingComponent with Redux Toolkit", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    store = mockStore({
-      paymentDatasetState: {
-        items: [{ id: 1, status: "PENDING" }],
+    store = configureStore({
+      reducer: {
+        paymentDatasetState: paymentDatasetReducer,
+      },
+      preloadedState: {
+        paymentDatasetState: {
+          items: [{ id: 1, status: "PENDING" }],
+        },
       },
     });
   });
 
   it("should poll the API and update the dataset", async () => {
-    const mockPaymentDataset = {
-      id: 1,
-      status: "PENDING",
-    };
-
     getPaymentDatasetAPI.mockResolvedValueOnce({
       id: 1,
       status: "COMPLETED",
@@ -35,7 +35,7 @@ describe("PollingComponent", () => {
 
     render(
       <Provider store={store}>
-        <PollingComponent paymentDataset={mockPaymentDataset} WAIT_FOR={100} />
+        <PollingComponent paymentDataset={{ id: 1, status: "PENDING" }} WAIT_FOR={100} />
       </Provider>
     );
 
@@ -43,31 +43,19 @@ describe("PollingComponent", () => {
       expect(getPaymentDatasetAPI).toHaveBeenCalledWith(1);
     });
 
-    const actions = store.getActions();
-    expect(actions).toContainEqual(
-      expect.objectContaining({
-        type: "UPDATE_PENDING_DATASET",
-        payload: expect.objectContaining({
-          items: [
-            {
-              id: 1,
-              status: "COMPLETED",
-            },
-          ],
-        }),
-      })
-    );
+    const actions = store.getState().paymentDatasetState.items;
+    expect(actions).toEqual([
+      {
+        id: 1,
+        status: "COMPLETED",
+      },
+    ]);
   });
 
   it("should stop polling when the status is COMPLETED", async () => {
-    const mockPaymentDataset = {
-      id: 1,
-      status: "COMPLETED",
-    };
-
     render(
       <Provider store={store}>
-        <PollingComponent paymentDataset={mockPaymentDataset} WAIT_FOR={100} />
+        <PollingComponent paymentDataset={{ id: 1, status: "COMPLETED" }} WAIT_FOR={100} />
       </Provider>
     );
 
@@ -77,16 +65,11 @@ describe("PollingComponent", () => {
   });
 
   it("should handle API errors gracefully", async () => {
-    const mockPaymentDataset = {
-      id: 1,
-      status: "PENDING",
-    };
-
     getPaymentDatasetAPI.mockRejectedValueOnce(new Error("API error"));
 
     render(
       <Provider store={store}>
-        <PollingComponent paymentDataset={mockPaymentDataset} WAIT_FOR={100} />
+        <PollingComponent paymentDataset={{ id: 1, status: "PENDING" }} WAIT_FOR={100} />
       </Provider>
     );
 
@@ -94,7 +77,7 @@ describe("PollingComponent", () => {
       expect(getPaymentDatasetAPI).toHaveBeenCalledWith(1);
     });
 
-    const actions = store.getActions();
-    expect(actions).toHaveLength(0);
+    const actions = store.getState().paymentDatasetState.items;
+    expect(actions).toEqual([{ id: 1, status: "PENDING" }]);
   });
 });
