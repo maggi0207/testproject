@@ -1,92 +1,353 @@
-import React from "react";
-import { Container, Typography, Box, Paper, Grid, Card, CardContent, Divider } from "@mui/material";
-import { useMediaQuery, useTheme } from "@mui/material";
+/* Frame 36451 */
 
-const sampleData = {
-  drivers: [
-    {
-      personal_detail: {
-        name: { first_name: "Jacob", last_name: "Smith" },
-        dob: "1995-06-15",
-        address: {
-          address_line_1: "2450 Mission College Blvd",
-          city: "Santa Clara",
-          state: "CA",
-          zip: "95054",
-        },
-      },
-    },
-    {
-      personal_detail: {
-        name: { first_name: "Julia", last_name: "Smith" },
-      },
-    },
-  ],
-  vehicles: [
-    {
-      description: { year: "2021", make: "Jeep", model: "Liberty" },
-    },
-    {
-      description: { year: "2022", make: "Toyota", model: "Tundra" },
-    },
-    {
-      description: { year: "2020", make: "Honda", model: "Civic" },
-    },
-  ],
-};
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 12px;
 
-const QuoteSummary = ({ data = sampleData }) => {
-  const primaryDriver = data?.drivers?.[0];
-  const secondaryDrivers = data?.drivers?.slice(1)?.map(driver => `${driver.personal_detail.name.first_name} ${driver.personal_detail.name.last_name}`) || [];
-  const primaryVehicles = data?.vehicles?.slice(0, 2) || [];
-  const remainingVehicleCount = (data?.vehicles?.length || 0) - 2;
+width: 580px;
+height: 384px;
 
-  return (
-    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      <Container maxWidth="md" sx={{ textAlign: "left" }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          {primaryDriver && (
-            <>
-              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                Welcome, {primaryDriver.personal_detail.name.first_name}!
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 2 }}>
-                Just a few more questions before we can finalize your quote
-              </Typography>
-            </>
-          )}
-          <Typography variant="h6">Based on what you entered, this is your estimated premium:</Typography>
-          <Typography variant="h4" sx={{ mt: 1, fontWeight: "bold" }}>$164/mo</Typography>
-          <Typography variant="body2" color="primary">• Good Student discount applied</Typography>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" sx={{ fontWeight: "bold" }}>Here's a summary of your profile</Typography>
-          <Card variant="outlined" sx={{ mt: 2 }}>
-            <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Drivers</Typography>
-              {primaryDriver && (
-                <>
-                  <Typography variant="body1">{primaryDriver.personal_detail.name.first_name} {primaryDriver.personal_detail.name.last_name}</Typography>
-                  <Typography variant="body2">{primaryDriver.personal_detail.dob}</Typography>
-                  <Typography variant="body2">{primaryDriver.personal_detail.address.address_line_1}, {primaryDriver.personal_detail.address.city}, {primaryDriver.personal_detail.address.state} {primaryDriver.personal_detail.address.zip}</Typography>
-                </>
-              )}
-              {secondaryDrivers.map((driver, index) => (
-                <Typography key={index} variant="body2">& {driver}</Typography>
-              ))}
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Vehicles</Typography>
-              {primaryVehicles.map((vehicle, index) => (
-                <Typography key={index} variant="body1" sx={{ fontWeight: "bold" }}>{vehicle.description.year} {vehicle.description.make} {vehicle.description.model}</Typography>
-              ))}
-              {remainingVehicleCount > 0 && (
-                <Typography variant="body2">& {remainingVehicleCount} other vehicle(s) found</Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Paper>
-      </Container>
-    </Box>
-  );
-};
 
-export default QuoteSummary;
+/* Inside auto layout */
+flex: none;
+order: 4;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* text */
+
+width: 580px;
+height: 29px;
+
+/* Theme Styles/body-lg */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 500;
+font-size: 18px;
+line-height: 160%;
+/* identical to box height, or 29px */
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* content */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 12px;
+gap: 12px;
+
+width: 580px;
+height: 343px;
+overflow-y: scroll;
+
+border: 1px solid #B9C0CA;
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame 36446 */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 12px;
+
+width: 556px;
+height: 319px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* text */
+
+width: 59px;
+height: 29px;
+
+/* Theme Styles/title-lg */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 700;
+font-size: 18px;
+line-height: 160%;
+/* identical to box height, or 29px */
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* row */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 4px;
+
+width: 556px;
+height: 97px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Text */
+
+width: 251px;
+height: 29px;
+
+/* Theme Styles/title-lg */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 700;
+font-size: 18px;
+line-height: 160%;
+/* identical to box height, or 29px */
+display: flex;
+align-items: center;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Text */
+
+width: 247px;
+height: 20px;
+
+/* Theme Styles/body-sm */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 140%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: center;
+
+color: #40475E;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Text */
+
+width: 247px;
+height: 40px;
+
+/* Theme Styles/body-sm */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 140%;
+/* or 20px */
+display: flex;
+align-items: center;
+
+color: #40475E;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* text */
+
+width: 556px;
+height: 20px;
+
+/* Theme Styles/body-sm */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 140%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: center;
+
+color: #40475E;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Line 2 */
+
+width: 557px;
+height: 0px;
+
+border: 1px solid #CBD0D7;
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* row */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 12px;
+
+width: 556px;
+height: 125px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 4;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* text */
+
+width: 67px;
+height: 29px;
+
+/* Theme Styles/title-lg */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 700;
+font-size: 18px;
+line-height: 160%;
+/* identical to box height, or 29px */
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* text */
+
+width: 556px;
+height: 20px;
+
+/* Theme Styles/body-sm */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 140%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: center;
+
+color: #40475E;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* text */
+
+width: 167px;
+height: 20px;
+
+/* Theme Styles/body-sm */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 140%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: center;
+
+color: #40475E;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* text */
+
+width: 167px;
+height: 20px;
+
+/* Theme Styles/body-sm */
+font-family: 'Lato';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 140%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: center;
+
+color: #40475E;
+
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+flex-grow: 0;
