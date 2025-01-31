@@ -1,74 +1,100 @@
-@media (max-width: 768px) {
-    .quote-summary-container {
-        width: 90%;
-        padding: 16px;
-        height: auto;
-    }
-
-    .quote-summary-content {
-        width: 100%;
-        padding: 12px;
-    }
-
-    .quote-summary-title {
-        font-size: 20px;
-    }
-
-    .quote-summary-subtitle,
-    .quote-summary-text,
-    .quote-summary-section,
-    .quote-summary-subheading,
-    .quote-summary-subheading-title {
-        font-size: 16px;
-    }
-
-    .quote-summary-price {
-        font-size: 20px;
-        line-height: 32px;
-    }
-
-    .quote-summary-price-discount {
-        font-size: 12px;
-    }
-
-    .quote-summary-card {
-        padding: 8px;
-    }
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-@media (max-width: 480px) {
-    .quote-summary-container {
-        width: 95%;
-        padding: 12px;
-        height: auto;
-    }
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
 
-    .quote-summary-content {
-        padding: 10px;
-    }
+.description {
+  color: #666;
+  margin-bottom: 20px;
+}
 
-    .quote-summary-title {
-        font-size: 18px;
-    }
+.form-section {
+  margin-bottom: 20px;
+}
 
-    .quote-summary-subtitle,
-    .quote-summary-text,
-    .quote-summary-section,
-    .quote-summary-subheading,
-    .quote-summary-subheading-title {
-        font-size: 14px;
-    }
+.form-group {
+  margin-bottom: 15px;
+}
 
-    .quote-summary-price {
-        font-size: 18px;
-        line-height: 28px;
-    }
+.form-group label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
 
-    .quote-summary-price-discount {
-        font-size: 10px;
-    }
+.input, .select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
 
-    .quote-summary-card {
-        padding: 6px;
-    }
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.divider {
+  border: 0;
+  height: 1px;
+  background: #ddd;
+  margin: 20px 0;
+}
+
+.assigned-accounts {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
+}
+
+.remove-btn {
+  background: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.submit-btn {
+  background: green;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: gray;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
 }
