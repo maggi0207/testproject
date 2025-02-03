@@ -1,12 +1,3 @@
-const MultiValueContainer = ({ selectProps, data }) => {
-  const count = selectProps.value.length;
-  return count > 1 ? (
-    <div className="selected-count-text">{count} items selected</div>
-  ) : (
-    <div>{data.label}</div>
-  );
-};
-
 <Select
           isMulti
           options={options}
@@ -17,5 +8,8 @@ const MultiValueContainer = ({ selectProps, data }) => {
           closeMenuOnSelect={false}
           isClearable
           hideSelectedOptions={false}
-          components={{ MultiValueContainer }}
+          getValue={() => tempSelection.length > 1 
+            ? [{ label: `${tempSelection.length} items selected`, value: "count" }] 
+            : tempSelection
+          }
         />
