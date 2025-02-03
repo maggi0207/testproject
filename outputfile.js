@@ -1,84 +1,108 @@
 import React, { useState } from "react";
 import Select from "react-select";
-import "./RegisterUser.css";
+import "./styles.css"; // Import the CSS file
 
-const accountsData = Array.from({ length: 200 }, (_, i) => ({ value: `Account ${i + 1}`, label: `Account ${i + 1} lorem ipsum dolar sit` }));
+const options = Array.from({ length: 200 }, (_, i) => ({
+  value: `Account ${i + 1}`,
+  label: `Account ${i + 1} lorem ipsum dolor sit`,
+}));
 
-const RegisterUser = () => {
-  const [selectedAccounts, setSelectedAccounts] = useState([]);
+const ITEMS_PER_PAGE_OPTIONS = [5, 10, 20, 50];
+
+const AccountSelection = () => {
+  const [selectedOptions, setSelectedOptions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [tempSelection, setTempSelection] = useState([]);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Default 10 items per page
 
-  const totalPages = Math.ceil(accountsData.length / perPage);
-  const displayedAccounts = accountsData.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const handleAdd = () => {
+    const newItems = tempSelection.filter(
+      (item) => !selectedOptions.some((selected) => selected.value === item.value)
+    );
 
-  const handleAddAccount = (selectedOption) => {
-    setSelectedAccounts(selectedOption || []);
+    if (newItems.length > 0) {
+      setSelectedOptions([...selectedOptions, ...newItems]);
+      setTempSelection([]); // Clear temporary selection
+      setCurrentPage(1); // Reset to first page
+    }
   };
 
-  const handleRemoveAccount = (account) => {
-    setSelectedAccounts(selectedAccounts.filter((item) => item.value !== account.value));
+  const handleRemove = (value) => {
+    setSelectedOptions(selectedOptions.filter((item) => item.value !== value));
   };
+
+  const handlePageChange = (direction) => {
+    setCurrentPage((prev) =>
+      direction === "next"
+        ? Math.min(prev + 1, Math.ceil(selectedOptions.length / itemsPerPage))
+        : Math.max(prev - 1, 1)
+    );
+  };
+
+  const handleItemsPerPageChange = (event) => {
+    setItemsPerPage(Number(event.target.value));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const startIdx = (currentPage - 1) * itemsPerPage;
+  const paginatedItems = selectedOptions.slice(startIdx, startIdx + itemsPerPage);
 
   return (
     <div className="container">
-      <h2 className="title">Register new user</h2>
-      <p className="description">Complete the form below to register a new user. You will receive confirmation when your case has been processed.</p>
-      <div className="form-group">
-        <label>Email / User ID *</label>
-        <input type="email" className="input" placeholder="john.smith@optum.com" />
+      <h3>Search / Select accounts</h3>
+      <div className="select-container">
+        <Select
+          isMulti
+          options={options}
+          value={tempSelection}
+          onChange={setTempSelection}
+          className="select-box"
+        />
+        <button className="add-btn" onClick={handleAdd}>Add</button>
       </div>
-      <div className="form-row">
-        <div className="form-group">
-          <label>First name *</label>
-          <input type="text" className="input" placeholder="John" />
-        </div>
-        <div className="form-group">
-          <label>Last name *</label>
-          <input type="text" className="input" placeholder="Smith" />
-        </div>
-      </div>
-      <div className="form-group">
-        <h3>User roles</h3>
-        <p>Select at least one role.</p>
-        <input type="checkbox" /> Standard user
-        <input type="checkbox" defaultChecked /> Account case manager
-        <input type="checkbox" /> Partner case manager
-      </div>
-      <div className="form-group">
-        <h3>Account access</h3>
-        <p>Select at least one account.</p>
-        <Select options={accountsData} isMulti onChange={handleAddAccount} className="select" />
-      </div>
-      <div className="form-group">
-        <h4>Assigned accounts</h4>
-        <div className="assigned-accounts">
-          {selectedAccounts.map((account, index) => (
-            <div key={index} className="account-item">
-              {account.label}
-              <button className="remove-btn" onClick={() => handleRemoveAccount(account)}>X</button>
+
+      <h4>Assigned accounts</h4>
+      <div className="list-container">
+        {paginatedItems.length > 0 ? (
+          paginatedItems.map((item) => (
+            <div key={item.value} className="list-item">
+              {item.label}
+              <button className="remove-btn" onClick={() => handleRemove(item.value)}>
+                ×
+              </button>
             </div>
-          ))}
+          ))
+        ) : (
+          <p className="empty-text">No accounts selected.</p>
+        )}
+      </div>
+
+      {selectedOptions.length > 0 && (
+        <div className="pagination">
+          <div className="items-per-page">
+            <label htmlFor="itemsPerPage">Rows per page: </label>
+            <select id="itemsPerPage" value={itemsPerPage} onChange={handleItemsPerPageChange}>
+              {ITEMS_PER_PAGE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button className="page-btn" disabled={currentPage === 1} onClick={() => handlePageChange("prev")}>
+            ◀ Prev
+          </button>
+          <span className="page-info">
+            {startIdx + 1}-{Math.min(startIdx + itemsPerPage, selectedOptions.length)} of {selectedOptions.length}
+          </span>
+          <button className="page-btn" disabled={currentPage === Math.ceil(selectedOptions.length / itemsPerPage)} onClick={() => handlePageChange("next")}>
+            Next ▶
+          </button>
         </div>
-      </div>
-      <div className="pagination-container">
-        <label>Rows per page:</label>
-        <select onChange={(e) => setPerPage(Number(e.target.value))} defaultValue={20} className="select">
-          <option value={20}>20</option>
-          <option value={50}>50</option>
-        </select>
-        <div className="pagination-controls">
-          <button className="pagination-btn" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}>Previous</button>
-          <span>Page {currentPage} of {totalPages}</span>
-          <button className="pagination-btn" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}>Next</button>
-        </div>
-      </div>
-      <div className="button-group">
-        <button className="submit-btn">Submit</button>
-        <button className="cancel-btn">Cancel</button>
-      </div>
+      )}
     </div>
   );
 };
 
-export default RegisterUser;
+export default AccountSelection;
