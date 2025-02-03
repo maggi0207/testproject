@@ -1,100 +1,110 @@
 .container {
-  max-width: 600px;
-  margin: auto;
+  max-width: 500px;
+  margin: 20px auto;
   padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
 }
 
-.title {
-  font-size: 24px;
-  font-weight: bold;
+h3, h4 {
   margin-bottom: 10px;
 }
 
-.description {
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.form-section {
-  margin-bottom: 20px;
-}
-
-.form-group {
+.select-container {
+  display: flex;
+  gap: 10px;
   margin-bottom: 15px;
 }
 
-.form-group label {
-  font-weight: bold;
-  display: block;
-  margin-bottom: 5px;
+.select-box {
+  flex: 1;
 }
 
-.input, .select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 16px;
+.add-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.form-row {
-  display: flex;
-  gap: 10px;
+.add-btn:hover {
+  background: #0056b3;
 }
 
-.divider {
-  border: 0;
-  height: 1px;
-  background: #ddd;
-  margin: 20px 0;
-}
-
-.assigned-accounts {
-  border: 1px solid #ccc;
+.list-container {
+  border: 1px solid #ddd;
   padding: 10px;
-  border-radius: 5px;
-  max-height: 150px;
-  overflow-y: auto;
+  border-radius: 6px;
+  min-height: 120px;
+  background: #fafafa;
 }
 
-.account-item {
+.list-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px;
-  border-bottom: 1px solid #ddd;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  background: white;
 }
 
 .remove-btn {
   background: red;
   color: white;
   border: none;
-  padding: 5px 10px;
+  border-radius: 4px;
+  padding: 2px 8px;
   cursor: pointer;
 }
 
-.button-group {
+.remove-btn:hover {
+  background: darkred;
+}
+
+.empty-text {
+  color: gray;
+  text-align: center;
+  font-size: 14px;
+}
+
+.pagination {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
 }
 
-.submit-btn {
-  background: green;
-  color: white;
+.items-per-page {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.items-per-page select {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.page-btn {
+  padding: 5px 10px;
   border: none;
-  padding: 10px;
+  background: #007bff;
+  color: white;
+  border-radius: 4px;
   cursor: pointer;
 }
 
-.cancel-btn {
-  background: gray;
-  color: white;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
+.page-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 14px;
 }
