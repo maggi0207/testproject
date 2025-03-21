@@ -1,31 +1,22 @@
-.modal-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+import React from 'react';
+import { importRemote } from '@module-federation/utilities';
 
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  width: 400px;
-  text-align: center;
+function AssistedMfeHostConnector({ module, moduleProps }) {
+  // Uncomment the below if you are running the Host MFE seperately and wants use that
+  const remoteEntryUrl = 'http://localhost:3002';
+  //const remoteEntryUrl=  window.location.origin+'/etc/clientlibs/vcg/assisted/soe-assisted-mfe/onevzsoemfeassistedhost/100';
+  const MfeHostConnector = React.lazy(() =>
+    importRemote({
+      url: remoteEntryUrl,
+      scope: 'onevzsoemfeassistedhost',
+      module: 'MfeHostConnector',
+      bustRemoteEntryCache: false,
+    }),
+  );
+  return (
+    <React.Suspense fallback={<div>loading...</div>}>
+      <MfeHostConnector module={module} moduleProps={moduleProps} />
+    </React.Suspense>
+  );
 }
-
-.modal-header {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.modal-body {
-  font-size: 16px;
-  margin-bottom: 20px;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
+export default AssistedMfeHostConnector;
