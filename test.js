@@ -18,3 +18,26 @@
       setCurrentSection('TermsConditions');
     }
   }, [AddTradeinToCartResult]);
+
+
+const mockCustomerInfo = {
+  billAccounts: [
+    {
+      mtns: [
+        {
+          mtn: '1234567890', 
+          equipmentInfos: [
+            {
+              deviceInfo: {
+                deviceSku: 'mockSku123',
+                deviceId: 'mockDevice456',
+              },
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  lookupMtn: '1234567890', 
+};
+
