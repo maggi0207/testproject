@@ -1,43 +1,18 @@
- const invokeReceivePoll = async (eventData) => {
-    handleSingnatrueReceivePoll(
-      eventData,
-      clientId,
-      cartDetails,
-      customerProfileData,
-      submitSignatureAPI,
-      requestBodySendMsg,
+// 🧪 Mock handleSingnatrueReceivePoll to invoke VTZDSubmitPayment
+    jest.spyOn(utils, 'handleSingnatrueReceivePoll').mockImplementation((
+      _eventData,
+      _clientId,
+      _cartDetails,
+      _customerProfileData,
+      _submitSignatureAPI,
+      _requestBodySendMsg,
       VTZDSubmitPayment,
-      VTSetIPAddress,
-      zeroDollarOrder,
-      singnatureReceiveCallBack
-    );
-  };
+    ) => {
+      // You can pass your own signatureReqBody and makePaymentReqBody here
+      const signatureReqBody = { safeTechSessionId: mockSafeTechSessionId };
+      const makePaymentReqBody = { someKey: 'someValue' };
+      VTZDSubmitPayment(signatureReqBody, makePaymentReqBody);
+    });
 
-  const VTZDSubmitPayment = (signatureReqBody, makePaymentReqBody) => {
-    const custIP = sessionStorage.getItem('customerIPAddress') ? sessionStorage.getItem('customerIPAddress') : '';
-    const newSignatureReqBody = { ...signatureReqBody };
-    newSignatureReqBody.ipAddress = custIP;
-    setSignatrueRquestBody(newSignatureReqBody);
-    setMakePaymentBody(makePaymentReqBody);
-    console.log(makePaymentBody);
-    const body = {
-      ipAddress: custIP,
-      paymentType: 'ZD',
-      paymentAmount: 0,
-      customerInfo: {
-        processingMTN: cartHeader?.cartCreator,
-        cartCreator: cartHeader?.cartCreator,
-      },
-      regNo: '51',
-      isIndirectBuyOut: false,
-      orderNumber,
-      isIpad,
-    };
-
-    if (signatureReqBody?.safeTechSessionId) {
-      body.safeTechSession = 'true';
-      body.safeTechSessionId = signatureReqBody?.safeTechSessionId;
-    }
-
-    submitPayment({ body, spinner: true, mock: false });
-  };
+    // 🧪 Set IP in sessionStorage
+    sessionStorage.setItem('customerIPAddress', '127.0.0.1');
