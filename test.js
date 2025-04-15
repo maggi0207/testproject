@@ -125,13 +125,19 @@ const handleFulfilledStatus = (data) => {
 };
 
 const handleViewTogetherFlow = (submitPaymentResult) => {
-  const { status, data, error } = submitPaymentResult || {};
+  if (!submitPaymentResult) return;
+
+  const { status, data, error } = submitPaymentResult;
 
   if (status === 'rejected') {
-    isTrustlyActionsProcessed.submitPayment
-      ? trustlySubmitPaymentResultHelper(error?.data?.errors?.[0]?.message)
-      : handleRejectedStatus(error);
+    const errorMessage = error?.data?.errors?.[0]?.message || 'Payment failed';
+    if (isTrustlyActionsProcessed.submitPayment) {
+      trustlySubmitPaymentResultHelper(errorMessage);
+    } else {
+      handleRejectedStatus(error);
+    }
   } else if (status === 'fulfilled') {
     handleFulfilledStatus(data);
   }
 };
+
