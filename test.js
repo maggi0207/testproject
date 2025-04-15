@@ -1,24 +1,23 @@
 useEffect(() => {
   if (!retrievePaymentOptionsResult) return;
 
-  const {
-    paymentOptions = [],
-    orders = [],
-    orderBalance,
-    orderTotal,
-  } = retrievePaymentOptionsResult;
+  const hasValidOptions =
+    retrievePaymentOptionsResult.paymentOptions?.length > 0 &&
+    changedPaymentModes?.length === 0;
 
-  const hasValidOptions = paymentOptions.length > 0 && changedPaymentModes?.length === 0;
+  const isZeroDollarOrder =
+    orderBalance === 0 && retrievePaymentOptionsResult?.orderTotal === 0;
 
-  const isZeroDollarOrder = orderBalance === 0 && orderTotal === 0;
   const isOpenZeroOrder =
-    orderBalance === 0 && !orders[0]?.orderClosed && orderTotal === 0;
+    orderBalance === 0 &&
+    !retrievePaymentOptionsResult?.orders?.[0]?.orderClosed &&
+    retrievePaymentOptionsResult?.orderTotal === 0;
 
   if (hasValidOptions) {
-    updatePaymentModes(paymentOptions);
-    updatePaymentDetails(orders);
-    setOrderBalance(orderBalance);
-    handleBackArrowDisplay(orders);
+    updatePaymentModes();
+    updatePaymentDetails();
+    setOrderBalance(retrievePaymentOptionsResult.orderBalance);
+    handleBackArrowDisplay();
     maybeShowSplitTenderWarning(channelDisplayFlags?.blockSplitPayment);
   }
 
@@ -34,33 +33,35 @@ useEffect(() => {
   }
 }, [retrievePaymentOptionsResult]);
 
-// === Helper Functions ===
+// === Helper Functions (use outer scoped values) ===
 
-const updatePaymentModes = (paymentOptions) => {
-  const paymentModes = paymentOptions.map((option) => option.paymentType);
-  const modes = paymentModes.filter((option) => option !== 'CK');
+const updatePaymentModes = () => {
+  const modes = paymentOptions
+    .map((option) => option.paymentType)
+    .filter((type) => type !== 'CK');
   setChangedPaymentModes(modes);
 };
 
-const updatePaymentDetails = (orders) => {
-  if (splitFullfillmentEnablement() && itemLevelShipment && orders?.length > 1) {
-    const splitDetails = orders.map((order) => order.paymentDetail).flat() || [];
-    const filtered = filterValidPayments(splitDetails);
-    setPaymentDetail(filtered);
+const updatePaymentDetails = () => {
+  const orders = retrievePaymentOptionsResult?.orders || [];
+
+  if (splitFullfillmentEnablement() && itemLevelShipment && orders.length > 1) {
+    const splitDetails = orders.flatMap((order) => order.paymentDetail || []);
+    setPaymentDetail(filterValidPayments(splitDetails));
   } else {
     const firstOrderDetails = orders[0]?.paymentDetail || [];
-    const filtered = filterValidPayments(firstOrderDetails);
-    setPaymentDetail(filtered);
+    setPaymentDetail(filterValidPayments(firstOrderDetails));
   }
 };
 
 const filterValidPayments = (paymentDetails) =>
   paymentDetails
-    ?.filter((payment) => payment?.paymentStatus !== 'V')
-    ?.filter((payment) => payment?.modeOfPay !== 'IE' && payment?.modeOfPay !== 'BA');
+    .filter((p) => p?.paymentStatus !== 'V')
+    .filter((p) => p?.modeOfPay !== 'IE' && p?.modeOfPay !== 'BA');
 
-const handleBackArrowDisplay = (orders) => {
-  if (orders[0]?.paymentDetail?.length) {
+const handleBackArrowDisplay = () => {
+  const details = retrievePaymentOptionsResult?.orders?.[0]?.paymentDetail;
+  if (details?.length) {
     setShowBackArrow(false);
   }
 };
@@ -73,7 +74,7 @@ const maybeShowSplitTenderWarning = (blockSplitPayment) => {
         'info',
         true,
         true,
-      ),
+      )
     );
   }
 };
