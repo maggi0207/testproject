@@ -69,61 +69,69 @@ const handleOrderStatusCheck = (orders) => {
   }
 };
 
-const handleViewTogetherFlow = (submitPaymentResult) => {
-  const status = submitPaymentResult?.status;
-  const data = submitPaymentResult?.data;
+const handleRejectedStatus = (error) => {
+  const fallbackMessage = error?.data?.errors?.[0]?.message || 'Payment failed';
+  const body1 = errorSendMessageBody(clientId, 'Payment failed');
+  const body2 = errorSendMessageBody(clientId, fallbackMessage);
 
-  if (status === 'rejected') {
-    if (isTrustlyActionsProcessed.submitPayment) {
-      trustlySubmitPaymentResultHelper(submitPaymentResult.error?.data?.errors?.[0]?.message);
-    } else {
-      const fallbackMessage = submitPaymentResult.error?.data?.errors?.[0]?.message || 'Payment failed';
-      const body1 = errorSendMessageBody(clientId, 'Payment failed');
-      const body2 = errorSendMessageBody(clientId, fallbackMessage);
+  requestBodySendMsg({ body: body1, spinner: false, mock: false });
+  requestBodySendMsg({ body: body2, spinner: false, mock: false });
+};
 
-      requestBodySendMsg({ body: body1, spinner: false, mock: false });
-      requestBodySendMsg({ body: body2, spinner: false, mock: false });
-    }
-  } else if (status === 'fulfilled') {
-    const body = makPaymentPayload(
+const handleFulfilledStatus = (data) => {
+  const body = makPaymentPayload(
+    cartDetails,
+    customerProfile,
+    getEligibleAgreementOptionsResult,
+    cBandQualified,
+    encryptedCartId,
+  );
+
+  body.pageName = 'tandc';
+  body.isVTProfileRegEnabled =
+    cartDetails?.lineDetails?.lineInfo?.length === 1 &&
+    customerType === 'N' &&
+    isVTProfileRegEnabled === 'TRUE'
+      ? 'Y'
+      : 'N';
+
+  const makePaymentBody = {
+    ...sendMsgTandCBody,
+    clientId,
+    payload: body,
+  };
+
+  const shouldSendTandC =
+    window.sessionStorage.getItem('isViewTogether') === 'true' && !data?.balanceExist;
+
+  if (shouldSendTandC) {
+    requestBodySendMsg({ body: makePaymentBody, spinner: false, mock: false });
+  } else if (scmUpgradeMfeEnable && data?.balanceExist) {
+    const balancePaymentBody = getBalanceSendMessageBody(
+      { data },
       cartDetails,
       customerProfile,
-      getEligibleAgreementOptionsResult,
-      cBandQualified,
-      encryptedCartId,
-    );
-    body.pageName = 'tandc';
-    body.isVTProfileRegEnabled =
-      cartDetails?.lineDetails?.lineInfo?.length === 1 && customerType === 'N' && isVTProfileRegEnabled === 'TRUE'
-        ? 'Y'
-        : 'N';
-
-    const makePaymentBody = {
-      ...sendMsgTandCBody,
+      retrievePaymentOptionsResult,
+      '',
+      paxAuth,
       clientId,
-      payload: body,
-    };
+    );
+    requestBodySendMsg({ body: balancePaymentBody, spinner: true, mock: false });
+  }
 
-    const shouldSendTandC =
-      window.sessionStorage.getItem('isViewTogether') === 'true' && !data?.balanceExist;
+  if (isTrustlyActionsProcessed.submitPayment && data?.balanceExist) {
+    trustlySubmitPaymentResultHelper();
+  }
+};
 
-    if (shouldSendTandC) {
-      requestBodySendMsg({ body: makePaymentBody, spinner: false, mock: false });
-    } else if (scmUpgradeMfeEnable && data?.balanceExist) {
-      const balancePaymentBody = getBalanceSendMessageBody(
-        submitPaymentResult,
-        cartDetails,
-        customerProfile,
-        retrievePaymentOptionsResult,
-        '',
-        paxAuth,
-        clientId,
-      );
-      requestBodySendMsg({ body: balancePaymentBody, spinner: true, mock: false });
-    }
+const handleViewTogetherFlow = (submitPaymentResult) => {
+  const { status, data, error } = submitPaymentResult || {};
 
-    if (isTrustlyActionsProcessed.submitPayment && data?.balanceExist) {
-      trustlySubmitPaymentResultHelper();
-    }
+  if (status === 'rejected') {
+    isTrustlyActionsProcessed.submitPayment
+      ? trustlySubmitPaymentResultHelper(error?.data?.errors?.[0]?.message)
+      : handleRejectedStatus(error);
+  } else if (status === 'fulfilled') {
+    handleFulfilledStatus(data);
   }
 };
