@@ -1,101 +1,127 @@
- useEffect(() => {
-    // #2
-    if (submitPaymentResult?.data) {
-      /* istanbul ignore else */
-      if (Object.keys(submitPaymentResult?.data)) {
-        if (submitPaymentResult?.data?.orders?.[0]?.paymentDetail?.length > 0) {
-          setShowBackArrow(false);
-        }
-        if (splitFullfillmentEnablement() && itemLevelShipment) {
-          const splitFulfillmentPaymentDetails =
-            submitPaymentResult?.data?.orders?.map((order) => order.paymentDetail).flat() || [];
-          if (JSON.stringify(splitFulfillmentPaymentDetails) !== JSON.stringify(paymentDetail)) {
-            const sortedSFPaymentDetails = splitFulfillmentPaymentDetails
-              ?.filter((payment) => payment?.paymentStatus !== 'V')
-              ?.filter((payment) => payment?.modeOfPay !== 'IE' && payment?.modeOfPay !== 'BA');
-            setPaymentDetail(sortedSFPaymentDetails);
-          }
-        } else {
-          const newPaymentDetails = submitPaymentResult?.data?.orders?.[0]?.paymentDetail || [];
-          if (JSON.stringify(newPaymentDetails) !== JSON.stringify(paymentDetail)) {
-            const sortedPaymentDetails = newPaymentDetails
-              ?.filter((payment) => payment.paymentStatus !== 'V')
-              ?.filter((payment) => payment.modeOfPay !== 'IE' && payment.modeOfPay !== 'BA');
-            setPaymentDetail(sortedPaymentDetails);
-          }
-        }
-        /* istanbul ignore else */
-        if (submitPaymentResult?.data?.balanceExist) {
-          setOrderBalance(submitPaymentResult?.data?.orderBalance);
-          setPaymentType('');
+useEffect(() => {
+  if (!submitPaymentResult?.data) return;
 
-          setChangedPaymentModes(submitPaymentResult?.data?.paymentOptions?.map((option) => option.paymentType));
-        } else if (!submitPaymentResult?.data?.balanceExist) {
-          setOrderBalance(submitPaymentResult?.data?.orderBalance);
-          setPaymentType('');
-          setSubmitApiSuccess(true);
-        }
+  const data = submitPaymentResult.data;
+  const orders = data?.orders || [];
 
-        // Check valid Order status
-        if (submitPaymentResult?.data?.orders?.length > 0 && isRxOrderReview) {
-          const rst = submitPaymentResult?.data?.orders.every((item) => item?.void === true);
-          setOrderStatus(rst);
-        }
-        setGiftCardNumber('');
-        showAppMessage('Submit Payment Completed Successfully', 'success');
-      }
+  if (Object.keys(data).length) {
+    handleBackArrowDisplay(orders);
+    handlePaymentDetailUpdate(data);
+    handleBalanceAndPaymentModes(data);
+    handleOrderStatusCheck(orders);
+    setGiftCardNumber('');
+    showAppMessage('Submit Payment Completed Successfully', 'success');
+  }
+
+  if (
+    window.sessionStorage.getItem('isViewTogether') === 'true' &&
+    submitPaymentResult.status !== 'uninitialized' &&
+    submitPaymentResult.status !== 'pending'
+  ) {
+    handleViewTogetherFlow(submitPaymentResult);
+  }
+}, [submitPaymentResult?.status, submitRemarkResult?.data]);
+
+const handleBackArrowDisplay = (orders) => {
+  if (orders?.[0]?.paymentDetail?.length > 0) {
+    setShowBackArrow(false);
+  }
+};
+
+const handlePaymentDetailUpdate = (data) => {
+  const orders = data?.orders || [];
+
+  const getFilteredDetails = (details) =>
+    details
+      ?.filter((p) => p?.paymentStatus !== 'V')
+      ?.filter((p) => !['IE', 'BA'].includes(p?.modeOfPay));
+
+  if (splitFullfillmentEnablement() && itemLevelShipment) {
+    const splitDetails = orders.flatMap((o) => o.paymentDetail || []);
+    if (JSON.stringify(splitDetails) !== JSON.stringify(paymentDetail)) {
+      setPaymentDetail(getFilteredDetails(splitDetails));
     }
-    if (
-      window.sessionStorage.getItem('isViewTogether') === 'true' &&
-      submitPaymentResult.status !== 'uninitialized' &&
-      submitPaymentResult.status !== 'pending'
-    ) {
-      if (submitPaymentResult?.status === 'rejected') {
-        if (isTrustlyActionsProcessed.submitPayment) {
-          trustlySubmitPaymentResultHelper(submitPaymentResult.error.data.errors[0].message);
-        } else {
-          const body = errorSendMessageBody(clientId, 'Payment failed');
-          requestBodySendMsg({ body, spinner: false, mock: false });
-          const payload = errorSendMessageBody(clientId, submitPaymentResult.error.data.errors[0].message);
-          requestBodySendMsg({ body: payload, spinner: false, mock: false });
-        }
-      } else if (submitPaymentResult?.status === 'fulfilled') {
-        const body = makPaymentPayload(
-          cartDetails,
-          customerProfile,
-          getEligibleAgreementOptionsResult,
-          cBandQualified,
-          encryptedCartId,
-        );
-        body.pageName = 'tandc';
-        body.isVTProfileRegEnabled =
-          cartDetails?.lineDetails?.lineInfo?.length === 1 && customerType === 'N' && isVTProfileRegEnabled === 'TRUE'
-            ? 'Y'
-            : 'N';
-        const makePaymentBody = {
-          ...sendMsgTandCBody,
-          clientId,
-          payload: body,
-        };
-        /* istanbul ignore else */
-        if (window.sessionStorage.getItem('isViewTogether') === 'true' && !submitPaymentResult?.data?.balanceExist) {
-          requestBodySendMsg({ body: makePaymentBody, spinner: false, mock: false });
-        } else if (scmUpgradeMfeEnable && submitPaymentResult?.data?.balanceExist) {
-          const balancePaymentbody = getBalanceSendMessageBody(
-            submitPaymentResult,
-            cartDetails,
-            customerProfile,
-            retrievePaymentOptionsResult,
-            '',
-            paxAuth,
-            clientId,
-          );
-          requestBodySendMsg({ body: balancePaymentbody, spinner: true, mock: false });
-        }
-
-        if (isTrustlyActionsProcessed.submitPayment && submitPaymentResult?.data?.balanceExist) {
-          trustlySubmitPaymentResultHelper();
-        }
-      }
+  } else {
+    const newDetails = orders?.[0]?.paymentDetail || [];
+    if (JSON.stringify(newDetails) !== JSON.stringify(paymentDetail)) {
+      setPaymentDetail(getFilteredDetails(newDetails));
     }
-  }, [submitPaymentResult?.status, submitRemarkResult?.data]);
+  }
+};
+
+const handleBalanceAndPaymentModes = (data) => {
+  setOrderBalance(data.orderBalance);
+  setPaymentType('');
+
+  if (data.balanceExist) {
+    setChangedPaymentModes(data.paymentOptions?.map((o) => o.paymentType));
+  } else {
+    setSubmitApiSuccess(true);
+  }
+};
+
+const handleOrderStatusCheck = (orders) => {
+  if (orders?.length > 0 && isRxOrderReview) {
+    const isAllVoid = orders.every((o) => o?.void === true);
+    setOrderStatus(isAllVoid);
+  }
+};
+
+const handleViewTogetherFlow = (submitPaymentResult) => {
+  const status = submitPaymentResult?.status;
+  const data = submitPaymentResult?.data;
+
+  if (status === 'rejected') {
+    if (isTrustlyActionsProcessed.submitPayment) {
+      trustlySubmitPaymentResultHelper(submitPaymentResult.error?.data?.errors?.[0]?.message);
+    } else {
+      const fallbackMessage = submitPaymentResult.error?.data?.errors?.[0]?.message || 'Payment failed';
+      const body1 = errorSendMessageBody(clientId, 'Payment failed');
+      const body2 = errorSendMessageBody(clientId, fallbackMessage);
+
+      requestBodySendMsg({ body: body1, spinner: false, mock: false });
+      requestBodySendMsg({ body: body2, spinner: false, mock: false });
+    }
+  } else if (status === 'fulfilled') {
+    const body = makPaymentPayload(
+      cartDetails,
+      customerProfile,
+      getEligibleAgreementOptionsResult,
+      cBandQualified,
+      encryptedCartId,
+    );
+    body.pageName = 'tandc';
+    body.isVTProfileRegEnabled =
+      cartDetails?.lineDetails?.lineInfo?.length === 1 && customerType === 'N' && isVTProfileRegEnabled === 'TRUE'
+        ? 'Y'
+        : 'N';
+
+    const makePaymentBody = {
+      ...sendMsgTandCBody,
+      clientId,
+      payload: body,
+    };
+
+    const shouldSendTandC =
+      window.sessionStorage.getItem('isViewTogether') === 'true' && !data?.balanceExist;
+
+    if (shouldSendTandC) {
+      requestBodySendMsg({ body: makePaymentBody, spinner: false, mock: false });
+    } else if (scmUpgradeMfeEnable && data?.balanceExist) {
+      const balancePaymentBody = getBalanceSendMessageBody(
+        submitPaymentResult,
+        cartDetails,
+        customerProfile,
+        retrievePaymentOptionsResult,
+        '',
+        paxAuth,
+        clientId,
+      );
+      requestBodySendMsg({ body: balancePaymentBody, spinner: true, mock: false });
+    }
+
+    if (isTrustlyActionsProcessed.submitPayment && data?.balanceExist) {
+      trustlySubmitPaymentResultHelper();
+    }
+  }
+};
