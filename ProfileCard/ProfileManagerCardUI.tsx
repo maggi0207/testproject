@@ -16,40 +16,69 @@ import {
   FormBox,
 } from '../styles/profileManager.styles';
 
-export interface FieldConfig {
-  label: string;
-  name: string;
-  required?: boolean;
-  errormessage?: string;
-  autocomplete?: string;
+interface ContentstackField {
+  textwrapper?: {
+    label: string;
+    isvalidationrequired: boolean;
+    errormessage?: string;
+    _metadata: { uid: string };
+  };
+  button_wrapper?: {
+    label: string;
+    _metadata: { uid: string };
+  };
 }
 
-export interface ProfileManagerEntry {
+interface ContentstackFormTemplate {
+  layoutschema: ContentstackField[];
+  _metadata?: { uid: string };
+}
+
+interface ContentstackSchema {
   title: string;
-  tooltip?: string;
-  buttonLabel: string;
-  cancelLabel?: string;
-  fields: FieldConfig[];
+  formcontext: [
+    {
+      formtemplate: ContentstackFormTemplate;
+    }
+  ];
 }
 
 interface Props {
-  entry: ProfileManagerEntry;
-  onSubmit?: (data: any) => void;
+  entry: ContentstackSchema;
+  onSubmit?: (data: Record<string, string>) => void;
 }
 
 export const ProfileManagerCardUI: React.FC<Props> = ({ entry, onSubmit }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const initialValues = entry.fields.reduce((acc, field) => {
-    acc[field.name] = '';
-    return acc;
-  }, {} as Record<string, string>);
+  const layoutSchema = entry?.formcontext?.[0]?.formtemplate?.layoutschema || [];
+
+  const fields = layoutSchema.filter((item) => item.textwrapper);
+  const buttons = layoutSchema.filter((item) => item.button_wrapper);
+
+  const initialValues: Record<string, string> = {};
+  const requiredFields: Record<string, string> = {};
+
+  fields.forEach((field) => {
+    const uid = field.textwrapper!._metadata.uid;
+    initialValues[uid] = '';
+    if (field.textwrapper!.isvalidationrequired) {
+      requiredFields[uid] = field.textwrapper!.errormessage || 'Required';
+    }
+  });
+
+  const submitLabel =
+    buttons.find((b) => b.button_wrapper?.label.toLowerCase().includes('add'))?.button_wrapper?.label ||
+    'Submit';
+  const cancelLabel =
+    buttons.find((b) => b.button_wrapper?.label.toLowerCase().includes('cancel'))?.button_wrapper?.label ||
+    'Cancel';
 
   const validate = (values: Record<string, string>) => {
     const errors: Record<string, string> = {};
-    entry.fields.forEach((field) => {
-      if (field.required && !values[field.name]?.trim()) {
-        errors[field.name] = field.errormessage || 'Required';
+    Object.entries(requiredFields).forEach(([uid, message]) => {
+      if (!values[uid]?.trim()) {
+        errors[uid] = message;
       }
     });
     return errors;
@@ -70,53 +99,52 @@ export const ProfileManagerCardUI: React.FC<Props> = ({ entry, onSubmit }) => {
         <Typography variant="h6" fontWeight="bold">
           {entry.title}
         </Typography>
-        {entry.tooltip && (
-          <Tooltip title={entry.tooltip}>
-            <IconButton size="small">
-              <InfoIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
+        <Tooltip title="Info about this form">
+          <IconButton size="small">
+            <InfoIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </ProfileManagerHeaderContainer>
 
       <Divider sx={{ my: 2 }} />
 
       {!isExpanded ? (
         <Button variant="contained" fullWidth onClick={() => setIsExpanded(true)}>
-          {entry.buttonLabel}
+          {submitLabel}
         </Button>
       ) : (
         <form onSubmit={formik.handleSubmit}>
           <FormBox>
-            {entry.fields.map((field) => (
-              <TextField
-                key={field.name}
-                label={field.label}
-                name={field.name}
-                fullWidth
-                autoComplete={field.autocomplete || 'off'}
-                value={formik.values[field.name]}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={!!formik.touched[field.name] && !!formik.errors[field.name]}
-                helperText={formik.touched[field.name] && formik.errors[field.name]}
-              />
-            ))}
+            {fields.map((field) => {
+              const { label, _metadata } = field.textwrapper!;
+              const name = _metadata.uid;
+              return (
+                <TextField
+                  key={name}
+                  name={name}
+                  label={label}
+                  fullWidth
+                  value={formik.values[name]}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={Boolean(formik.touched[name] && formik.errors[name])}
+                  helperText={formik.touched[name] && formik.errors[name]}
+                />
+              );
+            })}
             <Button variant="contained" type="submit">
-              {entry.buttonLabel}
+              {submitLabel}
             </Button>
-            {entry.cancelLabel && (
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => {
-                  formik.resetForm();
-                  setIsExpanded(false);
-                }}
-              >
-                {entry.cancelLabel}
-              </Button>
-            )}
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={() => {
+                formik.resetForm();
+                setIsExpanded(false);
+              }}
+            >
+              {cancelLabel}
+            </Button>
           </FormBox>
         </form>
       )}
