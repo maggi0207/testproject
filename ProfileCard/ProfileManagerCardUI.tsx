@@ -17,9 +17,7 @@ import {
 import { ProfileManagerCardUIProps } from '#/src/types/pages/manageMembership';
 import { SpaceXs } from '@costcolabs/forge-design-tokens';
 
-export const ProfileManagerCardUI = (props: ProfileManagerCardUIProps) => {
-  const { entryData } = props;
-
+export const ProfileManagerCardUI = ({ entryData }: ProfileManagerCardUIProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [submittedUser, setSubmittedUser] = useState<{
     firstName: string;
@@ -44,6 +42,7 @@ export const ProfileManagerCardUI = (props: ProfileManagerCardUIProps) => {
     const label = field.textwrapper!.label.toLowerCase();
 
     initialValues[uid] = '';
+
     if (field.textwrapper!.isvalidationrequired) {
       requiredFields[uid] = field.textwrapper!.errormessage || 'Required';
     }
@@ -73,25 +72,37 @@ export const ProfileManagerCardUI = (props: ProfileManagerCardUIProps) => {
   const formik = useFormik({
     initialValues,
     validate,
-    onSubmit: async (values) => {
+    onSubmit: async (values, { setTouched }) => {
+      const errors = validate(values);
+
+      if (Object.keys(errors).length > 0) {
+        // ✅ Mark all required fields as touched
+        const touchedMap = Object.keys(requiredFields).reduce(
+          (acc, key) => ({ ...acc, [key]: true }),
+          {}
+        );
+        setTouched(touchedMap);
+        return;
+      }
+
       const firstName = values[firstNameFieldUid] || '';
       const lastName = values[lastNameFieldUid] || '';
       const membershipNumber = values[membershipNumberFieldUid] || '';
 
       try {
-        // TODO: Integrate with API
+        // 🔧 Placeholder for backend API integration
         // await api.addAccountManager(values);
+
         setSubmittedUser({ firstName, lastName, membershipNumber });
         formik.resetForm();
         setIsExpanded(false);
       } catch (error) {
-        console.error('Submit error:', error);
-        // Optional: show error toast
+        console.error('Submission error:', error);
       }
     },
   });
 
-  // Auto-dismiss success message
+  // 🕒 Auto-dismiss success message after 3 seconds
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (submittedUser) {
@@ -105,7 +116,7 @@ export const ProfileManagerCardUI = (props: ProfileManagerCardUIProps) => {
   return (
     <ProfileManagerCard>
       <MMCHeaderContainer>
-        <Text variant="t3" bold={true}>
+        <Text variant="t3" bold>
           {entryData.title}
         </Text>
         {entryData.tooltip && (
@@ -160,11 +171,15 @@ export const ProfileManagerCardUI = (props: ProfileManagerCardUIProps) => {
         </Box>
       )}
 
-      {!isExpanded ? (
+      {/* ✅ Show Add button initially */}
+      {!submittedUser && !isExpanded && (
         <Button fullWidth variant="secondary" onClick={() => setIsExpanded(true)}>
           {submitLabel}
         </Button>
-      ) : (
+      )}
+
+      {/* ✅ Form - only when expanded and not yet submitted */}
+      {isExpanded && !submittedUser && (
         <form onSubmit={formik.handleSubmit}>
           <SubComponentContainer>
             {fields.map((field) => {
@@ -172,6 +187,7 @@ export const ProfileManagerCardUI = (props: ProfileManagerCardUIProps) => {
               const name = _metadata.uid;
               const isError = Boolean(formik.touched[name] && formik.errors[name]);
               const errorText = isError ? formik.errors[name] : '';
+
               return (
                 <TextField
                   key={name}
@@ -181,7 +197,7 @@ export const ProfileManagerCardUI = (props: ProfileManagerCardUIProps) => {
                   label={label}
                   value={formik.values[name] || ''}
                   onChange={(e) => formik.setFieldValue(name, e.target.value)}
-                  onBlur={formik.handleBlur}
+                  onBlur={() => formik.setFieldTouched(name, true)} // ensures touched
                   isError={isError}
                   errorText={errorText}
                   id={name}
