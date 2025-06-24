@@ -1,57 +1,33 @@
 'use client';
-import React, { useState } from 'react';
-import {
-  TextField,
-  Typography,
-  IconButton,
-  Tooltip,
-  Button,
-  Divider,
-} from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
+import { useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import {
+  TextField,
+  Button,
+  Divider,
+  Text,
+  Tooltip,
+} from '@costcolabs/forge-components';
+import { Box } from '@mui/material';
+import {
   ProfileManagerCard,
-  ProfileManagerHeaderContainer,
-  FormBox,
-} from '../styles/profileManager.styles';
+  MMCHeaderContainer,
+  SubComponentContainer,
+} from '../styles';
+import { ProfileManagerCardUIProps } from '#/src/types/pages/manageMembership';
+import { SpaceXs } from '@costcolabs/forge-design-tokens';
 
-interface ContentstackField {
-  textwrapper?: {
-    label: string;
-    isvalidationrequired: boolean;
-    errormessage?: string;
-    _metadata: { uid: string };
-  };
-  button_wrapper?: {
-    label: string;
-    _metadata: { uid: string };
-  };
-}
+export const ProfileManagerCardUI = (props: ProfileManagerCardUIProps) => {
+  const { entryData } = props;
 
-interface ContentstackFormTemplate {
-  layoutschema: ContentstackField[];
-  _metadata?: { uid: string };
-}
-
-interface ContentstackSchema {
-  title: string;
-  formcontext: [
-    {
-      formtemplate: ContentstackFormTemplate;
-    }
-  ];
-}
-
-interface Props {
-  entry: ContentstackSchema;
-  onSubmit?: (data: Record<string, string>) => void;
-}
-
-export const ProfileManagerCardUI: React.FC<Props> = ({ entry, onSubmit }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [submittedUser, setSubmittedUser] = useState<{
+    firstName: string;
+    lastName: string;
+    membershipNumber?: string;
+  } | null>(null);
 
-  const layoutSchema = entry?.formcontext?.[0]?.formtemplate?.layoutschema || [];
+  const layoutSchema = entryData?.formcontext?.[0]?.formtemplate?.layoutschema || [];
 
   const fields = layoutSchema.filter((item) => item.textwrapper);
   const buttons = layoutSchema.filter((item) => item.button_wrapper);
@@ -59,20 +35,30 @@ export const ProfileManagerCardUI: React.FC<Props> = ({ entry, onSubmit }) => {
   const initialValues: Record<string, string> = {};
   const requiredFields: Record<string, string> = {};
 
+  let firstNameFieldUid = '';
+  let lastNameFieldUid = '';
+  let membershipNumberFieldUid = '';
+
   fields.forEach((field) => {
     const uid = field.textwrapper!._metadata.uid;
+    const label = field.textwrapper!.label.toLowerCase();
+
     initialValues[uid] = '';
     if (field.textwrapper!.isvalidationrequired) {
       requiredFields[uid] = field.textwrapper!.errormessage || 'Required';
     }
+
+    if (label.includes('first name')) {
+      firstNameFieldUid = uid;
+    } else if (label.includes('last name')) {
+      lastNameFieldUid = uid;
+    } else if (label.includes('membership')) {
+      membershipNumberFieldUid = uid;
+    }
   });
 
-  const submitLabel =
-    buttons.find((b) => b.button_wrapper?.label.toLowerCase().includes('add'))?.button_wrapper?.label ||
-    'Submit';
-  const cancelLabel =
-    buttons.find((b) => b.button_wrapper?.label.toLowerCase().includes('cancel'))?.button_wrapper?.label ||
-    'Cancel';
+  const submitLabel = buttons[0]?.button_wrapper?.label || 'Submit';
+  const cancelLabel = buttons[1]?.button_wrapper?.label || 'Cancel';
 
   const validate = (values: Record<string, string>) => {
     const errors: Record<string, string> = {};
@@ -87,65 +73,138 @@ export const ProfileManagerCardUI: React.FC<Props> = ({ entry, onSubmit }) => {
   const formik = useFormik({
     initialValues,
     validate,
-    onSubmit: (values) => {
-      onSubmit?.(values);
-      console.log('Submitted:', values);
+    onSubmit: async (values) => {
+      const firstName = values[firstNameFieldUid] || '';
+      const lastName = values[lastNameFieldUid] || '';
+      const membershipNumber = values[membershipNumberFieldUid] || '';
+
+      try {
+        // TODO: Integrate with API
+        // await api.addAccountManager(values);
+        setSubmittedUser({ firstName, lastName, membershipNumber });
+        formik.resetForm();
+        setIsExpanded(false);
+      } catch (error) {
+        console.error('Submit error:', error);
+        // Optional: show error toast
+      }
     },
   });
 
+  // Auto-dismiss success message
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (submittedUser) {
+      timer = setTimeout(() => {
+        setSubmittedUser(null);
+      }, 3000);
+    }
+    return () => clearTimeout(timer);
+  }, [submittedUser]);
+
   return (
     <ProfileManagerCard>
-      <ProfileManagerHeaderContainer>
-        <Typography variant="h6" fontWeight="bold">
-          {entry.title}
-        </Typography>
-        <Tooltip title="Info about this form">
-          <IconButton size="small">
-            <InfoIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </ProfileManagerHeaderContainer>
+      <MMCHeaderContainer>
+        <Text variant="t3" bold={true}>
+          {entryData.title}
+        </Text>
+        {entryData.tooltip && (
+          <Tooltip
+            position="right"
+            uniqueId="MMC"
+            buttonAriaLabel={entryData.title}
+            tooltipId="MMC_Tooltip"
+            content={entryData.tooltip}
+          />
+        )}
+      </MMCHeaderContainer>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ marginBottom: SpaceXs, marginTop: '8px' }} />
+
+      {/* ✅ Success Message */}
+      {submittedUser && (
+        <Box
+          sx={{
+            backgroundColor: '#d4edda',
+            border: '1px solid green',
+            padding: '12px',
+            marginBottom: '16px',
+            borderRadius: '6px',
+          }}
+        >
+          <Text variant="t6" style={{ color: '#155724' }}>
+            Person has been added.
+          </Text>
+          <Box sx={{ marginTop: '8px' }}>
+            <Text bold>
+              {submittedUser.firstName} {submittedUser.lastName}
+            </Text>
+            {submittedUser.membershipNumber && (
+              <Text variant="t6" style={{ fontWeight: 400 }}>
+                Membership #: {submittedUser.membershipNumber}
+              </Text>
+            )}
+            <Button
+              variant="link"
+              onClick={() => setSubmittedUser(null)}
+              style={{
+                color: '#007bff',
+                textDecoration: 'underline',
+                fontWeight: 'normal',
+                marginTop: '8px',
+              }}
+            >
+              Remove
+            </Button>
+          </Box>
+        </Box>
+      )}
 
       {!isExpanded ? (
-        <Button variant="contained" fullWidth onClick={() => setIsExpanded(true)}>
+        <Button fullWidth variant="secondary" onClick={() => setIsExpanded(true)}>
           {submitLabel}
         </Button>
       ) : (
         <form onSubmit={formik.handleSubmit}>
-          <FormBox>
+          <SubComponentContainer>
             {fields.map((field) => {
               const { label, _metadata } = field.textwrapper!;
               const name = _metadata.uid;
+              const isError = Boolean(formik.touched[name] && formik.errors[name]);
+              const errorText = isError ? formik.errors[name] : '';
               return (
                 <TextField
                   key={name}
+                  sx={{ marginTop: '16px', marginBottom: '16px' }}
+                  inputLabelId={name}
                   name={name}
                   label={label}
-                  fullWidth
-                  value={formik.values[name]}
-                  onChange={formik.handleChange}
+                  value={formik.values[name] || ''}
+                  onChange={(e) => formik.setFieldValue(name, e.target.value)}
                   onBlur={formik.handleBlur}
-                  error={Boolean(formik.touched[name] && formik.errors[name])}
-                  helperText={formik.touched[name] && formik.errors[name]}
+                  isError={isError}
+                  errorText={errorText}
+                  id={name}
+                  isRequired={field.textwrapper!.isvalidationrequired}
+                  type="text"
+                  uniqueId={`MMC_${name}`}
                 />
               );
             })}
-            <Button variant="contained" type="submit">
-              {submitLabel}
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => {
-                formik.resetForm();
-                setIsExpanded(false);
-              }}
-            >
-              {cancelLabel}
-            </Button>
-          </FormBox>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Button type="submit">{submitLabel}</Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  formik.resetForm();
+                  setIsExpanded(false);
+                }}
+              >
+                {cancelLabel}
+              </Button>
+            </Box>
+          </SubComponentContainer>
         </form>
       )}
     </ProfileManagerCard>
