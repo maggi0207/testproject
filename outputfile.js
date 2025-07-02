@@ -1,51 +1,71 @@
-useEffect(() => {
-    // Find which top-level props changed
-    Object.keys(props).forEach(key => {
-      // If the prop is a nested object and has changed
-      if (typeof props[key] === 'object' && props[key] !== null) {
-        if (!isEqual(prevProps.current[key], props[key])) {
-          console.log(`Prop "${key}" changed:`, {
-            from: prevProps.current[key],
-            to: props[key]
-          });
-          
-          // Optional: Find which nested properties changed
-          findNestedChanges(prevProps.current[key], props[key], key);
-        }
-      } else if (prevProps.current[key] !== props[key]) {
-        console.log(`Prop "${key}" changed:`, {
-          from: prevProps.current[key],
-          to: props[key]
-        });
-      }
-    });
-    
-    prevProps.current = JSON.parse(JSON.stringify(props)); // Deep clone
-  });
-  
-  return <div>{/* Your component content */}</div>;
+// components/SubComponents/RemovePersonModal.tsx
+
+import React from 'react';
+import { Modal, Text } from '@costcolabs/forge-components';
+
+interface RemovePersonModalProps {
+  isOpen: boolean;
+  firstName: string;
+  lastName: string;
+  onClose: () => void;
+  onRemove: () => void;
 }
 
-// Helper to find changes in nested objects
-function findNestedChanges(oldObj, newObj, path = '') {
-  if (!oldObj || !newObj) return;
-  
-  const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
-  
-  allKeys.forEach(key => {
-    const oldVal = oldObj[key];
-    const newVal = newObj[key];
-    const currentPath = path ? `${path}.${key}` : key;
-    
-    if (typeof oldVal === 'object' && typeof newVal === 'object' && 
-        oldVal !== null && newVal !== null) {
-      // Recursively check nested objects
-      findNestedChanges(oldVal, newVal, currentPath);
-    } else if (!isEqual(oldVal, newVal)) {
-      console.log(`Nested prop "${currentPath}" changed:`, {
-        from: oldVal,
-        to: newVal
-      });
-    }
-  });
-}
+const RemovePersonModal: React.FC<RemovePersonModalProps> = ({
+  isOpen,
+  firstName,
+  lastName,
+  onClose,
+  onRemove,
+}) => {
+  return (
+    <Modal
+      isOpen={isOpen}
+      modalTitle="Remove Person"
+      onClose={onClose}
+      buttons={[
+        {
+          text: 'Remove Person',
+          action: onRemove,
+        },
+        {
+          text: 'Cancel',
+          action: onClose,
+        },
+      ]}
+    >
+      <Text>
+        Are you sure you want to remove {firstName} {lastName} from your membership?
+      </Text>
+    </Modal>
+  );
+};
+
+export default RemovePersonModal;
+
+
+import React, { useState } from 'react';
+import RemovePersonModal from './components/SubComponents/RemovePersonModal';
+
+const ParentComponent = () => {
+  const [isModalOpen, setModalOpen] = useState(false);
+
+  const handleRemove = () => {
+    console.log('Person removed');
+    setModalOpen(false);
+  };
+
+  return (
+    <>
+      <button onClick={() => setModalOpen(true)}>Open Modal</button>
+
+      <RemovePersonModal
+        isOpen={isModalOpen}
+        firstName="John"
+        lastName="Doe"
+        onClose={() => setModalOpen(false)}
+        onRemove={handleRemove}
+      />
+    </>
+  );
+};
