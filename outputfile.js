@@ -3,110 +3,103 @@
 import {
   AuthUserCardUIProps,
   AuthUserCardField,
+  UserDetails,
+  RemovePersonFields,
 } from '#/src/types/pages/AuthUserCard';
 import {
   AuthUserCard,
   HeaderContainer,
-  PersonAddedContainer,
   SubComponentContainer,
-  SuccessNotificationContainer,
-  anchorTextStyle,
-  boldBodyStyle,
 } from './styles';
-import { useState, useMemo, useEffect } from 'react';
+
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Divider,
   Text,
   Tooltip,
   Button,
-  TextField,
   Skeleton,
   SkeletonVariant,
+  Notification,
+  Link,
 } from '@costcolabs/forge-components';
-import { Box } from '@mui/material';
-import { SpaceMd } from '@costcolabs/forge-design-tokens';
-import { useFormik } from 'formik';
+import { Box, Stack } from '@mui/material';
+import { SpaceMd, SpaceXs } from '@costcolabs/forge-design-tokens';
+
+import CostcoFormikForm from '#/src/components/common/CostcoFormikForm';
+import FormikTextField from '#/src/components/common/FormikTextField';
 
 import {
-  knownFieldIds,
   extractFields,
   initializeFieldState,
   handleSubmit,
-  handleChange,
-  validateFields,
+  knownFieldIds,
 } from './helpers';
 import { useAuth } from '@costcolabs/forge-digital-components';
 import RemovePersonModal from './SubComponents/RemovePersonModal';
 
-export const AuthUserCardUI = ({ entryData }: AuthUserCardUIProps) => {
+export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { isUserSignedIn, isLoading: isLoadingMsal } = useAuth();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [submittedUser, setSubmittedUser] = useState<{
-    firstName: string;
-    lastName: string;
-    membershipNumber?: string;
-  } | null>(null);
-  const [removedUser, setRemovedUser] = useState<{
-    firstName: string;
-    lastName: string;
-  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [submittedUser, setSubmittedUser] = useState<UserDetails | null>(null);
+  const [removedUser, setRemovedUser] = useState<UserDetails | null>(null);
+  const [modalUser, setModalUser] = useState<UserDetails | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [modalUser, setModalUser] = useState<{
-    firstName: string;
-    lastName: string;
-  } | null>(null);
+
+  const addAccountButtonRef = useRef<HTMLButtonElement>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const successMessageRef = useRef<HTMLDivElement>(null);
 
   const layoutSchema: AuthUserCardField[] = useMemo(
-    () =>
-      entryData?.baseformref?.[0]?.formcontext?.[0]?.formtemplate?.layoutschema ||
-      [],
+    () => entryData?.baseformref?.[0]?.formcontext?.[0]?.formtemplate?.layoutschema || [],
+    [entryData]
+  );
+
+  const removePersonFields: RemovePersonFields[] = useMemo(
+    () => entryData?.removepersoncomposer?.[0]?.removepersonwrapper?.removepersonref || [],
     [entryData]
   );
 
   const { fields, buttons } = extractFields(layoutSchema);
-
   const { initialValues, requiredFields } = initializeFieldState(fields);
 
   useEffect(() => {
     if (!isLoadingMsal && isLoading) {
-      isUserSignedIn().then(() => {
-        setIsLoading(false);
-      });
+      isUserSignedIn().then(() => setIsLoading(false));
     }
   }, [isLoading, isLoadingMsal, isUserSignedIn]);
 
-  const formik = useFormik({
-    initialValues,
-    validate: (values) => validateFields(values, requiredFields),
-    onSubmit: (values, { setTouched }) =>
-      handleSubmit(values, requiredFields, setTouched, (user) => {
-        setSubmittedUser(user);
-        setRemovedUser(null); // Clear any previous removal
-        formik.resetForm();
-        setIsExpanded(false);
-      }),
-  });
+  const submitLabel = buttons[0]?.button.label || 'Submit';
+  const cancelLabel = buttons[1]?.button.label || 'Cancel';
+
+  const handleFormSubmit = async (
+    values: Record<string, string>,
+    helpers: any
+  ) => {
+    await handleSubmit(values, requiredFields, helpers.setTouched, (user: UserDetails) => {
+      setSubmittedUser(user);
+      setRemovedUser(null);
+      helpers.resetForm();
+      setIsExpanded(false);
+      setTimeout(() => successMessageRef.current?.focus(), 0);
+    });
+  };
 
   const handleOpenRemoveModal = () => {
     if (submittedUser) {
-      setModalUser({
-        firstName: submittedUser.firstName,
-        lastName: submittedUser.lastName,
-      });
+      setModalUser(submittedUser);
       setModalOpen(true);
     }
   };
 
-  const handleRemove = (firstName: string, lastName: string) => {
+  const handleRemove = (user: UserDetails) => {
+    setRemovedUser(user);
     setSubmittedUser(null);
-    setRemovedUser({ firstName, lastName });
     setIsExpanded(false);
     setModalOpen(false);
   };
-
-  const submitLabel = buttons[0]?.button.label || 'Submit';
-  const cancelLabel = buttons[1]?.button.label || 'Cancel';
 
   if (isLoading) {
     return (
@@ -118,19 +111,18 @@ export const AuthUserCardUI = ({ entryData }: AuthUserCardUIProps) => {
 
   return (
     <>
-      {/* Remove Confirmation Modal */}
       {modalUser && (
         <RemovePersonModal
           isOpen={isModalOpen}
-          firstName={modalUser.firstName}
-          lastName={modalUser.lastName}
+          userDetails={modalUser}
           onClose={() => setModalOpen(false)}
           onRemove={handleRemove}
+          removePersonFields={removePersonFields}
         />
       )}
 
       <AuthUserCard>
-        <HeaderContainer>
+        <HeaderContainer direction={'row'} justifyContent={'space-between'}>
           <Text variant="t3" bold>
             {entryData?.title}
           </Text>
@@ -143,100 +135,93 @@ export const AuthUserCardUI = ({ entryData }: AuthUserCardUIProps) => {
           />
         </HeaderContainer>
 
-        <Divider sx={{ marginBottom: SpaceMd, marginTop: '8px' }} />
+        <Divider sx={{ marginBottom: SpaceMd, marginTop: SpaceXs }} />
 
-        {/* Notification if person was added */}
-        {submittedUser && (
-          <>
-            <SuccessNotificationContainer>
-              <Text variant="t6" sx={{ color: '#155724' }}>
-                Person has been added.
-              </Text>
-            </SuccessNotificationContainer>
-            <PersonAddedContainer>
-              <Text sx={boldBodyStyle}>
-                {submittedUser.firstName} {submittedUser.lastName}
-              </Text>
-              <Text
-                sx={anchorTextStyle}
-                onClick={handleOpenRemoveModal}
-                style={{ cursor: 'pointer' }}
-              >
-                Remove
-              </Text>
-            </PersonAddedContainer>
-          </>
-        )}
-
-        {/* Notification if person was removed */}
-        {removedUser && (
-          <SuccessNotificationContainer>
-            <Text variant="t6" sx={{ color: '#155724' }}>
-              {removedUser.firstName} {removedUser.lastName} has been removed.
-            </Text>
-          </SuccessNotificationContainer>
-        )}
-
-        {/* Add Account Manager button */}
-        {!isExpanded && !submittedUser && (
-          <Button
-            fullWidth
-            variant="secondary"
-            onClick={() => {
-              setIsExpanded(true);
-              setRemovedUser(null); // Reset removal state
-            }}
-          >
-            {entryData?.primarybuttonlabel || 'Add Account Manager'}
-          </Button>
-        )}
-
-        {/* Form shown when expanded and no user submitted */}
-        {isExpanded && !submittedUser && (
-          <form onSubmit={formik.handleSubmit}>
-            <SubComponentContainer>
-              {fields.map(({ textfield }) => {
-                const { fieldid, label } = textfield;
-                const isTouched = formik.touched[fieldid];
-                const error = formik.errors[fieldid];
-                const isError = Boolean(isTouched && error);
-
-                return (
-                  <TextField
-                    key={fieldid}
-                    inputLabelId={fieldid}
-                    uniqueId={fieldid}
-                    id={fieldid}
-                    label={label}
-                    value={formik.values[fieldid] || ''}
-                    onChange={(e) =>
-                      handleChange(e, formik.setFieldValue, fieldid)
-                    }
-                    onBlur={() => formik.setFieldTouched(fieldid, true)}
-                    isError={isError}
-                    errorText={error || ''}
-                    isRequired
-                    type="text"
-                    sx={{ marginBottom: SpaceMd }}
-                  />
-                );
-              })}
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <Button type="submit">{submitLabel}</Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    formik.resetForm();
-                    setIsExpanded(false);
-                  }}
+        <Stack gap={SpaceMd}>
+          {submittedUser && (
+            <Stack gap={SpaceMd}>
+              <Notification ref={successMessageRef} message={translations?.alertaddperson} severity="success" />
+              <Stack direction="row" gap={SpaceXs} alignItems="center">
+                <Text bold>
+                  {submittedUser.firstName} {submittedUser.lastName}
+                </Text>
+                <Link
+                  aria-label={`${translations?.remove} ${submittedUser.firstName} ${submittedUser.lastName}`}
+                  onClick={handleOpenRemoveModal}
+                  underline="always"
+                  role="button"
                 >
-                  {cancelLabel}
-                </Button>
-              </Box>
-            </SubComponentContainer>
-          </form>
-        )}
+                  <Text variant="t6">{translations?.remove}</Text>
+                </Link>
+              </Stack>
+            </Stack>
+          )}
+
+          {removedUser && !submittedUser && (
+            <Notification message={translations?.alertremoveperson} severity="success" />
+          )}
+
+          {!isExpanded && !submittedUser && (
+            <Button
+              fullWidth
+              variant="secondary"
+              ref={addAccountButtonRef}
+              onClick={() => {
+                setIsExpanded(true);
+                setRemovedUser(null);
+                setTimeout(() => firstInputRef.current?.focus(), 0);
+              }}
+            >
+              {entryData?.primarybuttonlabel}
+            </Button>
+          )}
+
+          {isExpanded && !submittedUser && (
+            <CostcoFormikForm
+              initialValues={initialValues}
+              onSubmit={handleFormSubmit}
+              validateOnChange={false}
+              validateOnBlur={false}
+              formProps={{ noValidate: true }}
+            >
+              {(formik) => (
+                <SubComponentContainer>
+                  {fields.map(({ textfield }, index) => {
+                    const { fieldid, label } = textfield;
+
+                    return (
+                      <FormikTextField
+                        key={fieldid}
+                        name={fieldid}
+                        label={label}
+                        uniqueId={fieldid}
+                        inputAriaLabel={label}
+                        isRequired
+                        type={fieldid === knownFieldIds.membershipNumber ? 'number' : 'text'}
+                        inputRef={index === 0 ? firstInputRef : undefined}
+                        sx={{ marginBottom: SpaceMd }}
+                      />
+                    );
+                  })}
+
+                  <Stack gap={SpaceMd}>
+                    <Button type="submit">{submitLabel}</Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        formik.resetForm();
+                        setIsExpanded(false);
+                        setTimeout(() => addAccountButtonRef.current?.focus(), 0);
+                      }}
+                    >
+                      {cancelLabel}
+                    </Button>
+                  </Stack>
+                </SubComponentContainer>
+              )}
+            </CostcoFormikForm>
+          )}
+        </Stack>
       </AuthUserCard>
     </>
   );
