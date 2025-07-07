@@ -11,7 +11,6 @@ import {
   HeaderContainer,
   SubComponentContainer,
 } from './styles';
-
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Divider,
@@ -25,14 +24,12 @@ import {
 } from '@costcolabs/forge-components';
 import { Box, Stack } from '@mui/material';
 import { SpaceMd, SpaceXs } from '@costcolabs/forge-design-tokens';
-
-import CostcoFormikForm from '#/src/components/common/CostcoFormikForm';
-import FormikTextField from '#/src/components/common/FormikTextField';
-
+import CostcoFormikForm from '#/src/components/common/CostcoFormikForm'; // ✅ import wrapper
+import FormikTextField from '#/src/components/common/FormikTextField'; // ✅ custom field
 import {
   extractFields,
   initializeFieldState,
-  handleSubmit,
+  validateFields,
   knownFieldIds,
 } from './helpers';
 import { useAuth } from '@costcolabs/forge-digital-components';
@@ -42,14 +39,12 @@ export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps)
   const [isExpanded, setIsExpanded] = useState(false);
   const { isUserSignedIn, isLoading: isLoadingMsal } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-
   const [submittedUser, setSubmittedUser] = useState<UserDetails | null>(null);
   const [removedUser, setRemovedUser] = useState<UserDetails | null>(null);
-  const [modalUser, setModalUser] = useState<UserDetails | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
-
-  const addAccountButtonRef = useRef<HTMLButtonElement>(null);
-  const firstInputRef = useRef<HTMLInputElement>(null);
+  const [modalUser, setModalUser] = useState<UserDetails | null>(null);
+  const addAccountButtonref = useRef<HTMLButtonElement | null>(null);
+  const firstInputRef = useRef<HTMLInputElement | null>(null);
   const successMessageRef = useRef<HTMLDivElement>(null);
 
   const layoutSchema: AuthUserCardField[] = useMemo(
@@ -67,25 +62,11 @@ export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps)
 
   useEffect(() => {
     if (!isLoadingMsal && isLoading) {
-      isUserSignedIn().then(() => setIsLoading(false));
+      isUserSignedIn().then(() => {
+        setIsLoading(false);
+      });
     }
   }, [isLoading, isLoadingMsal, isUserSignedIn]);
-
-  const submitLabel = buttons[0]?.button.label || 'Submit';
-  const cancelLabel = buttons[1]?.button.label || 'Cancel';
-
-  const handleFormSubmit = async (
-    values: Record<string, string>,
-    helpers: any
-  ) => {
-    await handleSubmit(values, requiredFields, helpers.setTouched, (user: UserDetails) => {
-      setSubmittedUser(user);
-      setRemovedUser(null);
-      helpers.resetForm();
-      setIsExpanded(false);
-      setTimeout(() => successMessageRef.current?.focus(), 0);
-    });
-  };
 
   const handleOpenRemoveModal = () => {
     if (submittedUser) {
@@ -94,12 +75,15 @@ export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps)
     }
   };
 
-  const handleRemove = (user: UserDetails) => {
-    setRemovedUser(user);
+  const handleRemove = (userDetails: UserDetails) => {
+    setRemovedUser(userDetails);
     setSubmittedUser(null);
     setIsExpanded(false);
     setModalOpen(false);
   };
+
+  const submitLabel = buttons[0]?.button.label;
+  const cancelLabel = buttons[1]?.button.label;
 
   if (isLoading) {
     return (
@@ -122,7 +106,7 @@ export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps)
       )}
 
       <AuthUserCard>
-        <HeaderContainer direction={'row'} justifyContent={'space-between'}>
+        <HeaderContainer direction="row" justifyContent="space-between">
           <Text variant="t3" bold>
             {entryData?.title}
           </Text>
@@ -140,13 +124,17 @@ export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps)
         <Stack gap={SpaceMd}>
           {submittedUser && (
             <Stack gap={SpaceMd}>
-              <Notification ref={successMessageRef} message={translations?.alertaddperson} severity="success" />
-              <Stack direction="row" gap={SpaceXs} alignItems="center">
+              <Notification
+                ref={successMessageRef}
+                message={translations?.alertaddperson}
+                severity="success"
+              />
+              <Stack direction="row" alignItems="flex-start" gap={SpaceXs}>
                 <Text bold>
                   {submittedUser.firstName} {submittedUser.lastName}
                 </Text>
                 <Link
-                  aria-label={`${translations?.remove} ${submittedUser.firstName} ${submittedUser.lastName}`}
+                  aria-label={`Remove ${submittedUser.firstName} ${submittedUser.lastName}`}
                   onClick={handleOpenRemoveModal}
                   underline="always"
                   role="button"
@@ -157,7 +145,7 @@ export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps)
             </Stack>
           )}
 
-          {removedUser && !submittedUser && (
+          {removedUser && (
             <Notification message={translations?.alertremoveperson} severity="success" />
           )}
 
@@ -165,11 +153,13 @@ export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps)
             <Button
               fullWidth
               variant="secondary"
-              ref={addAccountButtonRef}
+              ref={addAccountButtonref}
               onClick={() => {
                 setIsExpanded(true);
                 setRemovedUser(null);
-                setTimeout(() => firstInputRef.current?.focus(), 0);
+                setTimeout(() => {
+                  firstInputRef.current?.focus();
+                }, 0);
               }}
             >
               {entryData?.primarybuttonlabel}
@@ -179,46 +169,49 @@ export const AuthUserCardUI = ({ entryData, translations }: AuthUserCardUIProps)
           {isExpanded && !submittedUser && (
             <CostcoFormikForm
               initialValues={initialValues}
-              onSubmit={handleFormSubmit}
-              validateOnChange={false}
-              validateOnBlur={false}
+              validate={(values) => validateFields(values, requiredFields)}
+              onSubmit={(values, formikHelpers) => {
+                const user: UserDetails = {
+                  firstName: values[knownFieldIds.firstName],
+                  lastName: values[knownFieldIds.lastName],
+                  membershipNumber: values[knownFieldIds.membershipNumber],
+                };
+                setSubmittedUser(user);
+                setRemovedUser(null);
+                formikHelpers.resetForm();
+                setIsExpanded(false);
+                setTimeout(() => successMessageRef.current?.focus(), 0);
+              }}
               formProps={{ noValidate: true }}
             >
-              {(formik) => (
-                <SubComponentContainer>
-                  {fields.map(({ textfield }, index) => {
-                    const { fieldid, label } = textfield;
+              <SubComponentContainer>
+                {fields.map(({ textfield }, index) => (
+                  <FormikTextField
+                    key={textfield.fieldid}
+                    name={textfield.fieldid}
+                    label={textfield.label}
+                    isRequired={!!textfield.isverificationrequired}
+                    type={textfield.fieldid === knownFieldIds.membershipNumber ? 'number' : 'text'}
+                    sx={{ marginBottom: SpaceMd }}
+                    inputRef={index === 0 ? firstInputRef : undefined}
+                  />
+                ))}
 
-                    return (
-                      <FormikTextField
-                        key={fieldid}
-                        name={fieldid}
-                        label={label}
-                        uniqueId={fieldid}
-                        inputAriaLabel={label}
-                        isRequired
-                        type={fieldid === knownFieldIds.membershipNumber ? 'number' : 'text'}
-                        inputRef={index === 0 ? firstInputRef : undefined}
-                        sx={{ marginBottom: SpaceMd }}
-                      />
-                    );
-                  })}
-
-                  <Stack gap={SpaceMd}>
-                    <Button type="submit">{submitLabel}</Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        formik.resetForm();
-                        setIsExpanded(false);
-                        setTimeout(() => addAccountButtonRef.current?.focus(), 0);
-                      }}
-                    >
-                      {cancelLabel}
-                    </Button>
-                  </Stack>
-                </SubComponentContainer>
-              )}
+                <Stack gap={SpaceMd}>
+                  <Button type="submit">{submitLabel}</Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setIsExpanded(false);
+                      setTimeout(() => {
+                        addAccountButtonref.current?.focus();
+                      }, 0);
+                    }}
+                  >
+                    {cancelLabel}
+                  </Button>
+                </Stack>
+              </SubComponentContainer>
             </CostcoFormikForm>
           )}
         </Stack>
