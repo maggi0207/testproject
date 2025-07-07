@@ -49,19 +49,23 @@ export const initializeFieldState = (fields: { textfield: TextFieldWrapper }[]) 
 };
 
 export const validateFields = (
-  values: Record<string, string>,
+  values: Record<string, string | number | undefined>,
   requiredFields: Record<string, string>
 ): Record<string, string> => {
   const errors: Record<string, string> = {};
 
   for (const [fieldId, message] of Object.entries(requiredFields)) {
-    if (!values[fieldId]?.trim()) {
+    const value = values[fieldId];
+
+    // Safely coerce to string, then trim
+    if (!String(value ?? '').trim()) {
       errors[fieldId] = message;
     }
   }
 
   return errors;
 };
+
 
 // Custom handleSubmit compatible with CostcoFormikForm
 export const handleSubmit = async (
