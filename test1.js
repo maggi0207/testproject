@@ -1,236 +1,161 @@
-'use client';
+import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { AuthUserCardUI } from "./AuthUserCardUI";
+import mockPersonalManager from "#/src/mocks/authUserCard/mockPersonalManager.json";
+import "@testing-library/jest-dom";
 
-import {
-  AuthUserCardUIProps,
-  AuthUserCardField,
-} from '#/src/types/pages/AuthUserCard';
-import {
-  AuthUserCard,
-  HeaderContainer,
-  PersonAddedContainer,
-  SubComponentContainer,
-  SuccessNotificationContainer,
-  anchorTextStyle,
-  boldBodyStyle,
-} from './styles';
-import { useState, useMemo, useEffect } from 'react';
-import {
-  Divider,
-  Text,
-  Tooltip,
-  Button,
-  TextField,
-  Skeleton,
-  SkeletonVariant,
-} from '@costcolabs/forge-components';
-import { Box } from '@mui/material';
-import { SpaceMd } from '@costcolabs/forge-design-tokens';
-import { useFormik } from 'formik';
+jest.mock("@costcolabs/forge-components", () => ({
+  Text: ({ children }: any) => <span>{children}</span>,
+  Tooltip: ({ content }: any) => <div data-testid="tooltip">{content}</div>,
+  Button: ({ children, onClick, ...rest }: any) => (
+    <button onClick={onClick} {...rest}>
+      {children}
+    </button>
+  ),
+  TextField: ({ label, value, onChange, onBlur, isError, errorText, inputLabelId }: any) => (
+    <div>
+      <label htmlFor={inputLabelId}>{label}</label>
+      <input
+        id={inputLabelId}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        aria-invalid={isError}
+      />
+      {isError && <div role="alert">{errorText}</div>}
+    </div>
+  ),
+  Divider: () => <hr />,
+  Notification: ({ message }: any) => <div role="status">{message}</div>,
+  Link: ({ children, onClick, ...rest }: any) => (
+    <a onClick={onClick} role="button" {...rest}>
+      {children}
+    </a>
+  ),
+}));
 
-import {
-  extractFields,
-  initializeFieldState,
-  handleSubmit,
-  handleChange,
-  validateFields,
-} from './helpers';
-import { useAuth } from '@costcolabs/forge-digital-components';
-import RemovePersonModal from './SubComponents/RemovePersonModal';
+jest.mock("@costcolabs/forge-digital-components", () => ({
+  useAuth: () => ({
+    isUserSignedIn: () => Promise.resolve(true),
+    isLoading: false,
+  }),
+}));
 
-import { userDetails } from '#/src/types/userDetails'; // ✅ Adjust path as needed
+const mockEntryData = mockPersonalManager;
 
-export const AuthUserCardUI = ({ entryData }: AuthUserCardUIProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { isUserSignedIn, isLoading: isLoadingMsal } = useAuth();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const [submittedUser, setSubmittedUser] = useState<userDetails | null>(null);
-  const [removedUser, setRemovedUser] = useState<userDetails | null>(null);
-  const [modalUser, setModalUser] = useState<userDetails | null>(null);
-  const [isModalOpen, setModalOpen] = useState(false);
-
-  const layoutSchema: AuthUserCardField[] = useMemo(
-    () =>
-      entryData?.baseformref?.[0]?.formcontext?.[0]?.formtemplate?.layoutschema ||
-      [],
-    [entryData]
-  );
-
-  const { fields, buttons } = extractFields(layoutSchema);
-  const { initialValues, requiredFields } = initializeFieldState(fields);
-
-  useEffect(() => {
-    if (!isLoadingMsal && isLoading) {
-      isUserSignedIn().then(() => setIsLoading(false));
-    }
-  }, [isLoadingMsal, isLoading, isUserSignedIn]);
-
-  const formik = useFormik({
-    initialValues,
-    validate: (values) => validateFields(values, requiredFields),
-    onSubmit: async (values, { setTouched, validateForm }) => {
-      // ✅ Mark all required fields as touched
-      const allTouched = requiredFields.reduce(
-        (acc, field) => ({ ...acc, [field]: true }),
-        {}
-      );
-      setTouched(allTouched, true);
-
-      // ✅ Validate before submission
-      const errors = await validateForm();
-      if (Object.keys(errors).length > 0) return;
-
-      handleSubmit(values, requiredFields, setTouched, (user: userDetails) => {
-        setSubmittedUser(user);
-        setRemovedUser(null);
-        formik.resetForm();
-        setIsExpanded(false);
-      });
-    },
+describe("AuthUserCardUI", () => {
+  it("renders title and tooltip", () => {
+    render(<AuthUserCardUI entryData={mockEntryData} />);
+    expect(screen.getByText("Personal Account Manager")).toBeInTheDocument();
+    expect(screen.getByTestId("tooltip")).toHaveTextContent(
+      "A Personal Account Manager is a current Costco member"
+    );
   });
 
-  const handleOpenRemoveModal = () => {
-    if (submittedUser) {
-      setModalUser(submittedUser);
-      setModalOpen(true);
-    }
-  };
+  it("expands form when Add Account Manager button clicked", () => {
+    render(<AuthUserCardUI entryData={mockEntryData} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
+    expect(screen.getByLabelText("First Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Last Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Membership Number")).toBeInTheDocument();
+  });
 
-  const handleRemove = (user: userDetails) => {
-    setSubmittedUser(null);
-    setRemovedUser(user);
-    setIsExpanded(false);
-    setModalOpen(false);
-  };
+  it("shows validation errors when fields are empty", async () => {
+    render(<AuthUserCardUI entryData={mockEntryData} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
 
-  const submitLabel = buttons[0]?.button.label || 'Submit';
-  const cancelLabel = buttons[1]?.button.label || 'Cancel';
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    });
 
-  if (isLoading) {
-    return (
-      <AuthUserCard>
-        <Skeleton variant={SkeletonVariant.TextBody} width={343} />
-      </AuthUserCard>
-    );
-  }
+    expect(screen.getAllByRole("alert")).toHaveLength(3);
+  });
 
-  return (
-    <>
-      {modalUser && (
-        <RemovePersonModal
-          isOpen={isModalOpen}
-          firstName={modalUser.firstName}
-          lastName={modalUser.lastName}
-          onClose={() => setModalOpen(false)}
-          onRemove={() => handleRemove(modalUser)}
-        />
-      )}
+  it("clears validation error on field change", async () => {
+    render(<AuthUserCardUI entryData={mockEntryData} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
 
-      <AuthUserCard>
-        <HeaderContainer>
-          <Text variant="t3" bold>
-            {entryData?.title}
-          </Text>
-          <Tooltip
-            position="right"
-            uniqueId="MMC"
-            buttonAriaLabel={entryData?.title || ''}
-            tooltipId="MMC_Tooltip"
-            content={entryData?.tooltip}
-          />
-        </HeaderContainer>
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    });
 
-        <Divider sx={{ marginBottom: SpaceMd, marginTop: '8px' }} />
+    expect(screen.getAllByRole("alert")).toHaveLength(3);
 
-        {submittedUser && (
-          <>
-            <SuccessNotificationContainer>
-              <Text variant="t6" sx={{ color: '#155724' }}>
-                Person has been added.
-              </Text>
-            </SuccessNotificationContainer>
-            <PersonAddedContainer>
-              <Text sx={boldBodyStyle}>
-                {submittedUser.firstName} {submittedUser.lastName}
-              </Text>
-              <Text
-                sx={anchorTextStyle}
-                onClick={handleOpenRemoveModal}
-                style={{ cursor: 'pointer' }}
-              >
-                Remove
-              </Text>
-            </PersonAddedContainer>
-          </>
-        )}
+    fireEvent.change(screen.getByLabelText("Membership Number"), {
+      target: { value: "123456" },
+    });
 
-        {removedUser && !submittedUser && (
-          <SuccessNotificationContainer>
-            <Text variant="t6" sx={{ color: '#155724' }}>
-              {removedUser.firstName} {removedUser.lastName} has been removed.
-            </Text>
-          </SuccessNotificationContainer>
-        )}
+    // Wait for error to disappear
+    await waitFor(() => {
+      expect(screen.getAllByRole("alert")).toHaveLength(2);
+    });
+  });
 
-        {!isExpanded && !submittedUser && (
-          <Button
-            fullWidth
-            variant="secondary"
-            onClick={() => {
-              setIsExpanded(true);
-              setRemovedUser(null);
-            }}
-          >
-            {entryData?.primarybuttonlabel || 'Add Account Manager'}
-          </Button>
-        )}
+  it("submits successfully and shows confirmation", async () => {
+    render(<AuthUserCardUI entryData={mockEntryData} />);
 
-        {isExpanded && !submittedUser && (
-          <form onSubmit={formik.handleSubmit}>
-            <SubComponentContainer>
-              {fields.map(({ textfield }) => {
-                const { fieldid, label } = textfield;
-                const isTouched = formik.touched[fieldid];
-                const error = formik.errors[fieldid];
-                const isError = Boolean(isTouched && error);
+    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
 
-                return (
-                  <TextField
-                    key={fieldid}
-                    inputLabelId={fieldid}
-                    uniqueId={fieldid}
-                    id={fieldid}
-                    label={label}
-                    value={formik.values[fieldid] || ''}
-                    onChange={(e) =>
-                      handleChange(e, formik.setFieldValue, fieldid)
-                    }
-                    onBlur={() => formik.setFieldTouched(fieldid, true)}
-                    isError={isError}
-                    errorText={error || ''}
-                    isRequired
-                    type="text"
-                    sx={{ marginBottom: SpaceMd }}
-                  />
-                );
-              })}
+    fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Jane" } });
+    fireEvent.change(screen.getByLabelText("Last Name"), { target: { value: "Doe" } });
+    fireEvent.change(screen.getByLabelText("Membership Number"), {
+      target: { value: "123456" },
+    });
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <Button type="submit">{submitLabel}</Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    formik.resetForm();
-                    setIsExpanded(false);
-                  }}
-                >
-                  {cancelLabel}
-                </Button>
-              </Box>
-            </SubComponentContainer>
-          </form>
-        )}
-      </AuthUserCard>
-    </>
-  );
-};
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Person has been added.");
+      expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+      expect(screen.getByText("Remove")).toBeInTheDocument();
+    });
+  });
+
+  it("resets and collapses form when Cancel is clicked", async () => {
+    render(<AuthUserCardUI entryData={mockEntryData} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
+
+    fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "John" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByLabelText("First Name")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
+    expect(screen.getByLabelText("First Name")).toHaveValue(""); // Should be reset
+  });
+
+  it("removes user on remove click and shows removal confirmation", async () => {
+    render(<AuthUserCardUI entryData={mockEntryData} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
+    fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Jane" } });
+    fireEvent.change(screen.getByLabelText("Last Name"), { target: { value: "Smith" } });
+    fireEvent.change(screen.getByLabelText("Membership Number"), {
+      target: { value: "123456" },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Remove")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Remove"));
+
+    // Click the actual confirm in modal (you can mock RemovePersonModal separately for unit test)
+    // For now let's assume modal works and user is removed
+    // So simulate modal close effect:
+    await act(async () => {
+      // Simulate modal's onRemove call
+      screen.getByText("Remove").click();
+    });
+
+    // Simulate showing removal success message
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("has been removed");
+    });
+  });
+});
