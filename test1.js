@@ -31,6 +31,23 @@ jest.mock("@costcolabs/forge-components", () => ({
       {children}
     </a>
   ),
+      CostcoFormikForm: ({ children }: any) => (
+    <form onSubmit={(e) => e.preventDefault()}>
+      {typeof children === 'function'
+        ? children({
+            values: {},
+            errors: {},
+            touched: {},
+            handleChange: jest.fn(),
+            handleBlur: jest.fn(),
+            handleSubmit: jest.fn(),
+            setFieldValue: jest.fn(),
+            setFieldTouched: jest.fn(),
+            isSubmitting: false,
+          })
+        : children}
+    </form>
+  ),
 }));
 
 jest.mock("@costcolabs/forge-digital-components", () => ({
