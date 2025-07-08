@@ -54,7 +54,10 @@ jest.mock('@costcolabs/forge-components', () => ({
 
 jest.mock('@costcolabs/forge-design-tokens', () => ({
   SpaceMd: '16px',
-  SpaceXs: '4px',
-  // Add other tokens if used
+  SpaceSm: '12px',
+  SpaceXs: '8px',
+  SpaceXxs: '4px',
+  CardShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
 }));
+
 
