@@ -3,6 +3,13 @@ import { AuthUserCardUI } from "./AuthUserCardUI";
 import mockPersonalManager from "#/src/mocks/authUserCard/mockPersonalManager.json";
 import "@testing-library/jest-dom";
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    json: () => Promise.resolve({}),
+  })
+) as jest.Mock;
+
+
 jest.mock("@costcolabs/forge-components", () => ({
   Text: ({ children }: any) => <span>{children}</span>,
   Tooltip: ({ content }: any) => <div data-testid="tooltip">{content}</div>,
