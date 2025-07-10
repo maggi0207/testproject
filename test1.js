@@ -1,140 +1,74 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import EmailDeliveryPreferences from './EmailDeliveryPreferences'; // Adjust the import path
-import { useDispatch, useSelector } from 'react-redux';
-import getEmailDeliveryPreferences from '../../../../Services/getEmailDeliveryPreferences'; // Adjust the import path
-import { loadingIndicatorActions } from '../../../../store/LoadingIndicator/LoadingIndicatorSlice';
-import { dataLayerAccountNotifications } from '../../../../utils/analyticsUtils';
-import { updateEmailPreferenceToggle, setEmailPreferencesInitialValues } from '../../../../store/CommunicationNotification/EmailPreferenceSlice';
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { AuthUserCardUI } from "./AuthUserCardUI";
+import "@testing-library/jest-dom";
+import mockEntryData from "#/src/mocks/authUserCard/mockPersonalManager.json";
 
-// Mock the Redux hooks
-jest.mock('react-redux', () => ({
-  useDispatch: jest.fn(),
-  useSelector: jest.fn(),
-}));
+// 🔥 No mocking for forge-components or forge-digital-components
+// 👉 We'll test it as-is, assuming components render correctly
 
-jest.mock("react-router-dom", () => ({
-  ...jest.requireActual("react-router-dom"), // Preserve other functionalities
-  NavLink: ({ children, to, ...props }) => (
-    <div data-testid="navlink-mock" {...props}>
-      MockNavLink to: {to}
-      {children}
-    </div>
-  ),
-}));
+jest.mock("@costcolabs/forge-digital-components", () => {
+  const originalModule = jest.requireActual("@costcolabs/forge-digital-components");
 
-// Mock the API service
-jest.mock('../../../../Services/getEmailDeliveryPreferences');
+  return {
+    ...originalModule,
+    useAuth: () => ({
+      isUserSignedIn: () => Promise.resolve(true),
+      isLoading: false,
+    }),
+  };
+});
 
-// Mock the analytics utility
-jest.mock('../../../../utils/analyticsUtils', () => ({
-  dataLayerAccountNotifications: jest.fn(),
-}));
+describe("AuthUserCardUI", () => {
+  const translations = {
+    alertaddperson: "Person has been added.",
+    alertremoveperson: "Person has been removed.",
+    remove: "Remove",
+  };
 
-describe('EmailDeliveryPreferences', () => {
-  let mockDispatch;
-  let mockPreferences;
-
-  beforeEach(() => {
-    mockDispatch = jest.fn();
-    useDispatch.mockReturnValue(mockDispatch);
-    
-    mockPreferences = {
-      dailySummary: false,
-      instantNotification: true,
-      pendingActionNotification: false,
-    };
-
-    useSelector.mockReturnValue({ emailPreferences: { current: mockPreferences } });
+  it("renders the title and tooltip", () => {
+    render(<AuthUserCardUI entryData={mockEntryData} translations={translations} />);
+    expect(screen.getByText("Personal Account Manager")).toBeInTheDocument();
+    expect(screen.getByLabelText("Personal Account Manager")).toBeInTheDocument();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  it("opens form on 'Add Account Manager' button click", async () => {
+    render(<AuthUserCardUI entryData={mockEntryData} translations={translations} />);
+    const addBtn = screen.getByRole("button", { name: /add account manager/i });
+    fireEvent.click(addBtn);
+
+    expect(await screen.findByLabelText(/First Name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Last Name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Membership Number/i)).toBeInTheDocument();
   });
 
-  test('should render the component with the correct title and description', () => {
-    const props = {
-      title: 'Email Preferences',
-      description: 'Configure your email preferences.',
-      primarySubTitle: 'Daily Summary',
-      primarySubDescription: 'Receive daily summaries of your activities.',
-      secondarySubTitle: 'Instant Notification',
-      secondarySubDescription: 'Get instant notifications when actions are required.',
-      checkboxDescription: 'Enable pending action notifications.',
-    };
+  it("submits the form and shows confirmation", async () => {
+    render(<AuthUserCardUI entryData={mockEntryData} translations={translations} />);
+    fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
 
-    render(<EmailDeliveryPreferences {...props} />);
-
-    expect(screen.getByText('Email Preferences')).toBeTruthy();
-    expect(screen.getByText('Configure your email preferences.')).toBeTruthy();
-    expect(screen.getByText('Daily Summary')).toBeTruthy();
-    expect(screen.getByText('Instant Notification')).toBeTruthy();
-  });
-
-  test('should dispatch setEmailPreferencesInitialValues when API call returns preferences', async () => {
-    getEmailDeliveryPreferences.mockResolvedValue({
-      records: [{ Case_Email_Delivery_Preference__c: 'Digest Only' }],
+    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Jane" } });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Doe" } });
+    fireEvent.change(screen.getByLabelText(/Membership Number/i), {
+      target: { value: "12345678" },
     });
 
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
+    fireEvent.click(screen.getByRole("button", { name: /submit/i }));
 
     await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith(
-        setEmailPreferencesInitialValues({
-          dailySummary: true,
-          instantNotification: false,
-          pendingActionNotification: false,
-        })
-      );
+      expect(screen.getByText("Person has been added.")).toBeInTheDocument();
+      expect(screen.getByText("Jane Doe")).toBeInTheDocument();
     });
   });
 
-  test('should handle toggle for dailySummary', () => {
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
+  it("resets the form when Cancel is clicked", async () => {
+    render(<AuthUserCardUI entryData={mockEntryData} translations={translations} />);
+    fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
 
-    const toggleSwitch = screen.getByRole('checkbox', { name: /off/i });
-    fireEvent.click(toggleSwitch); // Simulate toggling
+    expect(await screen.findByLabelText(/First Name/i)).toBeInTheDocument();
 
-    expect(mockDispatch).toHaveBeenCalledWith(updateEmailPreferenceToggle({
-      key: 'dailySummary',
-      value: true,
-    }));
-
-    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('daily summary off to on');
-    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('instant on to off');
-  });
-
-  test('should handle toggle for instantNotification', () => {
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
-
-    const toggleSwitch = screen.getByRole('checkbox', { name: /off/i });
-    fireEvent.click(toggleSwitch); // Simulate toggling
-
-    expect(mockDispatch).toHaveBeenCalledWith(updateEmailPreferenceToggle({
-      key: 'instantNotification',
-      value: true,
-    }));
-
-    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('instant off to on');
-    expect(dataLayerAccountNotifications).toHaveBeenCalledWith('daily summary on to off');
-  });
-
-  test('should disable pendingActionNotification when dailySummary is off', () => {
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
-
-    const checkbox = screen.getByLabelText('Enable pending action notifications.');
-    expect(checkbox).toBeDisabled();
-  });
-
-  test('should dispatch loading indicator actions during API call', async () => {
-    getEmailDeliveryPreferences.mockResolvedValue({
-      records: [{ Case_Email_Delivery_Preference__c: 'Normal' }],
-    });
-
-    render(<EmailDeliveryPreferences {...mockPreferences} />);
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
 
     await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: true }));
-      expect(mockDispatch).toHaveBeenCalledWith(loadingIndicatorActions.setLoadingIndicatorProps({ isLoading: false }));
+      expect(screen.queryByLabelText(/First Name/i)).not.toBeInTheDocument();
     });
   });
 });
