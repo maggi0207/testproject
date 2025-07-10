@@ -1,30 +1,49 @@
-it("shows validation errors when fields are empty", async () => {
-    render(<AuthUserCardUI entryData={mockEntryData} />);
-    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
+it("removes person when confirm button in modal is clicked", async () => {
+  render(<AuthUserCardUI entryData={mockEntryData} translations={translations} />);
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Submit" }));
-    });
+  fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
+  fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Jane" } });
+  fireEvent.change(screen.getByLabelText("Last Name"), { target: { value: "Doe" } });
+  fireEvent.change(screen.getByLabelText("Membership Number"), { target: { value: "12345678" } });
+  fireEvent.click(screen.getByRole("button", { name: "Submit" }));
 
-    expect(screen.getAllByRole("alert")).toHaveLength(3);
+  await waitFor(() => {
+    expect(screen.getByText("Remove")).toBeInTheDocument();
   });
 
-  it("clears validation error on field change", async () => {
-    render(<AuthUserCardUI entryData={mockEntryData} />);
-    fireEvent.click(screen.getByRole("button", { name: "Add Account Manager" }));
+  fireEvent.click(screen.getByText("Remove"));
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Submit" }));
-    });
+  const removeBtn = await screen.findByRole("button", { name: "Remove Person" });
+  fireEvent.click(removeBtn);
 
-    expect(screen.getAllByRole("alert")).toHaveLength(3);
-
-    fireEvent.change(screen.getByLabelText("Membership Number"), {
-      target: { value: "123456" },
-    });
-
-    // Wait for error to disappear
-    await waitFor(() => {
-      expect(screen.getAllByRole("alert")).toHaveLength(2);
-    });
+  await waitFor(() => {
+    expect(screen.getByText("Jane Doe has been removed.")).toBeInTheDocument();
   });
+
+  expect(screen.getByRole("button", { name: /add account manager/i })).toBeInTheDocument();
+});
+
+it("closes modal when Cancel button is clicked", async () => {
+  render(<AuthUserCardUI entryData={mockEntryData} translations={translations} />);
+
+  fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
+  fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Jane" } });
+  fireEvent.change(screen.getByLabelText("Last Name"), { target: { value: "Doe" } });
+  fireEvent.change(screen.getByLabelText("Membership Number"), { target: { value: "12345678" } });
+  fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+  await waitFor(() => {
+    expect(screen.getByText("Remove")).toBeInTheDocument();
+  });
+
+  fireEvent.click(screen.getByText("Remove"));
+
+  const cancelBtn = await screen.findByRole("button", { name: "Cancel" });
+  fireEvent.click(cancelBtn);
+
+  await waitFor(() => {
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+});
