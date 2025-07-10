@@ -1,63 +1,45 @@
-jest.mock('@costcolabs/forge-components', () => ({
-  Text: ({ children }: any) => <span>{children}</span>,
-  Tooltip: ({ content }: any) => <div data-testid="tooltip">{content}</div>,
-  Button: ({ children, onClick, type = 'button', ...rest }: any) => (
-    <button type={type} onClick={onClick} {...rest}>
-      {children}
-    </button>
-  ),
-  FormikTextField: ({
-    label,
-    value,
-    onChange,
-    onBlur,
-    isError,
-    errorText,
-    inputLabelId,
-  }: any) => (
-    <div>
-      <label htmlFor={inputLabelId}>{label}</label>
-      <input
-        id={inputLabelId}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-        aria-invalid={isError}
-        aria-describedby={isError ? `${inputLabelId}-error` : undefined}
-      />
-      {isError && (
-        <div id={`${inputLabelId}-error`} role="alert">
-          {errorText}
-        </div>
-      )}
-    </div>
-  ),
-  Divider: () => <hr />,
-  Notification: ({ children, message }: any) => (
-    <div role="status">
-      {message}
-      {children}
-    </div>
-  ),
-  Link: ({ children, onClick }: any) => (
-    <a role="button" onClick={onClick}>
-      {children}
-    </a>
-  ),
-  Skeleton: () => <div data-testid="skeleton">Loading...</div>,
-  SkeletonVariant: {
-    TextBody: 'textBody',
-  },
-  Box: ({ children }: any) => <div>{children}</div>,
-  Stack: ({ children }: any) => <div>{children}</div>,
-}));
+it("opens modal with empty title and buttons when removePersonFields have empty strings", async () => {
+  const entryWithEmptyModalLabels = {
+    ...mockEntryData,
+    removepersoncomposer: [
+      {
+        removepersonwrapper: {
+          removepersonref: [
+            {
+              modalTitle: "",
+              primarybuttonlabel: "",
+              secondarybuttonlabel: "",
+              confirmationtext: "Do you want to remove?",
+              _content_type_uid: "removeperson",
+            },
+          ],
+        },
+      },
+    ],
+  };
 
-jest.mock('@costcolabs/forge-design-tokens', () => ({
-  SpaceMd: '16px',
-  SpaceSm: '12px',
-  SpaceXs: '8px',
-  SpaceXxs: '4px',
-  CardShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
-}));
+  render(<AuthUserCardUI entryData={entryWithEmptyModalLabels} translations={translations} />);
 
+  fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
+  fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Jane" } });
+  fireEvent.change(screen.getByLabelText("Last Name"), { target: { value: "Doe" } });
+  fireEvent.change(screen.getByLabelText("Membership Number"), {
+    target: { value: "12345678" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Submit" }));
 
+  await waitFor(() => {
+    expect(screen.getByText("Remove")).toBeInTheDocument();
+  });
+
+  fireEvent.click(screen.getByText("Remove"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Do you want to remove?")).toBeInTheDocument();
+  });
+
+  const modalButtons = screen.getAllByRole("button");
+  expect(modalButtons).toHaveLength(2);
+  expect(modalButtons[0]).toHaveTextContent(""); // primary button
+  expect(modalButtons[1]).toHaveTextContent(""); // secondary button
+});
