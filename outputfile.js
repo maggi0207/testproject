@@ -1,149 +1,241 @@
-// ✅ File: types/pages/AuthUserCard.ts
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import AuthUserCardUI from "../AuthUserCardUI";
+import { useAuth } from "@costcolabs/connect-core";
+import { mockPersonalManager, mockHouseholdData, mockAdditionalPeopleData } from "./mockData";
 
-export type Metadata = {
-  uid: string;
-};
+jest.mock("@costcolabs/connect-core");
 
-export type TextFieldWrapper = {
-  label: string;
-  isverificationrequired: boolean;
-  errormessage?: string;
-  fieldid: string;
-  _metadata: Metadata;
-};
+describe("AuthUserCardUI - AccountManager", () => {
+  beforeEach(() => {
+    (useAuth as jest.Mock).mockReturnValue({
+      isUserSignedIn: jest.fn().mockResolvedValue(true),
+      isLoading: false,
+    });
+  });
 
-export type ButtonFieldWrapper = {
-  label: string;
-  _metadata: Metadata;
-};
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-export type DobFieldWrapper = {
-  label: string;
-  textlabelmonth: string;
-  textlabelday: string;
-  textlabelyear: string;
-  errortextmonth: string;
-  errortextyear: string;
-  warningtext?: string;
-  _metadata: Metadata;
-};
+  const translations = mockPersonalManager.translations.value.reduce((acc, currVal) => {
+    if (currVal?.key && currVal.value) acc[currVal.key] = currVal.value;
+    return acc;
+  }, {} as Record<string, string>);
 
-export type InfoTextWrapper = {
-  text: string;
-  _metadata: Metadata;
-};
+  test("renders correctly", () => {
+    render(<AuthUserCardUI translations={translations} entryData={mockPersonalManager} />);
+    expect(screen.getByText("Personal Account Manager")).toBeInTheDocument();
+    expect(screen.getByTestId("Tooltip_MMC")).toBeInTheDocument();
+  });
 
-export type AuthUserCardField =
-  | { textfield: TextFieldWrapper }
-  | { dob: DobFieldWrapper }
-  | { button: ButtonFieldWrapper }
-  | { infotext: InfoTextWrapper };
+  test("opens form on button click", () => {
+    render(<AuthUserCardUI translations={translations} entryData={mockPersonalManager} />);
+    fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
+    expect(screen.getByLabelText(/First Name/i)).toBeInTheDocument();
+  });
 
-export interface UserDetails {
-  firstName: string;
-  lastName: string;
-  membershipNumber?: string;
-}
+  test("submits the form and shows confirmation", async () => {
+    render(<AuthUserCardUI entryData={mockPersonalManager} translations={translations} />);
+    fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
 
-export interface AuthUserFormProps {
-  fields: AuthUserCardField[];
-  initialValues: Record<string, string>;
-  requiredFields: Record<string, string>;
-  submitLabel: string;
-  cancelLabel: string;
-  firstInputRef: React.RefObject<HTMLInputElement>;
-  onCancel: () => void;
-  onSubmitSuccess: (values: Record<string, string>) => void;
-}
+    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Jane" } });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Doe" } });
+    fireEvent.change(screen.getByLabelText(/Membership Number/i), { target: { value: "12345678" } });
 
-// ✅ File: components/SubComponents/AuthUserForm.tsx
+    fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
 
-import {
-  CostcoFormikForm,
-  FormikTextField,
-  FormikDateOfBirthField,
-} from "@costcolabs/forge-digital-components";
-import { Stack } from "@mui/material";
-import { Button } from "@costcolabs/forge-components";
-import { SpaceMd } from "@costcolabs/forge-design-tokens";
-import { validateFields, knownFieldIds } from "../helpers";
-import {
-  AuthUserCardField,
-  TextFieldWrapper,
-  DobFieldWrapper,
-  AuthUserFormProps,
-} from "#/src/types/pages/AuthUserCard";
+    await waitFor(() => {
+      expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+    });
+  });
 
-const AuthUserForm: React.FC<AuthUserFormProps> = ({
-  fields,
-  initialValues,
-  requiredFields,
-  submitLabel,
-  cancelLabel,
-  firstInputRef,
-  onCancel,
-  onSubmitSuccess,
-}) => {
-  return (
-    <CostcoFormikForm
-      initialValues={initialValues}
-      validateOnBlur
-      validateOnChange
-      validate={(values) => validateFields(values, requiredFields)}
-      onSubmit={(values, helpers) => {
-        onSubmitSuccess(values);
-        helpers.resetForm();
-      }}
-      formProps={{ noValidate: true }}
-    >
-      <Stack gap={SpaceMd}>
-        {fields.map((field, index) => {
-          if ("textfield" in field) {
-            const textfield: TextFieldWrapper = field.textfield;
-            return (
-              <FormikTextField
-                key={textfield.fieldid}
-                name={textfield.fieldid}
-                label={textfield.label}
-                isRequired={!!textfield.isverificationrequired}
-                type={textfield.fieldid === knownFieldIds.membershipNumber ? "number" : "text"}
-                inputRef={index === 0 ? firstInputRef : undefined}
-                sx={{ marginBottom: SpaceMd }}
-              />
-            );
-          }
+  test("resets the form on cancel", async () => {
+    render(<AuthUserCardUI entryData={mockPersonalManager} translations={translations} />);
+    fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
+    await screen.findByLabelText(/First Name/i);
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    await waitFor(() => {
+      expect(screen.queryByLabelText(/First Name/i)).not.toBeInTheDocument();
+    });
+  });
 
-          if ("dob" in field) {
-            return (
-              <FormikDateOfBirthField
-                key={field.dob.label}
-                autoCompleteGroup="billing"
-                name={knownFieldIds.dob}
-                text={{
-                  dayhelpertext: "DD",
-                  daylabel: "Day",
-                  dobdisclaimer: undefined,
-                  monthhelpertext: "Month",
-                  monthlabel: "Month",
-                  yearhelpertext: "YYYY",
-                  yearlabel: "Year",
-                }}
-              />
-            );
-          }
+  test("removes a person via modal", async () => {
+    render(<AuthUserCardUI entryData={mockPersonalManager} translations={translations} />);
+    fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
+    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Jane" } });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Doe" } });
+    fireEvent.change(screen.getByLabelText(/Membership Number/i), { target: { value: "12345678" } });
+    fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
 
-          return null;
-        })}
+    await waitFor(() => {
+      const removeBtn = screen.getByTestId("remove-person-0");
+      fireEvent.click(removeBtn);
+    });
 
-        <Stack gap={SpaceMd}>
-          <Button type="submit">{submitLabel}</Button>
-          <Button variant="secondary" onClick={onCancel}>
-            {cancelLabel}
-          </Button>
-        </Stack>
-      </Stack>
-    </CostcoFormikForm>
-  );
-};
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole("button", { name: /Remove/i }));
+      expect(screen.queryByText("Jane Doe")).not.toBeInTheDocument();
+    });
+  });
+});
 
-export default AuthUserForm;
+describe("AuthUserCardUI - Household", () => {
+  const translations = mockHouseholdData.translations.value.reduce((acc, currVal) => {
+    if (currVal?.key && currVal.value) acc[currVal.key] = currVal.value;
+    return acc;
+  }, {} as Record<string, string>);
+
+  test("renders correctly", () => {
+    render(<AuthUserCardUI translations={translations} entryData={mockHouseholdData} />);
+    expect(screen.getByText("Household Members")).toBeInTheDocument();
+  });
+
+  test("opens form on button click", () => {
+    render(<AuthUserCardUI translations={translations} entryData={mockHouseholdData} />);
+    fireEvent.click(screen.getByRole("button", { name: /add household member/i }));
+    expect(screen.getByLabelText(/First Name/i)).toBeInTheDocument();
+  });
+
+test("submits the form and shows confirmation", async () => {
+  render(<AuthUserCardUI entryData={mockHouseholdData} translations={translations} />);
+  fireEvent.click(screen.getByRole("button", { name: /add household member/i }));
+
+  fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Mark" } });
+  fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Smith" } });
+  fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "mark@example.com" } });
+  fireEvent.change(screen.getByLabelText(/Phone Number/i), { target: { value: "1234567890" } });
+  fireEvent.change(screen.getByLabelText(/Date of Birth/i), { target: { value: "1990-01-01" } });
+  fireEvent.change(screen.getByLabelText(/Membership Number/i), { target: { value: "98765432" } });
+
+  fireEvent.click(screen.getByRole("button", { name: /add household member/i }));
+
+  await waitFor(() => {
+    expect(screen.getByText("Mark Smith")).toBeInTheDocument();
+  });
+});
+
+
+  test("resets the form on cancel", async () => {
+    render(<AuthUserCardUI entryData={mockHouseholdData} translations={translations} />);
+    fireEvent.click(screen.getByRole("button", { name: /add household member/i }));
+    await screen.findByLabelText(/First Name/i);
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    await waitFor(() => {
+      expect(screen.queryByLabelText(/First Name/i)).not.toBeInTheDocument();
+    });
+  });
+
+  test("removes a person via modal", async () => {
+    render(<AuthUserCardUI entryData={mockHouseholdData} translations={translations} />);
+  fireEvent.click(screen.getByRole("button", { name: /add household member/i }));
+
+  fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Mark" } });
+  fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Smith" } });
+  fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "mark@example.com" } });
+  fireEvent.change(screen.getByLabelText(/Phone Number/i), { target: { value: "1234567890" } });
+  fireEvent.change(screen.getByLabelText(/Date of Birth/i), { target: { value: "1990-01-01" } });
+  fireEvent.change(screen.getByLabelText(/Membership Number/i), { target: { value: "98765432" } });
+
+  fireEvent.click(screen.getByRole("button", { name: /add household member/i }));
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-person-0"));
+    });
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole("button", { name: /Remove/i }));
+      expect(screen.queryByText("Mark Smith")).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe("AuthUserCardUI - AdditionalPeopleDetails", () => {
+  const translations = mockAdditionalPeopleData.translations.value.reduce((acc, currVal) => {
+    if (currVal?.key && currVal.value) acc[currVal.key] = currVal.value;
+    return acc;
+  }, {} as Record<string, string>);
+
+  test("renders correctly", () => {
+    render(<AuthUserCardUI translations={translations} entryData={mockAdditionalPeopleData} />);
+    expect(screen.getByText("Additional People")).toBeInTheDocument();
+  });
+
+  test("opens form on button click", () => {
+    render(<AuthUserCardUI translations={translations} entryData={mockAdditionalPeopleData} />);
+    fireEvent.click(screen.getByRole("button", { name: /add additional person/i }));
+    expect(screen.getByLabelText(/First Name/i)).toBeInTheDocument();
+  });
+
+  test("submits the form and shows confirmation", async () => {
+    render(<AuthUserCardUI entryData={mockAdditionalPeopleData} translations={translations} />);
+test("submits the form and shows confirmation", async () => {
+  render(<AuthUserCardUI entryData={mockAdditionalPeopleData} translations={translations} />);
+  fireEvent.click(screen.getByRole("button", { name: /add additional person/i }));
+
+  fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Lily" } });
+  fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Wong" } });
+  fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "lily@example.com" } });
+  fireEvent.change(screen.getByLabelText(/Phone Number/i), { target: { value: "9876543210" } });
+  fireEvent.change(screen.getByLabelText(/Date of Birth/i), { target: { value: "1985-06-15" } });
+  fireEvent.change(screen.getByLabelText(/Address Line 1/i), { target: { value: "123 Main St" } });
+  fireEvent.change(screen.getByLabelText(/Address Line 2/i), { target: { value: "Apt 4B" } });
+  fireEvent.change(screen.getByLabelText(/Zip Code/i), { target: { value: "90210" } });
+  fireEvent.change(screen.getByLabelText(/Membership Number/i), { target: { value: "11223344" } });
+
+  fireEvent.click(screen.getByRole("button", { name: /add additional person/i }));
+
+  await waitFor(() => {
+    expect(screen.getByText("Lily Wong")).toBeInTheDocument();
+  });
+});
+
+
+    await waitFor(() => {
+      expect(screen.getByText("Lily Wong")).toBeInTheDocument();
+    });
+  });
+
+  test("resets the form on cancel", async () => {
+    render(<AuthUserCardUI entryData={mockAdditionalPeopleData} translations={translations} />);
+    fireEvent.click(screen.getByRole("button", { name: /add additional person/i }));
+    await screen.findByLabelText(/First Name/i);
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    await waitFor(() => {
+      expect(screen.queryByLabelText(/First Name/i)).not.toBeInTheDocument();
+    });
+  });
+
+  test("removes a person via modal", async () => {
+    render(<AuthUserCardUI entryData={mockAdditionalPeopleData} translations={translations} />);
+    test("submits the form and shows confirmation", async () => {
+  render(<AuthUserCardUI entryData={mockAdditionalPeopleData} translations={translations} />);
+  fireEvent.click(screen.getByRole("button", { name: /add additional person/i }));
+
+  fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Lily" } });
+  fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Wong" } });
+  fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: "lily@example.com" } });
+  fireEvent.change(screen.getByLabelText(/Phone Number/i), { target: { value: "9876543210" } });
+  fireEvent.change(screen.getByLabelText(/Date of Birth/i), { target: { value: "1985-06-15" } });
+  fireEvent.change(screen.getByLabelText(/Address Line 1/i), { target: { value: "123 Main St" } });
+  fireEvent.change(screen.getByLabelText(/Address Line 2/i), { target: { value: "Apt 4B" } });
+  fireEvent.change(screen.getByLabelText(/Zip Code/i), { target: { value: "90210" } });
+  fireEvent.change(screen.getByLabelText(/Membership Number/i), { target: { value: "11223344" } });
+
+  fireEvent.click(screen.getByRole("button", { name: /add additional person/i }));
+
+  await waitFor(() => {
+    expect(screen.getByText("Lily Wong")).toBeInTheDocument();
+  });
+});
+
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-person-0"));
+    });
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole("button", { name: /Remove/i }));
+      expect(screen.queryByText("Lily Wong")).not.toBeInTheDocument();
+    });
+  });
+});
