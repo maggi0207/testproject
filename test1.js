@@ -1,42 +1,31 @@
-// vehiclePrefillStore.test.ts
+// vehiclePrefillStore.ts
 
-import useVehiclePrefillStore, { initialValues } from './vehiclePrefillStore';
-import { renderHook, act } from '@testing-library/react-hooks';
+import { create } from 'zustand';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 
-describe('useVehiclePrefillStore', () => {
-  beforeEach(() => {
-    sessionStorage.clear();
-  });
+export const initialValues = {
+  vehiclePrefills: [],
+};
 
-  it('should initialize with default values', () => {
-    const { result } = renderHook(() => useVehiclePrefillStore());
-    expect(result.current.vehiclePrefills).toEqual(initialValues.vehiclePrefills);
-  });
+type VehiclePrefillStore = {
+  vehiclePrefills: any[];
+  setVehiclePrefills: (data: any[]) => void;
+};
 
-  it('should update vehiclePrefills when setVehiclePrefills is called', () => {
-    const { result } = renderHook(() => useVehiclePrefillStore());
+const useVehiclePrefillStore = create<VehiclePrefillStore>()(
+  devtools(
+    persist(
+      (set) => ({
+        ...initialValues,
+        setVehiclePrefills: (vehiclePrefills) =>
+          set({ vehiclePrefills }, false, 'setVehiclePrefills'),
+      }),
+      {
+        name: 'vehicle-prefills-store',
+        storage: createJSONStorage(() => sessionStorage),
+      }
+    )
+  )
+);
 
-    const testPrefills = [{ make: 'Toyota', model: 'Corolla' }];
-
-    act(() => {
-      result.current.setVehiclePrefills(testPrefills);
-    });
-
-    expect(result.current.vehiclePrefills).toEqual(testPrefills);
-  });
-
-  it('should persist state in sessionStorage', () => {
-    const testPrefills = [{ make: 'Honda', model: 'Civic' }];
-
-    const { result, rerender } = renderHook(() => useVehiclePrefillStore());
-
-    act(() => {
-      result.current.setVehiclePrefills(testPrefills);
-    });
-
-    rerender();
-
-    const stored = JSON.parse(sessionStorage.getItem('vehicle-prefills-store') || '{}');
-    expect(stored.state.vehiclePrefills).toEqual(testPrefills);
-  });
-});
+export default useVehiclePrefillStore;
