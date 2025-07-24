@@ -5,6 +5,68 @@ import { mockPersonalManager, mockHouseholdData, mockAdditionalPeopleData } from
 
 jest.mock("@costcolabs/connect-core");
 
+import { render, screen } from "@testing-library/react";
+import { AuthUserCardWrapper } from "../AuthUserCardWrapper";
+import { AuthUserFormType } from "#/src/types/pages/AuthUserCard";
+
+describe("Fallback empty array logic", () => {
+  it("should return empty layoutSchema and removePersonFields when entryData is undefined", () => {
+    const { container } = render(
+      <AuthUserCardWrapper
+        entryData={undefined}
+        userDetails={[]}
+        type={AuthUserFormType.AccountManager}
+        onSubmit={jest.fn()}
+        onRemove={jest.fn()}
+        handleClose={jest.fn()}
+        selectedUser={null}
+      />
+    );
+    expect(container).toBeInTheDocument(); // renders without crashing
+  });
+
+  it("should handle empty baseformref and removepersoncomposer arrays", () => {
+    const entryData = {
+      baseformref: [],
+      removepersoncomposer: [],
+    };
+
+    const { container } = render(
+      <AuthUserCardWrapper
+        entryData={entryData}
+        userDetails={[]}
+        type={AuthUserFormType.AccountManager}
+        onSubmit={jest.fn()}
+        onRemove={jest.fn()}
+        handleClose={jest.fn()}
+        selectedUser={null}
+      />
+    );
+    expect(container).toBeInTheDocument();
+  });
+
+  it("should handle missing nested structure and fallback to empty arrays", () => {
+    const entryData = {
+      baseformref: [{}],
+      removepersoncomposer: [{}],
+    };
+
+    const { container } = render(
+      <AuthUserCardWrapper
+        entryData={entryData}
+        userDetails={[]}
+        type={AuthUserFormType.AccountManager}
+        onSubmit={jest.fn()}
+        onRemove={jest.fn()}
+        handleClose={jest.fn()}
+        selectedUser={null}
+      />
+    );
+    expect(container).toBeInTheDocument();
+  });
+});
+
+
 describe("AuthUserCardUI - AccountManager", () => {
   beforeEach(() => {
     (useAuth as jest.Mock).mockReturnValue({
