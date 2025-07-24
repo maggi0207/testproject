@@ -1,45 +1,42 @@
-it("opens modal with empty title and buttons when removePersonFields have empty strings", async () => {
-  const entryWithEmptyModalLabels = {
-    ...mockEntryData,
-    removepersoncomposer: [
-      {
-        removepersonwrapper: {
-          removepersonref: [
-            {
-              modalTitle: "",
-              primarybuttonlabel: "",
-              secondarybuttonlabel: "",
-              confirmationtext: "Do you want to remove?",
-              _content_type_uid: "removeperson",
-            },
-          ],
-        },
-      },
-    ],
-  };
+// vehiclePrefillStore.test.ts
 
-  render(<AuthUserCardUI entryData={entryWithEmptyModalLabels} translations={translations} />);
+import useVehiclePrefillStore, { initialValues } from './vehiclePrefillStore';
+import { renderHook, act } from '@testing-library/react-hooks';
 
-  fireEvent.click(screen.getByRole("button", { name: /add account manager/i }));
-  fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Jane" } });
-  fireEvent.change(screen.getByLabelText("Last Name"), { target: { value: "Doe" } });
-  fireEvent.change(screen.getByLabelText("Membership Number"), {
-    target: { value: "12345678" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: "Submit" }));
-
-  await waitFor(() => {
-    expect(screen.getByText("Remove")).toBeInTheDocument();
+describe('useVehiclePrefillStore', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
   });
 
-  fireEvent.click(screen.getByText("Remove"));
-
-  await waitFor(() => {
-    expect(screen.getByText("Do you want to remove?")).toBeInTheDocument();
+  it('should initialize with default values', () => {
+    const { result } = renderHook(() => useVehiclePrefillStore());
+    expect(result.current.vehiclePrefills).toEqual(initialValues.vehiclePrefills);
   });
 
-  const modalButtons = screen.getAllByRole("button");
-  expect(modalButtons).toHaveLength(2);
-  expect(modalButtons[0]).toHaveTextContent(""); // primary button
-  expect(modalButtons[1]).toHaveTextContent(""); // secondary button
+  it('should update vehiclePrefills when setVehiclePrefills is called', () => {
+    const { result } = renderHook(() => useVehiclePrefillStore());
+
+    const testPrefills = [{ make: 'Toyota', model: 'Corolla' }];
+
+    act(() => {
+      result.current.setVehiclePrefills(testPrefills);
+    });
+
+    expect(result.current.vehiclePrefills).toEqual(testPrefills);
+  });
+
+  it('should persist state in sessionStorage', () => {
+    const testPrefills = [{ make: 'Honda', model: 'Civic' }];
+
+    const { result, rerender } = renderHook(() => useVehiclePrefillStore());
+
+    act(() => {
+      result.current.setVehiclePrefills(testPrefills);
+    });
+
+    rerender();
+
+    const stored = JSON.parse(sessionStorage.getItem('vehicle-prefills-store') || '{}');
+    expect(stored.state.vehiclePrefills).toEqual(testPrefills);
+  });
 });
