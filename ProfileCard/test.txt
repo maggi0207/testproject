@@ -1,0 +1,31 @@
+Affiliates Mapping
+
+In the members array, first look for entries where role = primary.
+
+These are considered the first affiliated members.
+
+After fetching an affiliated member, find the corresponding household member by:
+
+Matching memberID in the same array.
+
+Ensuring role = household.
+
+Ensuring status = current.
+
+Household Mapping
+
+In the members array, first look for entries where role = owner.
+
+After fetching the owner, find the corresponding household member by:
+
+Matching memberID with another item in the same array.
+
+Ensuring role = household.
+
+Ensuring status = current.
+
+Business Mapping
+
+In the members array, look for entries where role = administrator.
+
+If found, that member is considered the business account manager.
