@@ -1,20 +1,43 @@
 flowchart LR
 
-A[Saved Quotes Hub]
-A --> B{Quote Type}
+%% ================= LEFT SECTION =================
+A[Saved Quotes<br/>Hub]
 
-B -->|ACQ| C[New Route in M1V2 for Resume]
+B{Quote Type}
 
-C --> D[Hook changes to\npull resume End Point\nfrom ACQ launcher\nand show interstitial]
+A --> B
 
-D --> E{If premium changed\nOR\nCOPI / Risk Code changed}
+B -->|ACQ| C[New Route in<br/>M1V2 for Resume]
 
-E -->|Yes| F[Display Speed Bump\nbased on speed bump conditions]
+C --> D[Hook changes to<br/>
+pull resume End<br/>
+Point from ACQ<br/>
+launcher exp and<br/>
+show interstitial]
 
-E -->|No| G[Do Not Display\nSpeed Bump]
+%% ================= DECISION =================
+D --> E{If premium<br/>
+Changed OR<br/>
+COPI / Risk Code<br/>
+changed}
 
+%% ================= YES PATH (UP) =================
+E -->|Yes| F[Display Speed<br/>
+Bump based on<br/>
+Speed bump<br/>
+conditions]
+
+%% ================= NO PATH (RIGHT) =================
+E -->|No| G[Do Not Display<br/>
+Speed Bump]
+
+%% ================= ALIGNMENT HELPERS =================
 F --> H{If Quoted}
 G --> H
 
-H -->|Yes| I[Continue with\nQuoted Flow]
-H -->|No| J[Continue without\nQuoted Handling]
+%% ================= OUTCOMES =================
+H -->|Yes| I[Continue with<br/>
+Quoted Flow]
+
+H -->|No| J[Continue without<br/>
+Quoted Handling]
