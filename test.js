@@ -1,57 +1,19 @@
-1. Saved Quote Entry
+flowchart LR
 
-GW will not send pre-empted servicing quotes to Quote Hub
+A[Saved Quotes Hub] --> B{Quote Type}
+B -->|ACQ| C[New Route in M1V2 for Resume]
 
-The flow starts from Saved Quotes Hub
+C --> D[Resume Params\npolicyEffectiveDate\nlocation\ncompanyOfPlacement\nbusinessProcessDate\nresumeQuoteId]
 
-2. Quote Type Check
+D --> E[Hook changes:\n• Pull resume endpoint from ACQ launcher\n• Show interstitial after resume]
 
-If the Quote Type = ACQ
+E --> F{Premium changed\nOR\nCOPI / Risk Code changed?}
 
-Proceed with Resume flow
+F -->|Yes| G[Display Speed Bump\nbased on speed bump conditions]
+F -->|No| H[Do Not Display\nSpeed Bump]
 
-3. Resume Route
+G --> I{Is Quoted?}
+H --> I
 
-A new route in M1V2 is used for resume with the following parameters:
-
-policyEffectiveDate = 2025-11-26
-
-location = WV
-
-companyOfPlacement = GARB
-
-businessProcessDate = 2025-11-25
-
-resumeQuoteId = pcXXXX
-
-4. Hook Change (Resume Handling)
-
-Hook changes are applied to:
-
-Pull resume end-point from ACQ launcher
-
-After resume, show interstitial screen
-
-5. Premium / Risk Change Decision
-
-System checks:
-
-Has premium changed?
-
-Has COPI / Risk Code changed?
-
-If YES
-
-Display Speed Bump
-
-Display is based on speed bump conditions
-
-If NO
-
-Do NOT display Speed Bump
-
-6. Quoted Check
-
-After speed bump decision:
-
-Check if quoted
+I -->|Yes| J[Continue with Quoted Flow]
+I -->|No| K[Continue without\nQuoted Handling]
