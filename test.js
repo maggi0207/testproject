@@ -4,7 +4,7 @@ Reusable AddressField component with Country, Address Line 1/2, City, State, Zip
 Backed by AddressModel with DataAnnotations validation
 Supports mailing address and up to 3 physical locations
 Zip +4 field labeled "+4 (Optional)" per DWD review feedback
-Note: Front-end "Address Line 1" maps to SUITES backend "Address Line 2" and vice versa
+
 2. Created Shared Input Components for Phone Number and FEIN
 PhoneNumberField — auto-formats input as 999-999-9999, strips non-digits, limits to 10 digits, displays format hint (999-999-9999)
 FEINField — auto-formats input as 99-9999999, strips non-digits, limits to 9 digits
